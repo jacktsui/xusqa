@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.0.001
+// @version      1.0.003
 // @description  有道搜题，录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -492,6 +492,7 @@ const PRERULE = [ // 处理的是html全文,主要处理需要上下文关系的
         ra.splice(0, ra.length) // 清空
         //r = /([^0-9_]])(\(*\)*)(\d{1,2})([\.,]*)([^0-9_])/g
         //r = /([^_#3])(\(*\)*)(\d{1,2})([\.,]*)([^_#:])/g //'3': &#39;单引号,':'排除时间
+        str = str.replace(/\(&nbsp;&nbsp;&nbsp;&nbsp;\)/g, '()')
         r = /([^_#:0-9])(\(*\)*)\s*(\d+)([\.,]*)([^_:])/g //'3': &#39;单引号,':'排除时间
         m = str.match(r)
         if (m && m.length > 2){ // 匹配超过3个以上
@@ -3387,6 +3388,9 @@ function initVue(){
             }
             try{
                 if (to.name === 'QuestionInput') {
+                    if (!U){
+                        initUE()
+                    }
                     extendEditPage()
                 } else if (to.name === 'QuestionJudge') {
                     registerQjudgeHint()
@@ -3410,12 +3414,6 @@ function initVue(){
                     leaveQuestionInput(to, from)
                     if (to.name === 'Login'){ // 录题提交的时候,如果转到重新登录的话保存题目
                         helper.saveQuestion()
-                    }
-                }
-
-                if (to.name === 'QuestionInput'){
-                    if (!U){
-                        initUE()
                     }
                 }
             } catch(error){
