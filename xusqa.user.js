@@ -448,7 +448,7 @@ const PRERULE = [ // 处理的是html全文,主要处理需要上下文关系的
                     break
                 }
                 if (cur - start === num - 1){
-                    ra.push([e[0], e.index, e[1] + DIC.US3 + (b ? num : cur) + DIC.US3 + e[3]])
+                    ra.push([e[0], e.index, e[1] + DIC.US3 + (b ? num : cur) + DIC.US3])
                     num++
                 }
                 e = r.exec(str)
@@ -1529,6 +1529,10 @@ util.addStyle(util.cmt(function(){/*!CSS
     margin-right: 16px;
 }
 
+.latex[data-v-22e7772e] {
+    margin-right: 16px;
+}
+
 .process-title[data-v-0544f45b] {
     margin-right: 150px;
 }
@@ -2498,7 +2502,7 @@ function extendUE(){
         return new U.ui.Separator()
     })
 
-    U.registerUI('onekeybetterocr', function(editor, uiName) {
+    U.registerUI('onekeyformat', function(editor, uiName) {
         editor.registerCommand(uiName, {
             execCommand: function() {
                 const me = this
@@ -2739,14 +2743,14 @@ function registerQuestionSave(){
             analysis = analysis.replace(r, '$1')
         }
 
-        r = /\d+\.\s*考查([\u4E00-\u9FA5、]+)[.]/g
+        r = /(\d+\.)\s*考查([\u4E00-\u9FA5、]+)[.]/g
         m = analysis.match(r)
         if (m && m.length > 2){
             const u4 = helper.getEditor(4)
             let knowledge = '<p>'
             let e = r.exec(analysis)
             while(e){
-                knowledge += e[1] + ','            
+                knowledge += e[2] + ','            
                 e = r.exec(analysis)
             }
             knowledge = knowledge.slice(0,-1)
@@ -3359,7 +3363,7 @@ function registerUI() {
 
 function initUE(){
     clearTimeout(stage.timer.initUETimer)
-
+    C.count('initUE')
     if (window.UE){
         U = window.UE
         extendUE()
@@ -3376,8 +3380,10 @@ function initVue(){
 
         V.$router.afterEach((to, from) => {
             if (O.debug){
+                C.group('$router.afterEach')
                 C.log('to', to)
                 C.log('from:', from)
+                C.groupEnd()
             }
             try{
                 if (to.name === 'QuestionInput') {
@@ -3402,9 +3408,14 @@ function initVue(){
             try{
                 if (from.name === 'QuestionInput') {
                     leaveQuestionInput(to, from)
-
                     if (to.name === 'Login'){ // 录题提交的时候,如果转到重新登录的话保存题目
                         helper.saveQuestion()
+                    }
+                }
+
+                if (to.name === 'QuestionInput'){
+                    if (!U){
+                        initUE()
                     }
                 }
             } catch(error){
@@ -3437,7 +3448,7 @@ function waitLogin(){
 
 function init(){
     initVue()
-    initUE()
+    //initUE()
     waitLogin()
 }
 init()
