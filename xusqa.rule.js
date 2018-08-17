@@ -493,33 +493,34 @@ const AFTRULE = [ // 清理空段
 /*<-<-<-<-<-<- 配置区结束 <-<-<-<-<-<*/
 
 $.oneKeyFormat = {
+    _subject, _uid,
     get subject(){
-        return this.subject
+        return this._subject
     },
-    set subject(s){
-        this.subject = s
+    set subject(subject){
+        this._subject = subject
     },
 
     get uid(){
-        return this.uid
+        return this._uid
     },
-    set uid(id){
-        this.uid = id
+    set uid(uid){
+        this._uid = uid
     },
 
     preFormat: function(html) {
-        html = execReplRules(html, PRERULE, this.subject, this.uid)
+        html = execReplRules(html, PRERULE, this._subject, this._uid)
         return html
     },
 
     format: function(str) {
-        str = execReplRules(str, USRRULE, this.subject, this.uid)
-        str = execReplRules(str, RULE, this.subject, this.uid)
+        str = execReplRules(str, USRRULE, this._subject, this._uid)
+        str = execReplRules(str, RULE, this._subject, this._uid)
         return str
     },
 
     afterFormat: function(html){
-        html = execReplRules(html, AFTRULE, subject, uid)
+        html = execReplRules(html, AFTRULE, this._subject, this._uid)
         return html
     }
 }
