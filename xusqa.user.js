@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.0.009
+// @version      1.0.010
 // @description  有道搜题，录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -318,7 +318,9 @@ const RULE = [
     [/【*解析:*】*/g, '', '英语', '2'], // 删除解析字样
 
     // 试用,看看效果
-    [/([^\.])\.\s*\.([^\.])/g, '$1...$2', '英语'],
+    [/([^\.])\.\s*\.\s*\.*([^\.])/g, '$1...$2', '英语'],
+    [/…+/g, '……', '英语','2'],
+    [/,$/,'.','英语','2'],
     [/([\u4E00-\u9FA5])[\s…]+([\u4E00-\u9FA5])/g, '$1……$2', '英语', '2'], // 英语解析
     [/([\u4E00-\u9FA5])\s+([\u4E00-\u9FA5])/g, '$1……$2', '语文', '^1'], // 语文排除答案
 ]
@@ -435,11 +437,21 @@ const PRERULE = [ // 处理的是html全文,主要处理需要上下文关系的
         }
 
         ra.splice(0,ra.length)
+        let is = false
         r = /([A-Za-z]+:\s)/g
         m = str.match(r)
-        if (m && m.length > 2){ // 判断是不是补全对话(考虑根据题目要求“根据对话内容,从方框内选出能填入空白处的最佳选项。其中有两项为多余选项。”判断是不是补全对话)
+        if (m && m.length > 2){// 判断是不是补全对话
+            is = true
+        } else {
+            r = /\s\d{1,2}\s\(/g
+            m = str.match(r)
+            if (m && m.length > 2){ //单词填空
+                is =true
+            }
+        }
+        if (is){ // (考虑根据题目要求“根据对话内容,从方框内选出能填入空白处的最佳选项。其中有两项为多余选项。”判断是不是补全对话)
             //r = /([A-Za-z]+:\s)(\d{1,2})\.*(\s)/g
-            r = /(\s)(\d{1,2})[,\.\s]/g
+            r = /(\s)(\d{1,2})[,?\.\s]/g
             let start = util.getStartFromMatch(str.match(r)), cur = -1
             let num = 1
             let e = r.exec(str)
@@ -2732,13 +2744,13 @@ function registerQuestionSave(){
         const u2 = helper.getEditor(2)
         let analysis = u2.getContent()
         let r, m
-        r = /(\d+\.)\s*([A-D])\s+/g
+        r = /(\d+\.)\s*([A-D]|[a-zA-Z\s]{2,})\s+/g
         m = analysis.match(r)
         if (m && m.length > 2){
             const u1 = helper.getEditor(1)
             let answer = '<p>'
-            for(let i in m){
-                answer += m[i] + '</p><hr/>'
+            for(let i of m){
+                answer += i + '</p><hr/>'
             }
             answer = answer.slice(0, -5) // 去掉末尾的<hr/>
             u1.setContent(answer, u1.getContent())
