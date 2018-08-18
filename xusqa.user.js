@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.0.004
+// @version      1.0.008
 // @description  有道搜题，录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -1705,7 +1705,6 @@ function todayTaskReport() {
     function createTable(result) {
         let nTotal = 0, nFinished = 0, nReturnTimes = 0, nInput = 0, nCheck = 0, nPass = 0
         let thtm = '<table style="margin: 10px 20px 10px 0px;font-size: 14px;border-collapse:collapse;;border: none;">'
-
         thtm += '<caption>今日战绩 查询时间: ' + new Date().format('hh:mm:ss') + '</caption>'
         thtm += '<tr style="border-bottom:2px solid #808080;">'
         thtm += '<th>&nbsp;</th><th>总量</th><th>完成量</th><th>已退回</th><th>录入量</th><th>已审核</th><th>通过</th><th>通过率</th>'
@@ -1746,7 +1745,6 @@ function todayTaskReport() {
             '<td style="text-align: right;">' + nPass + '</td>' +
             '<td style="text-align: right;">' + (passrate * 100).toFixed(1) + (passrate ? '%' : '') + '</td>' +
             '</tr>'
-
         thtm += '</table>'
 
         return thtm
@@ -3265,16 +3263,41 @@ function registerQjudgeHint(){
     let timer
     function tryRegisterQjudgeHint (){
         clearTimeout(timer)
+        
         if ($(DOM.QJUDGE_BTN).length === 3){
             const $btnQJudge = $(DOM.QJUDGE_BTN).addClass('xusqa-btn')
             $btnQJudge.filter(':nth-child(1)').attr('title', STR.HINT.SEARCH_STANDARD)
             $btnQJudge.filter(':nth-child(2)').attr('title', STR.HINT.SEARCH_FAIL)
             $btnQJudge.filter(':nth-child(3)').attr('title', STR.HINT.SEARCH_LOSE)
+            setTimeout(LoadImg,3000)
+            //LoadImg()
         } else {
             timer = setTimeout(tryRegisterQjudgeHint, 500);
         }
     }
     tryRegisterQjudgeHint()
+}
+
+//临时，修复后删除
+function LoadImg(){
+    let timer
+    function tryLoadImg(){
+        clearTimeout(timer)
+        //try{
+            C.count()
+        const $d = $('#app > div > div.main-content > div > div')
+        const $img = $('#app > div > div.main-content > div > div > div.search-btns > div > div > div.fixed-box_container > img')
+        if ($d.length && $img.length && $d[0].__vue__){
+            let url = $d[0].__vue__.data.url
+            url = url.slice(0, url.indexOf('?'))
+            C.count()
+            $img.attr('src',url)
+        //} catch (e) {
+        } else {
+            timer = setTimeout(tryLoadImg,0)
+        }
+    }
+    tryLoadImg()
 }
 
 function registerPreMonthReport(){
@@ -3509,7 +3532,7 @@ function execCommand(cmd){
                 }
             }
         }
-    }    
+    }
 }
 
 /**
