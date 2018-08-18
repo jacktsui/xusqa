@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.0.008
+// @version      1.0.009
 // @description  有道搜题，录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -3288,10 +3288,35 @@ function LoadImg(){
         const $d = $('#app > div > div.main-content > div > div')
         const $img = $('#app > div > div.main-content > div > div > div.search-btns > div > div > div.fixed-box_container > img')
         if ($d.length && $img.length && $d[0].__vue__){
-            let url = $d[0].__vue__.data.url
-            url = url.slice(0, url.indexOf('?'))
+            let s = $d[0].__vue__.data.url
+            let url = s.slice(0, s.indexOf('?'))
             C.count()
             $img.attr('src',url)
+            const $btn = $('#app > div > div.main-content > div > div > div.quesion-answer-con > a')
+            $btn.click(function(){
+                let timer
+                function tryf(){
+                    clearTimeout(timer)
+                    const $i = $('#app > div > div.main-content > div > div > div.search-btns > div > div > div.fixed-box_container > img')
+                    const scale = $i[0].width / $i[0].naturalWidth
+                    if (scale === 1 || scale === 0){
+                        timer = setTimeout(tryf,0)
+                        return
+                    }
+                    //C.log(scale,$i[0].width,$i[0].naturalWidth,$img[0].naturalWidth)
+                    //http://nos.netease.com/yd-searchq/968c7132-c967-41a4-9803-d59e98713649.jpg?imageView&crop=41_978_1594_217
+                    const m = s.match(/crop=(\d+)_(\d+)_(\d+)_(\d+)/)
+                    const x = Math.round(parseInt(m[1]) * scale)
+                    const y = Math.round(parseInt(m[2]) * scale)
+                    const width = Math.round(parseInt(m[3]) * scale)
+                    const height = Math.round(parseInt(m[4]) * scale)
+                    const a = '<a style="width: 100px;height: 100px;display: inline-block;top: 0px;left: 0px;position: absolute;border: 2px solid #67c23a;"></a>'
+                    const $a = $(a).insertBefore($i)
+                    $a.css({'height':height+'px','width':width+'px','left':x+'px','top':y+'px'})
+                    $a.attr({'width':width,'height':height})
+                }
+                tryf() 
+            })
         //} catch (e) {
         } else {
             timer = setTimeout(tryLoadImg,0)
