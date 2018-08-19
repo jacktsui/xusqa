@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.0.012
+// @version      1.0.013
 // @description  有道搜题，录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -919,7 +919,7 @@ const O = {/* jshint +W003 */
     },
 
     get autoSliceAnalysis(){
-        return this.opts.autoSliceAnalysis
+        return this.opts.autoSliceAnalysis ? this.opts.autoSliceAnalysis : true
     },
     set autoSliceAnalysis(autoSlice){
         if (typeof(autoSlice) === 'boolean'){
@@ -955,7 +955,6 @@ const stage = {
     profile: {
         qqnumber: undefined,
         permission: null,
-        //inWhiteList: false,
         isValidSN: false,
     },
     timer:{}, // 用来统一存放计时器,用于清理计时器,目前没有做特别处理
@@ -1361,7 +1360,6 @@ const helper = {/* jshint +W003 */
                 stage.profile.permission = a
                 stage.profile.isValidSN = util.de(O.sn) === data.data.qqnumber
                 stage.profile.qqnumber = data.data.qqnumber
-                //stage.profile.inWhiteList = $.xu(parseInt(stage.profile.qqnumber))
             }
         })
     },
@@ -3333,8 +3331,7 @@ function registerQjudgeHint(){
             $btnQJudge.filter(':nth-child(1)').attr('title', STR.HINT.SEARCH_STANDARD)
             $btnQJudge.filter(':nth-child(2)').attr('title', STR.HINT.SEARCH_FAIL)
             $btnQJudge.filter(':nth-child(3)').attr('title', STR.HINT.SEARCH_LOSE)
-            setTimeout(LoadImg,3000)
-            //LoadImg()
+            setTimeout(loadImg,3000)
         } else {
             timer = setTimeout(tryRegisterQjudgeHint, 500);
         }
@@ -3342,51 +3339,44 @@ function registerQjudgeHint(){
     tryRegisterQjudgeHint()
 }
 
-//临时，修复后删除
-function LoadImg(){
-    let timer
-    function tryLoadImg(){
-        clearTimeout(timer)
-        //try{
-            C.count()
-        const $d = $('#app > div > div.main-content > div > div')
+//临时，待系统修复后删除
+function loadImg(){
+    clearTimeout(stage.timer.loadImg)
+    C.count()
+    const $d = $('#app > div > div.main-content > div > div')
+    if ($d.length && $d[0].__vue__ && $d[0].__vue__.data && $d[0].__vue__.data.url){
+        let s = $d[0].__vue__.data.url
+        let url = s.slice(0, s.indexOf('?'))
+        C.count()
         const $img = $('#app > div > div.main-content > div > div > div.search-btns > div > div > div.fixed-box_container > img')
-        if ($d.length && $img.length && $d[0].__vue__){
-            let s = $d[0].__vue__.data.url
-            let url = s.slice(0, s.indexOf('?'))
-            C.count()
-            $img.attr('src',url)
-            const $btn = $('#app > div > div.main-content > div > div > div.quesion-answer-con > a')
-            $btn.click(function(){
-                let timer
-                function tryf(){
-                    clearTimeout(timer)
-                    const $i = $('#app > div > div.main-content > div > div > div.search-btns > div > div > div.fixed-box_container > img')
-                    const scale = $i[0].width / $i[0].naturalWidth
-                    if (scale === 1 || scale === 0){
-                        timer = setTimeout(tryf,0)
-                        return
-                    }
-                    //C.log(scale,$i[0].width,$i[0].naturalWidth,$img[0].naturalWidth)
-                    //http://nos.netease.com/yd-searchq/968c7132-c967-41a4-9803-d59e98713649.jpg?imageView&crop=41_978_1594_217
-                    const m = s.match(/crop=(\d+)_(\d+)_(\d+)_(\d+)/)
-                    const x = Math.round(parseInt(m[1]) * scale)
-                    const y = Math.round(parseInt(m[2]) * scale)
-                    const width = Math.round(parseInt(m[3]) * scale)
-                    const height = Math.round(parseInt(m[4]) * scale)
-                    const a = '<a style="width: 100px;height: 100px;display: inline-block;top: 0px;left: 0px;position: absolute;border: 2px solid #67c23a;"></a>'
-                    const $a = $(a).insertBefore($i)
-                    $a.css({'height':height+'px','width':width+'px','left':x+'px','top':y+'px'})
-                    $a.attr({'width':width,'height':height})
+        $img.attr('src',url)
+        const $btn = $('#app > div > div.main-content > div > div > div.quesion-answer-con > a')
+        $btn.click(function(){
+            let timer
+            function tryf(){
+                clearTimeout(timer)
+                const $i = $('#app > div > div.main-content > div > div > div.search-btns > div > div > div.fixed-box_container > img')
+                const scale = $i[0].width / $i[0].naturalWidth
+                if (scale === 1 || scale === 0){
+                    timer = setTimeout(tryf,0)
+                    return
                 }
-                tryf() 
-            })
-        //} catch (e) {
-        } else {
-            timer = setTimeout(tryLoadImg,0)
-        }
+                //http://nos.netease.com/yd-searchq/968c7132-c967-41a4-9803-d59e98713649.jpg?imageView&crop=41_978_1594_217
+                const m = s.match(/crop=(\d+)_(\d+)_(\d+)_(\d+)/)
+                const x = Math.round(parseInt(m[1]) * scale)
+                const y = Math.round(parseInt(m[2]) * scale)
+                const width = Math.round(parseInt(m[3]) * scale)
+                const height = Math.round(parseInt(m[4]) * scale)
+                const a = '<a style="width: 100px;height: 100px;display: inline-block;top: 0px;left: 0px;position: absolute;border: 2px solid #f56c6c;"></a>'
+                const $a = $(a).insertBefore($i)
+                $a.css({'height':height+'px','width':width+'px','left':x+'px','top':y+'px'})
+                $a.attr({'width':width,'height':height})
+            }
+            tryf() 
+        })
+    } else {
+        stage.timer.loadImg = setTimeout(loadImg,0)
     }
-    tryLoadImg()
 }
 
 function registerPreMonthReport(){
@@ -3746,17 +3736,6 @@ const xusqapi = {
     },
     set crazyMode(bCrazyMode){
         O.crazyMode = bCrazyMode
-    },
-
-    get stage(){
-        return stage
-    },
-
-    get sn(){
-        return O.sn
-    },
-    set sn(sn){
-        O.sn = sn
     },
     /*\
      * method:
