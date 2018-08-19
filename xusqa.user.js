@@ -12,7 +12,6 @@
 // @match        http://searchq-editsys.youdao.com/
 // @require      https://cdn.bootcss.com/jquery/3.3.1/jquery.js
 // @require      https://cdn.bootcss.com/imgareaselect/0.9.10/js/jquery.imgareaselect.min.js
-// @require      https://github.com/jacktsui/jscore/raw/master/jquery.xu.js
 // @grant        none
 // @run-at       document-start
 // @note         一键整理为实验性功能
@@ -514,7 +513,7 @@ const PRERULE = [ // 处理的是html全文,主要处理需要上下文关系的
             while(e){
                 cur = parseInt(e[3])
                 if (cur - start === num - 1){ // 严格模式
-                    ra.push([e[0], e.index, e[1] + DIC.HR + (e[2].length === 1 ? '()' : e[2]) + (b ? num : cur) + '.' + e[5]])
+                    ra.push([e[0], e.index, e[1] + DIC.HR + (e[2].length === 1 ? '()' : e[2]) + (b ? num : cur) + '.' + (~[',','.'].indexOf(e[5]) ? '' : e[5])])
                     num++
                 }
                 e = r.exec(str)
@@ -679,7 +678,7 @@ const STR = {
     },
     ERROR: {
         STOP: '异常，需要手动刷新',
-        TOOFREQUENTLY: '你操作太频繁了',
+        POLICYDENY: '策略已阻止此操作',
     },
     SHAREQQ: {
         QTIME: '查询时间: {qtime}',
@@ -697,6 +696,7 @@ const DOM = {
     TASK_SQUARE_LI: '#app div.main-content ul.task-list li',
     MYTASK_ADDTIME: '#app > div > div.main-content > div > div > div.process-task-con > div:nth-child(2) > a.add-time',
     QJUDGE_BTN: '#app > div > div.main-content > div > div > div.search-btns >a',
+    DBSN: '#app > div > div.main-content > div > div > div:nth-child(4) > div:nth-child(8) > div > div.item-cell-value',
 
     EDIT_PAGE: '#app div.main-content div.main-wrap div.edit-page',
     EDIT_PAGE_QUESTION_CON: '#app > div > div.main-content > div > div > div.update-con',
@@ -852,6 +852,13 @@ const O = {/* jshint +W003 */
         }
     },
 
+    get sn(){
+        return this.opts.sn || ''
+    },
+    set sn(sn){
+        this.setOptions('sn', sn)
+    },
+
     get onekeyGetTaskSEs(){
         return this.opts.onekeyGetTaskSEs ? this.opts.onekeyGetTaskSEs : helper.getDefaultSEs()
     },
@@ -947,7 +954,8 @@ const stage = {
     profile: {
         qqnumber: undefined,
         permission: null,
-        inWhiteList: false,
+        //inWhiteList: false,
+        isValidSN: false,
     },
     timer:{}, // 用来统一存放计时器,用于清理计时器,目前没有做特别处理
     squareUpdateTime: new Date(), // 任务广场最后更新时间
@@ -1042,8 +1050,50 @@ const util = {/* jshint +W003 */
     },
 
     noop: function(){},
+
+    de: function(str) {
+        const decs = Array(-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 62, -1, -1, -1, 63, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, -1, -1, -1, -1, -1, -1, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, -1, -1, -1, -1, -1, -1, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, -1, -1, -1, -1, -1)
+        const len = str.length
+        let c1, c2, c3, c4
+        let i = 0, out = ''
+        while (i < len) {
+            do {
+                c1 = decs[str.charCodeAt(i++) & 0xff]
+            } while (i < len && c1 == -1)if (c1 == -1) {
+                break
+            }
+            do {
+                c2 = decs[str.charCodeAt(i++) & 0xff]
+            } while (i < len && c2 == -1)if (c2 == -1) {
+                break
+            }
+            out += String.fromCharCode((c1 << 2) | ((c2 & 0x30) >> 4))
+            do {
+                c3 = str.charCodeAt(i++) & 0xff
+                if (c3 == 61) {
+                    return out
+                }
+                c3 = decs[c3]
+            } while (i < len && c3 == -1)if (c3 == -1) {
+                break
+            }
+            out += String.fromCharCode(((c2 & 0XF) << 4) | ((c3 & 0x3C) >> 2))
+            do {
+                c4 = str.charCodeAt(i++) & 0xff
+                if (c4 == 61) {
+                    return out
+                }
+                c4 = decs[c4]
+            } while (i < len && c4 == -1)if (c4 == -1) {
+                break
+            }
+            out += String.fromCharCode(((c3 & 0x03) << 6) | c4)
+        }
+        return out
+    },
 }
 // util end------>
+
 /**
  * helper: 与项目相关的公共函数
  */
@@ -1308,8 +1358,9 @@ const helper = {/* jshint +W003 */
                     }
                 }
                 stage.profile.permission = a
-                stage.profile.qqnumber = parseInt(data.data.qqnumber)
-                stage.profile.inWhiteList = $.xu(stage.profile.qqnumber)
+                stage.profile.isValidSN = util.de(O.sn) === data.data.qqnumber
+                stage.profile.qqnumber = data.data.qqnumber
+                //stage.profile.inWhiteList = $.xu(parseInt(stage.profile.qqnumber))
             }
         })
     },
@@ -2510,7 +2561,7 @@ function execReplRules(str, rules, subject, uid){
     return str
 }
 
-function extendUE(){
+function doExtendUE(){
     // 工具栏分隔符
     U.registerUI('|', function() {
         return new U.ui.Separator()
@@ -3150,7 +3201,7 @@ function imgBlobUpload(uid, callback){
 /**
  * 为录题界面添加功能
  */
-function extendEditPage(){
+function doExtendEditPage(){
     let timer
     function doRegister(){
         clearTimeout(timer)
@@ -3352,6 +3403,29 @@ function registerPreMonthReport(){
     }
 }
 
+function registerDbsn(){
+    clearTimeout(stage.timer.registerDbsn)
+    const $sn = $(DOM.DBSN)
+    if ($sn.length){
+        $sn.dblclick(function(){
+            V.$prompt('序列号','请输入序列号').then(function(result){
+                    const sn = result.value
+                    if (sn){
+                        O.sn = sn
+                        stage.profile.isValidSN = util.de(sn) === stage.profile.qqnumber
+                    }
+                })
+        })
+
+        if (window.xusqadmin){
+            const admin = window.xusqadmin
+            admin.sng(V)
+        }
+    } else {
+        stage.timer.registerDbsn = setTimeout(registerDbsn, 0)
+    }
+}
+
 /**
  * 添加功能按钮
  * 一键领取,任务广场,任务报告，设置界面
@@ -3429,7 +3503,7 @@ function initUE(){
     clearTimeout(stage.timer.initUETimer)
     if (window.UE){
         U = window.UE
-        extendUE()
+        execCommand('doExtendUE')
     } else{
         stage.timer.initUETimer = setTimeout(initUE, 0)
     }
@@ -3453,13 +3527,15 @@ function initVue(){
                     if (!U){
                         initUE()
                     }
-                    extendEditPage()
+                    execCommand('doExtendEditPage')
                 } else if (to.name === 'QuestionJudge') {
                     registerQjudgeHint()
                 } else if (to.name === 'TaskChoose'){
                     extraTaskList()
                 } else if (to.name === 'Mytasks'){
                     registerPreMonthReport()
+                } else if (to.name === 'UserCenter'){
+                    registerDbsn()
                 }
 
                 if (from.name === 'Login'){
@@ -3532,16 +3608,19 @@ const policy = {
         }
         return true
     },
+    passport: function(){
+        return stage.profile.isValidSN // || stage.profile.inWhiteList
+    },
     doOneKeyGetTask: {
         timeList: [],
         check: function(){
-            return stage.profile.inWhiteList || policy.frequencyCheck(this.timeList, [[2,1000*10], [4,1000*60]])
+            return policy.passport() || policy.frequencyCheck(this.timeList, [[2,1000*10], [4,1000*60]])
         }
     },
     doExtraTaskList: {
         timeList: [],
         check: function(){
-            return stage.profile.inWhiteList || policy.frequencyCheck(this.timeList, [[2, 1000*20], [4,1000*60], [6, 1000*60*2]])
+            return policy.passport() || policy.frequencyCheck(this.timeList, [[2, 1000*20], [4,1000*60], [6, 1000*60*2]])
         }
     },
     doClear: {
@@ -3555,6 +3634,8 @@ const exportFun = {
     'doClear': doClear,
     'doExtraTaskList': doExtraTaskList,
     'doOneKeyGetTask': doOneKeyGetTask,
+    'doExtendEditPage': doExtendEditPage,
+    'doExtendUE': doExtendUE,
 }
 
 function execCommand(cmd){
@@ -3565,7 +3646,11 @@ function execCommand(cmd){
                 if (policy[cmd].check()){
                     f()
                 } else {
-                    helper.msg.error(STR.ERROR.TOOFREQUENTLY)
+                    C.error(STR.ERROR.POLICYDENY)
+                }
+            } else {
+                if (policy.passport()){
+                    f()
                 }
             }
         }
@@ -3660,6 +3745,10 @@ const xusqapi = {
     },
     set crazyMode(bCrazyMode){
         O.crazyMode = bCrazyMode
+    },
+
+    get stage(){
+        return stage
     },
     /*\
      * method:
