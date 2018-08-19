@@ -32,6 +32,7 @@
 
 /**
  * 放前面方便统一更换,8月1号staticfile出过问题,部分地区不能访问
+ * 8月19号bootcss广州部分地区不能访问
  * 备用cdn服务器
  * https://cdn.bootcss.com/
  * https://cdn.staticfile.org/
