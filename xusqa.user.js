@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.0.013
+// @version      1.0.015
 // @description  有道搜题，录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -9,9 +9,9 @@
 // @homepageURL  https://github.com/jacktsui/xusqa
 // @supportURL   https://github.com/jacktsui/xusqa/issues
 // @UpdateURL    https://github.com/jacktsui/xusqa/raw/master/xusqa.user.js
-// @match        http://searchq-editsys.youdao.com/
 // @require      https://cdn.bootcss.com/jquery/3.3.1/jquery.js
 // @require      https://cdn.bootcss.com/imgareaselect/0.9.10/js/jquery.imgareaselect.min.js
+// @match        http://searchq-editsys.youdao.com/
 // @grant        none
 // @run-at       document-start
 // @note         一键整理为实验性功能
@@ -31,8 +31,9 @@
     'use strict';
 
 /**
- * 放前面方便统一更换,8月1号staticfile出过问题,部分地区不能访问
+ * 放前面方便统一更换
  * 8月19号bootcss广州部分地区不能访问
+ * 8月1号staticfile出过问题,部分地区不能访问
  * 备用cdn服务器
  * https://cdn.bootcss.com/
  * https://cdn.staticfile.org/
@@ -535,6 +536,7 @@ const PRERULE = [ // 处理的是html全文,主要处理需要上下文关系的
             str = str.replace(/([A-G]\.)/g, DIC.P + '$1')
         }
 
+        str = str.replace(/(\s[b-z])\s(___)/g, '$1$2')
         r = /(\s)([b-z])(\s)/g
         m = str.match(r)
         if (m && m.length > 2){ // 单词首字母补全
