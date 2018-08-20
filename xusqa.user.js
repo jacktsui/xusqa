@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.0.015
+// @version      1.0.016
 // @description  有道搜题，录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -2722,7 +2722,6 @@ function registerQuestionSnap(){
         const img = new window.Image()
         img.setAttribute('crossOrigin', 'anonymous')
         img.src = $imgQ[0].src
-
         img.onload = function() {
             const canvas = document.createElement('canvas')
             canvas.width = selection.width
@@ -2741,7 +2740,6 @@ function registerQuestionSnap(){
                     loader.removeAttribute('id')
                     loader.removeAttribute('class')
                 }
-
                 helper.msg.success(STR.SNAP.SUCCESS)
             }))
         }
@@ -2755,8 +2753,6 @@ function registerQuestionSnap(){
     function registerHint(){
         $(DOM.QUESTION_CON).append(TPL.SNAP_QUESTION_HINT)
     }
-
-    // show hint
     if (O.showHint){
         registerHint()
     }
@@ -2884,7 +2880,6 @@ function registerSnap(pot){
             const canvas = document.createElement('canvas')
             canvas.width = width * zoom
             canvas.height = height * zoom
-
             const ctx = canvas.getContext('2d')
             ctx.scale(zoom / scale, zoom / scale)
             ctx.drawImage(img, 0, 0)
@@ -3020,17 +3015,14 @@ function registerGlass(pot){
         const ctn = d.parentNode.parentNode
         const m = d.attributes.style.value.match(/\d+/g)
         const y1 = parseInt(m[0]), x1 = parseInt(m[1]), width = parseInt(m[2]), height = parseInt(m[3])
-
         const $img = pot.img[0] === '#' ? $(pot.img) : pot.$box.find(pot.img)
         const scale = $img[0].naturalWidth / $img[0].width
         let zoom = $sel[0].parentNode.clientWidth / width
         zoom = zoom > O.glassMinzoom ? zoom : O.glassMinzoom
-
         const canvas = $(TPL.GLASS).insertBefore($img)[0]
         canvas.width = width * scale
         canvas.height = height * scale
         canvas.getContext('2d').drawImage($img[0], -x1*scale, -y1*scale)
- 
         canvas.onclick = function (){
             if (canvas){
                 canvas.remove()
@@ -3344,12 +3336,14 @@ function registerQjudgeHint(){
 //临时，待系统修复后删除
 function loadImg(){
     clearTimeout(stage.timer.loadImg)
-    C.count()
+    if (location.hash.indexOf('#/mytasks/qjudge') === -1){
+        return
+    }
+    C.count('loadImg()')
     const $d = $('#app > div > div.main-content > div > div')
     if ($d.length && $d[0].__vue__ && $d[0].__vue__.data && $d[0].__vue__.data.url){
         let s = $d[0].__vue__.data.url
         let url = s.slice(0, s.indexOf('?'))
-        C.count()
         const $img = $('#app > div > div.main-content > div > div > div.search-btns > div > div > div.fixed-box_container > img')
         $img.attr('src',url)
         const $btn = $('#app > div > div.main-content > div > div > div.quesion-answer-con > a')
