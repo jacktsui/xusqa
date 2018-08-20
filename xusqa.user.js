@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.0.016
+// @version      1.0.017
 // @description  有道搜题，录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -40,6 +40,7 @@
  *
  */
 const CDN = 'https://cdn.bootcss.com/'
+const ver = 'Ver 1.0.017'
 
 /*->->->->->-> 配置区 ->->->->->->*/
 const SE = {
@@ -779,6 +780,9 @@ const TPL = {
     EDIT_PAGE_CLEAR_KNOWLEDGE: '<a href="javascript:;" style="color: #337ab7;font-size: 16px;margin-left: 16px;float: right;" title="助手提示：清除无关知识点,下次同一任务的将会自动清除">清除</a>',
     EDIT_PAGE_MOVETO_ANALYSIS: '<a href="javascript:;" style="color: #337ab7;font-size: 16px;margin-left: 16px;float: right;" title="助手提示：将答案内容快速移动到解析">⇩</a>',
     EDIT_PAGE_PICKUP: '<a href="javascript:;" style="color: #337ab7;font-size: 16px;margin-left: 16px;" title="助手提示：从解析中快速提取答案和知识点">⇵</a>',
+    OPTIONS:'<div data-v-322b822a class="list-item"><div data-v-322b822a class="item-title">助手配置'+ver+'</div></div>',
+    OPTIONS_SWITCH: '<div data-v-322b822a class="item-cell-con"><div data-v-322b822a class="item-cell"><div data-v-322b822a class="item-cell-title">{title}</div><div data-v-322b822a class="item-cell-value"><input class="switch switch-anim" type="checkbox" checked /></div></div></div>',
+    OPTIONS_NUMBER: '<div data-v-322b822a class="item-cell-con"><div data-v-322b822a class="item-cell"><div data-v-322b822a class="item-cell-title">{title}</div><div data-v-322b822a class="item-cell-value"><input type="number" min="{min}" max="{max}" step="{step}" title="{hint}" /></div></div></div>',
 }
 
 const $ = window.$
@@ -1580,6 +1584,54 @@ util.addStyle(util.cmt(function(){/*!CSS
 
 .xusqa-c-message--tip td {
     padding: 4px 10px 4px 10px
+}
+
+.switch {
+    width: 57px;
+    height: 28px;
+    position: relative;
+    border: 1px solid #dfdfdf;
+    background-color: #fdfdfd;
+    box-shadow: #dfdfdf 0 0 0 0 inset;
+    border-radius: 20px;
+    background-clip: content-box;
+    display: inline-block;
+    -webkit-appearance: none;
+    user-select: none;
+    outline: none;
+}
+.switch:before {
+    content: '';
+    width: 26px;
+    height: 26px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    border-radius: 20px;
+    background-color: #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+.switch:checked {
+    border-color: #a6a9ad;
+    box-shadow: #a6a9ad 0 0 0 16px inset;
+    background-color: #a6a9ad;
+}
+.switch:checked:before {
+    left: 30px;
+}
+.switch.switch-anim {
+    transition: border cubic-bezier(0, 0, 0, 1) 0.4s, box-shadow cubic-bezier(0, 0, 0, 1) 0.4s;
+}
+.switch.switch-anim:before {
+    transition: left 0.3s;
+}
+.switch.switch-anim:checked {
+    box-shadow: #a6a9ad 0 0 0 16px inset;
+    background-color: #a6a9ad;
+    transition: border ease 0.4s, box-shadow ease 0.4s, background-color ease 1.2s;
+}
+.switch.switch-anim:checked:before {
+    transition: left 0.3s;
 }
 
 .xusqa-hide{
@@ -3390,6 +3442,22 @@ function registerPreMonthReport(){
     }
 }
 
+function registerOption(){
+    const $option = $(TPL.OPTIONS).insertAfter($(DOM.POSITION))
+    const $number_glassMinZoom = $(TPL.OPTIONS_NUMBER.format({title: '放大镜最小放大倍数[1.0,5.0]',hint: '助手提示: 建议设为 1.5-3 倍', min:1, max:5, step:0.1})).appendTo($option).find('input')
+    $number_glassMinZoom.val(O.glassMinzoom).on('change', function(){
+        O.glassMinzoom = $number_glassMinZoom.val()
+    })
+    const $switch_newNum = $(TPL.OPTIONS_SWITCH.format({title: '小题序号是否从 1 开始重新排'})).appendTo($option).find('input')
+    $switch_newNum.prop('checked', O.newNum).on('change', function(){
+        O.newNum = $switch_newNum.prop('checked')
+    })
+    const $switch_autoSliceAnalysis = $(TPL.OPTIONS_SWITCH.format({title: '框的准自动分割答案和解析'})).appendTo($option).find('input')
+    $switch_autoSliceAnalysis.prop('checked', O.autoSliceAnalysis).on('change', function(){
+        O.autoSliceAnalysis = $switch_autoSliceAnalysis.prop('checked')
+    })
+}
+
 function registerDbsn(){
     clearTimeout(stage.timer.registerDbsn)
     const $sn = $(DOM.DBSN)
@@ -3403,6 +3471,8 @@ function registerDbsn(){
                     }
                 })
         })
+
+        registerOption()
 
         if (window.xusqadmin){
             const admin = window.xusqadmin
