@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.0.020
+// @version      1.0.021
 // @description  有道搜题，录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -30,7 +30,7 @@
 (function() {
     'use strict';
 
-    const ver = 'Ver 1.0.020'
+    const ver = 'Ver 1.0.021'
 
 /**
  * 放前面方便统一更换
@@ -826,7 +826,7 @@ const O = {/* jshint +W003 */
     },
 
     get newNum(){
-        return this.opts.newNum ? this.opts.newNum : true
+        return this.opts.hasOwnProperty('newNum') ? this.opts.newNum : true
     },
     set newNum(bNew){
         if (typeof(bNew) === 'boolean'){
@@ -837,11 +837,11 @@ const O = {/* jshint +W003 */
     },
 
     get showHint(){
-        return this.opts.show_hint ? this.opts.show_hint : true
+        return this.opts.hasOwnProperty('showHint') ? this.opts.showHint : true
     },
     set showHint(b){
         if (typeof(b) === 'boolean'){
-            this.setOptions('show_hint', b)
+            this.setOptions('showHint', b)
         } else {
             C.error('设置是否显示助手提示, true 或者 false')
         }
@@ -868,7 +868,7 @@ const O = {/* jshint +W003 */
     },
 
     get onekeyGetTaskSEs(){
-        return this.opts.onekeyGetTaskSEs ? this.opts.onekeyGetTaskSEs : helper.getDefaultSEs()
+        return this.opts.hasOwnProperty('onekeyGetTaskSEs') ? this.opts.onekeyGetTaskSEs : helper.getDefaultSEs()
     },
     set onekeyGetTaskSEs(ses){
         this.setOptions('onekeyGetTaskSEs', ses)
@@ -926,7 +926,7 @@ const O = {/* jshint +W003 */
     },
 
     get autoSliceAnalysis(){
-        return this.opts.autoSliceAnalysis ? this.opts.autoSliceAnalysis : true
+        return this.opts.hasOwnProperty('autoSliceAnalysis') ? this.opts.autoSliceAnalysis : true
     },
     set autoSliceAnalysis(autoSlice){
         if (typeof(autoSlice) === 'boolean'){
@@ -944,6 +944,17 @@ const O = {/* jshint +W003 */
             this.setOptions('crazyMode', bCrazyMode)
         } else{
             C.error('设置是否开启疯狂模式, true 或者 false')
+        }
+    },
+
+    get fixSysBug(){
+        return this.opts.hasOwnProperty('fixSysBug') ? this.opts.fixSysBug : true
+    },
+    set fixSysBug(bFixSysBug){
+        if (typeof(bFixSysBug) === 'boolean'){
+            this.setOptions('fixSysBug', bFixSysBug)
+        } else{
+            C.error('设置是否修复系统bug, true 或者 false')
         }
     },
 }
@@ -3378,7 +3389,9 @@ function registerQjudgeHint(){
             $btnQJudge.filter(':nth-child(1)').attr('title', STR.HINT.SEARCH_STANDARD)
             $btnQJudge.filter(':nth-child(2)').attr('title', STR.HINT.SEARCH_FAIL)
             $btnQJudge.filter(':nth-child(3)').attr('title', STR.HINT.SEARCH_LOSE)
-            setTimeout(loadImg,3000)
+            if (O.fixSysBug){
+                setTimeout(loadImg,3000)
+            }
         } else {
             timer = setTimeout(tryRegisterQjudgeHint, 500);
         }
@@ -3493,6 +3506,10 @@ function registerOption(){
     const $switch_autoSliceAnalysis = $(TPL.OPTIONS_SWITCH.format({title: '框的准自动分割答案和解析'})).appendTo($option).find('input')
     $switch_autoSliceAnalysis.prop('checked', O.autoSliceAnalysis).on('change', function(){
         O.autoSliceAnalysis = $switch_autoSliceAnalysis.prop('checked')
+    })
+    const $switch_fixSysBug = $(TPL.OPTIONS_SWITCH.format({title: '修复判题查看题目所在页空白'})).appendTo($option).find('input')
+    $switch_fixSysBug.prop('checked', O.fixSysBug).on('change', function(){
+        O.fixSysBug = $switch_fixSysBug.prop('checked')
     })
 }
 
