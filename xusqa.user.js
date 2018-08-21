@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.0.018
+// @version      1.0.019
 // @description  有道搜题，录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -3458,7 +3458,7 @@ function loadImg(){
                     $a.hide()
                 }
             })
-            $('<span style="float: left;">本页功能为紧急修复系统bug，系统更新后，请及时更新脚本，防止冲突</span>').prependTo($page)
+            $('<span style="float: right;">本页功能为紧急修复系统bug，系统更新后，请及时更新脚本，防止冲突</span>').appendTo($page)
         })
     } else {
         stage.timer.loadImg = setTimeout(loadImg,0)
