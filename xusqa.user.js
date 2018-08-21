@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.0.017
+// @version      1.0.018
 // @description  有道搜题，录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -30,6 +30,8 @@
 (function() {
     'use strict';
 
+    const ver = 'Ver 1.0.018'
+
 /**
  * 放前面方便统一更换
  * 8月19号bootcss广州部分地区不能访问
@@ -40,7 +42,6 @@
  *
  */
 const CDN = 'https://cdn.bootcss.com/'
-const ver = 'Ver 1.0.017'
 
 /*->->->->->-> 配置区 ->->->->->->*/
 const SE = {
@@ -232,7 +233,7 @@ const RULE = [
         }
     }, '数学'],
     [/线\s*1/g, '线 l', '数学'], // 线1->线l
-    [/00\s*([上中与于的])/g, '⊙O $1', '数学'],
+    [/00\s*([内上中与于的])/g, '⊙O $1', '数学'],
     [/([在与于是])\s*00/g, '$1 ⊙O', '数学'],
     [/([圆点心过])\s*0/g, '$1 O', '数学'], // 点 0->点 O
     [/[0。]\s*([做是为点])/g, 'O $1', '数学'],
@@ -3399,6 +3400,7 @@ function loadImg(){
         const $img = $('#app > div > div.main-content > div > div > div.search-btns > div > div > div.fixed-box_container > img')
         $img.attr('src',url)
         const $btn = $('#app > div > div.main-content > div > div > div.quesion-answer-con > a')
+        let $a
         $btn.click(function(){
             let timer
             function tryf(){
@@ -3416,11 +3418,47 @@ function loadImg(){
                 const width = Math.round(parseInt(m[3]) * scale)
                 const height = Math.round(parseInt(m[4]) * scale)
                 const a = '<a style="width: 100px;height: 100px;display: inline-block;top: 0px;left: 0px;position: absolute;border: 2px solid #f56c6c;"></a>'
-                const $a = $(a).insertBefore($i)
+                $a = $(a).insertBefore($i)
                 $a.css({'height':height+'px','width':width+'px','left':x+'px','top':y+'px'})
                 $a.attr({'width':width,'height':height})
             }
             tryf() 
+        })
+
+        const id = $d[0].__vue__.data.id
+        $.get('http://searchq-editsys.youdao.com/editsys/questionpage?id='+id, function(data){
+            const d=data.data
+            const textbookid = d.textbookid
+            const pageno = d.pageno
+            let cur = pageno
+            const $page=$('#app > div > div.main-content > div > div > div.search-btns > div > div > div.fixed-box_pages > div')
+            const $nextPage = $('<a href="javascript:;">下一页</a>').appendTo($page)
+            $nextPage.click(function(){
+                cur++
+                $.get('http://searchq-editsys.youdao.com/editsys/questionpage?id='+id+'&textbookid='+textbookid+'&pageno='+cur,function(data){
+                    const url = data.data.url
+                    $img.attr('src',url)                    
+                })
+                if (cur === pageno){
+                    $a.show()
+                } else {
+                    $a.hide()
+                }
+            })
+            const $prePage = $('<a href="javascript:;">上一页</a>').prependTo($page)
+            $prePage.click(function(){
+                cur--
+                $.get('http://searchq-editsys.youdao.com/editsys/questionpage?id='+id+'&textbookid='+textbookid+'&pageno='+cur,function(data){
+                    const url = data.data.url
+                    $img.attr('src',url)                    
+                })
+                if (cur === pageno){
+                    $a.show()
+                } else {
+                    $a.hide()
+                }
+            })
+            $('<span style="float: left;">本页功能为紧急修复系统bug，系统更新后，请及时更新脚本，防止冲突</span>').prependTo($page)
         })
     } else {
         stage.timer.loadImg = setTimeout(loadImg,0)
