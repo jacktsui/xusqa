@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.0.024
+// @version      1.0.025
 // @description  有道搜题，录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -30,7 +30,7 @@
 (function() {
     'use strict';
 
-    const ver = 'Ver 1.0.024'
+    const ver = 'Ver 1.0.025'
 
 /**
  * 放前面方便统一更换
@@ -761,9 +761,9 @@ const URL = {
 
 const TPL = {
     CONFIG_MAIN: '<div id="xusqa_div_config" style="position: absolute;left: 604px;z-index: 9999;width: 352px;' +
-        'background-color: rgb(51, 122, 183);box-shadow: rgb(51, 122, 183) 3px 0px 15px;display: none;margin-top: 20px;">' +
+        'background-color: var(--navbgcolor);box-shadow: var(--navbgcolor) 3px 0px 15px;display: none;margin-top: 20px;">' +
         '<div style="width: 0px;top: -30px;z-index: 1000;left: 76px;position: absolute;height: 0px;border-width: 18px;' +
-        'border-style: solid;border-color: transparent transparent #337ab7 transparent;"></div>' +
+        'border-style: solid;border-color: transparent transparent var(--navbgcolor) transparent;"></div>' +
         '<span style="color: white;">调整一键领取任务顺序，用逗号分隔</span>' +
         '<textarea rows="5" cols="1000" style=" font-size: 16px; width: 92%; overflow:hidden; resize:none;"></textarea>' +
         '<div style="text-align: left;padding-left: 8px;font-size: 14px;"><input type="checkbox" id="xusqa_showHint" checked="checked"' +
@@ -790,7 +790,7 @@ const TPL = {
 }
 
 const EPCOLOR = [
-    ['银河白', '#FFFFFF'],
+    ['默认值', '#FFFFFF'],
     ['杏仁黄', '#FAF9DE'],
     ['秋叶褐', '#FFF2E2'],
     ['胭脂红', '#FDE6E0'],
@@ -1422,8 +1422,8 @@ util.addStyle(util.cmt(function(){/*!CSS
     --navbgcolor: #337ab7;
 }
 body { background-color: var(--bgcolor) !important; }
-table { background-color: var(--bgcolor) !important; }
-td { background-color: var(--bgcolor) !important; }
+table { background-color: var(--bgcolor)}
+td { background-color: var(--bgcolor)}
 .fixed-box_content[data-v-1e6a8d39] {
     background: var(--bgcolor);
 }
@@ -1547,7 +1547,7 @@ util.addStyle(util.cmt(function(){/*!CSS
     position: fixed;
     top: 30px;
     left: 50%;
-    background: #f0f9eb;
+    background: var(--bgcolor);
     min-width: 240px;
     color: #666;
     box-shadow: 0 2px 4px rgba(0, 0, 0, .12), 0 0 6px rgba(0, 0, 0, .04);
@@ -1935,12 +1935,6 @@ function todayTaskReport() {
             showClose: true,
             autoClose: false
         })
-
-        $('body div.xusqa-c-message table tr.xusqa-c-message--tr').hover(function() {
-            $(this).css('background', '#e1f3d8')
-        }, function() {
-            $(this).css('background', '#f0f9eb')
-        })
     }
 
     helper.msg.info(STR.TASK_REPORT.PROGRESS)
@@ -2115,12 +2109,6 @@ function preMonthReport() {
             message: createTable(arrtask) + TPL.ACC_INFO,
             showClose: true,
             autoClose: false
-        })
-
-        $('body div.xusqa-c-message table tr.xusqa-c-message--tr').hover(function() {
-            $(this).css('background', '#e1f3d8')
-        }, function() {
-            $(this).css('background', '#f0f9eb')
         })
     }
 
@@ -2306,12 +2294,6 @@ function myTaskReport() {
             message: createTable(arrtask) + TPL.THIS_ACC_INFO,
             showClose: true,
             autoClose: false
-        })
-
-        $('body div.xusqa-c-message table tr.xusqa-c-message--tr').hover(function() {
-            $(this).css('background', '#e1f3d8')
-        }, function() {
-            $(this).css('background', '#f0f9eb')
         })
 
         if (createAcc && tsc > 0){
