@@ -3570,8 +3570,12 @@ function registerDbsn(){
 
         if (window.xusqadmin){
             const admin = window.xusqadmin
-            admin.sng(V)
-            admin.protectPersonalInfo()
+            if (admin.hasOwnProperty('sng') && typeof(admin.sng) === 'function'){
+                admin.sng(V)
+            }
+            if (admin.hasOwnProperty('protectPersonalInfo') && typeof(admin.protectPersonalInfo) === 'function'){
+                admin.protectPersonalInfo()
+            }
         }
     } else {
         stage.timer.registerDbsn = setTimeout(registerDbsn, 0)
