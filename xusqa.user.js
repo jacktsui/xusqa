@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.0.026
+// @version      1.0.027
 // @description  有道搜题，录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -30,7 +30,7 @@
 (function() {
     'use strict';
 
-    const ver = 'Ver 1.0.026'
+    const ver = 'Ver 1.0.027'
 
 /**
  * 放前面方便统一更换
@@ -787,6 +787,7 @@ const TPL = {
     OPTIONS_SWITCH: '<div data-v-322b822a class="item-cell-con"><div data-v-322b822a class="item-cell"><div data-v-322b822a class="item-cell-title">{title}</div><div data-v-322b822a class="item-cell-value"><input class="switch switch-anim" type="checkbox" checked /></div></div></div>',
     OPTIONS_NUMBER: '<div data-v-322b822a class="item-cell-con"><div data-v-322b822a class="item-cell"><div data-v-322b822a class="item-cell-title">{title}</div><div data-v-322b822a class="item-cell-value"><input type="number" min="{min}" max="{max}" step="{step}" title="{hint}" /></div></div></div>',
     OPTIONS_BUTTON: '<div data-v-322b822a class="item-cell-con"><div data-v-322b822a class="item-cell"><div data-v-322b822a class="item-cell-title">{title}</div><div data-v-322b822a class="item-cell-value"><button data-v-322b822a="" type="button" class="el-button el-button--info el-button--small"><span>{text}</span></button></div></div></div>',
+    OPTIONS_SEPARATE: '<div data-v-322b822a="" class="item-cell-con"><div data-v-322b822a="" class="item-cell"><hr></div></div>',
 }
 
 const EPCOLOR = [
@@ -985,6 +986,13 @@ const O = {/* jshint +W003 */
             C.log('数值无效,设置护眼色,序号 0-'+(EPCOLOR.length-1))
         }
     },
+
+    get navImage(){
+        return this.opts.hasOwnProperty('navImage') ? this.opts.navImage : false
+    },
+    set navImage(navImage){
+        this.setOptions('navImage', navImage)
+    }
 }
 
 // 暂存器,数据只在脚本运行期间有效,不保存
@@ -1001,7 +1009,7 @@ const stage = {
     profile: {
         qqnumber: undefined,
         permission: null,
-        isValidSN: false,
+        isValidSN: O.crazyMode,
     },
     timer:{}, // 用来统一存放计时器,用于清理计时器,目前没有做特别处理
     squareUpdateTime: new Date(), // 任务广场最后更新时间
@@ -1018,9 +1026,12 @@ const util = {/* jshint +W003 */
         return f.toString().replace(/^[\s\S]*\/\*.*/, '').replace(/.*\*\/[\s\S]*$/, '').replace(/\r\n|\r|\n/g, '\n')
     },
 
-    addStyle: function(str){
+    addStyle: function(str, id){
         const style = document.createElement('style')
         style.textContent = str
+        if (id){
+            style.id = id
+        }
         document.head.appendChild(style)
         return style
     },
@@ -1398,6 +1409,14 @@ const helper = {/* jshint +W003 */
 util.importCssFile([
     CDN + 'imgareaselect/0.9.10/css/imgareaselect-animated.css',
 ])
+
+function refreshNavImage(){
+    if (O.navImage){
+        util.addStyle('.nav[data-v-3f6ca4fa] {background: url(https://bing.ioliu.cn/v1/rand?w=180&h=1280);}', 'xusqa-nav-img')
+    } else {
+        $('#xusqa-nav-img').remove()
+    }
+}
 
 // 护眼色
 util.addStyle(util.cmt(function(){/*!CSS
@@ -3573,6 +3592,13 @@ function registerOption(){
     $switch_fixSysBug.prop('checked', O.fixSysBug).on('change', function(){
         O.fixSysBug = $switch_fixSysBug.prop('checked')
     })
+
+    $(TPL.OPTIONS_SEPARATE).appendTo($option)
+    const $switch_navImage = $(TPL.OPTIONS_SWITCH.format({title: '导航栏显示随机图片'})).appendTo($option).find('input')
+    $switch_navImage.prop('checked', O.navImage).on('change', function(){
+        O.navImage = $switch_navImage.prop('checked')
+        refreshNavImage()
+    })
     const $switch_epColor = $(TPL.OPTIONS_BUTTON.format({title: '设置护眼色,点击切换'})).appendTo($option).find('button')
     $switch_epColor.find('span').text(EPCOLOR[O.epColor][0])
     $switch_epColor.on('click', function(){
@@ -3682,6 +3708,8 @@ function registerUI() {
             }
         }
     })
+
+    refreshNavImage()
 }
 
 function initUE(){
