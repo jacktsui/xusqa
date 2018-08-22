@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.0.022
+// @version      1.0.024
 // @description  有道搜题，录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -30,7 +30,7 @@
 (function() {
     'use strict';
 
-    const ver = 'Ver 1.0.022'
+    const ver = 'Ver 1.0.024'
 
 /**
  * 放前面方便统一更换
@@ -786,7 +786,19 @@ const TPL = {
     OPTIONS:'<div data-v-322b822a class="list-item"><div data-v-322b822a class="item-title">助手配置'+ver+'</div></div>',
     OPTIONS_SWITCH: '<div data-v-322b822a class="item-cell-con"><div data-v-322b822a class="item-cell"><div data-v-322b822a class="item-cell-title">{title}</div><div data-v-322b822a class="item-cell-value"><input class="switch switch-anim" type="checkbox" checked /></div></div></div>',
     OPTIONS_NUMBER: '<div data-v-322b822a class="item-cell-con"><div data-v-322b822a class="item-cell"><div data-v-322b822a class="item-cell-title">{title}</div><div data-v-322b822a class="item-cell-value"><input type="number" min="{min}" max="{max}" step="{step}" title="{hint}" /></div></div></div>',
+    OPTIONS_BUTTON: '<div data-v-322b822a class="item-cell-con"><div data-v-322b822a class="item-cell"><div data-v-322b822a class="item-cell-title">{title}</div><div data-v-322b822a class="item-cell-value"><button data-v-322b822a="" type="button" class="el-button el-button--info el-button--small"><span>{text}</span></button></div></div></div>',
 }
+
+const EPCOLOR = [
+    ['银河白', '#FFFFFF'],
+    ['杏仁黄', '#FAF9DE'],
+    ['秋叶褐', '#FFF2E2'],
+    ['胭脂红', '#FDE6E0'],
+    ['青草绿', '#E3EDCD'],
+    ['海天蓝', '#DCE2F1'],
+    ['葛巾紫', '#E9EBFE'],
+    ['极光灰', '#EAEAEF'],
+]
 
 const $ = window.$
 const C = window.console, S = window.localStorage
@@ -957,6 +969,20 @@ const O = {/* jshint +W003 */
             this.setOptions('fixSysBug', bFixSysBug)
         } else{
             C.error('设置是否修复系统bug, true 或者 false')
+        }
+    },
+
+    get epColor(){
+        //C.log(EPCOLOR[i][0] + EPCOLOR[i][1])
+        return this.opts.hasOwnProperty('epColor') ? this.opts.epColor : 0
+    },
+    set epColor(index){
+        if (index >=0 && index < EPCOLOR.length){
+            this.setOptions('epColor', index)
+            document.documentElement.style.setProperty('--bgcolor', EPCOLOR[index][1])
+            document.documentElement.style.setProperty('--navbgcolor', index === 0 ? '#337ab7' : '#606266')
+        } else {
+            C.log('数值无效,设置护眼色,序号 0-'+(EPCOLOR.length-1))
         }
     },
 }
@@ -1390,6 +1416,28 @@ util.importCssFile([
     CDN + 'imgareaselect/0.9.10/css/imgareaselect-animated.css',
 ])
 
+util.addStyle(util.cmt(function(){/*!CSS
+:root{
+    --bgcolor: #FFFFFF;
+    --navbgcolor: #337ab7;
+}
+body { background-color: var(--bgcolor) !important; }
+table { background-color: var(--bgcolor) !important; }
+td { background-color: var(--bgcolor) !important; }
+.fixed-box_content[data-v-1e6a8d39] {
+    background: var(--bgcolor);
+}
+.nav[data-v-3f6ca4fa] {
+    background-color: var(--navbgcolor);
+    box-shadow: 3px 0 15px var(--navbgcolor);
+}
+header[data-v-7b90ba54] {
+    background: var(--navbgcolor);
+    box-shadow: 0 3px 15px var(--navbgcolor);
+}
+*/
+}))
+
 // add css sheet to header, not comment
 util.addStyle(util.cmt(function(){/*!CSS
 .xusqa-btn {
@@ -1421,7 +1469,7 @@ util.addStyle(util.cmt(function(){/*!CSS
     border-width: 20px;
     width: 0;
     border-style: dashed dashed solid dashed;
-    border-color: transparent transparent #fff transparent;
+    border-color: transparent transparent var(--bgcolor) transparent;
     display: block;
     position: absolute;
     top: -41px;
@@ -1454,7 +1502,7 @@ util.addStyle(util.cmt(function(){/*!CSS
     border-width: 20px;
     width: 0;
     border-style: dashed dashed solid dashed;
-    border-color: transparent transparent #fff transparent;
+    border-color: transparent transparent var(--bgcolor) transparent;
     display: block;
     position: absolute;
     top: -41px;
@@ -1487,7 +1535,7 @@ util.addStyle(util.cmt(function(){/*!CSS
     border-width: 20px;
     width: 0;
     border-style: dashed dashed solid dashed;
-    border-color: transparent transparent #fff transparent;
+    border-color: transparent transparent var(--bgcolor) transparent;
     display: block;
     position: absolute;
     top: -41px;
@@ -3550,6 +3598,12 @@ function registerOption(){
     $switch_fixSysBug.prop('checked', O.fixSysBug).on('change', function(){
         O.fixSysBug = $switch_fixSysBug.prop('checked')
     })
+    const $switch_epColor = $(TPL.OPTIONS_BUTTON.format({title: '设置护眼色,点击切换'})).appendTo($option).find('button')
+    $switch_epColor.find('span').text(EPCOLOR[O.epColor][0])
+    $switch_epColor.on('click', function(){
+        O.epColor = (O.epColor + 1) % EPCOLOR.length
+        $switch_epColor.find('span').text(EPCOLOR[O.epColor][0])
+    })
 }
 
 function registerDbsn(){
@@ -3739,6 +3793,7 @@ function waitLogin(){
 }
 
 function init(){
+    O.epColor = O.epColor
     initVue()
     //initUE()
     waitLogin()
@@ -3901,6 +3956,13 @@ const xusqapi = {
     },
     set crazyMode(bCrazyMode){
         O.crazyMode = bCrazyMode
+    },
+
+    get epColor(){
+        return O.epColor
+    },
+    set epColor(index){
+        O.epColor = index
     },
     /*\
      * method:
