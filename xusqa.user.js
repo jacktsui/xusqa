@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.0.025
+// @version      1.0.026
 // @description  有道搜题，录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -30,7 +30,7 @@
 (function() {
     'use strict';
 
-    const ver = 'Ver 1.0.025'
+    const ver = 'Ver 1.0.026'
 
 /**
  * 放前面方便统一更换
@@ -1392,23 +1392,6 @@ const helper = {/* jshint +W003 */
             return V.$store.getters.isLogin
         }
     },
-
-    getProfile: function(){
-        $.get(URL.GET_PROFILE, function(data){ // status:'success'
-            if (data.code === 200){
-                var a = []
-                for(let es of data.data.permission){
-                    const se = es.slice(2) + '-' + es.slice(0,2)
-                    if (SE[se]){
-                        a.push(se)
-                    }
-                }
-                stage.profile.permission = a
-                stage.profile.isValidSN = util.de(O.sn) === data.data.qqnumber
-                stage.profile.qqnumber = data.data.qqnumber
-            }
-        })
-    },
 }
 
 // css------>
@@ -1416,6 +1399,7 @@ util.importCssFile([
     CDN + 'imgareaselect/0.9.10/css/imgareaselect-animated.css',
 ])
 
+// 护眼色
 util.addStyle(util.cmt(function(){/*!CSS
 :root{
     --bgcolor: #FFFFFF;
@@ -1427,6 +1411,12 @@ td { background-color: var(--bgcolor)}
 .fixed-box_content[data-v-1e6a8d39] {
     background: var(--bgcolor);
 }
+.fixed-box_content[data-v-22e7772e] {
+    background: var(--bgcolor);
+}
+.el-table th, .el-table tr {
+    background-color: var(--bgcolor);
+}
 .nav[data-v-3f6ca4fa] {
     background-color: var(--navbgcolor);
     box-shadow: 3px 0 15px var(--navbgcolor);
@@ -1434,6 +1424,33 @@ td { background-color: var(--bgcolor)}
 header[data-v-7b90ba54] {
     background: var(--navbgcolor);
     box-shadow: 0 3px 15px var(--navbgcolor);
+}
+*/
+}))
+
+// css 替换
+util.addStyle(util.cmt(function(){/*!CSS
+#answerCutBox {
+    top: 182px;
+}
+.box_min .region-con[data-v-22e7772e] {
+    display: block;
+}
+
+.latex[data-v-1e6a8d39] {
+    margin-right: 16px;
+}
+
+.latex[data-v-22e7772e] {
+    margin-right: 16px;
+}
+
+.submit-region[data-v-22e7772e] {
+    overflow: hidden;
+}
+
+.process-title[data-v-0544f45b] {
+    margin-right: 150px;
 }
 */
 }))
@@ -1695,30 +1712,6 @@ util.addStyle(util.cmt(function(){/*!CSS
 .switch.switch-anim:checked:before {
     transition: left 0.3s;
 }
-
-.xusqa-hide{
-    display: none;
-}
-
-#answerCutBox {
-    top: 182px;
-}
-.box_min .region-con[data-v-22e7772e] {
-    display: block;
-}
-
-.latex[data-v-1e6a8d39] {
-    margin-right: 16px;
-}
-
-.latex[data-v-22e7772e] {
-    margin-right: 16px;
-}
-
-.process-title[data-v-0544f45b] {
-    margin-right: 150px;
-}
-
 */
 }))
 //<------ css end
@@ -3757,10 +3750,27 @@ function initVue(){
     }
 }
 
+function getProfile(){
+    $.get(URL.GET_PROFILE, function(data){ // status:'success'
+        if (data.code === 200){
+            var a = []
+            for(let es of data.data.permission){
+                const se = es.slice(2) + '-' + es.slice(0,2)
+                if (SE[se]){
+                    a.push(se)
+                }
+            }
+            stage.profile.permission = a
+            stage.profile.isValidSN = util.de(O.sn) === data.data.qqnumber
+            stage.profile.qqnumber = data.data.qqnumber
+        }
+    })
+}
+
 function waitLogin(){
     function onLogin(){
+        getProfile()
         registerUI()
-        helper.getProfile()
     }
 
     clearTimeout(stage.timer.waitLoginTimer)
@@ -3777,7 +3787,6 @@ function waitLogin(){
 function init(){
     O.epColor = O.epColor
     initVue()
-    //initUE()
     waitLogin()
 }
 init()
