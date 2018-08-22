@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.0.021
+// @version      1.0.022
 // @description  有道搜题，录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -30,7 +30,7 @@
 (function() {
     'use strict';
 
-    const ver = 'Ver 1.0.021'
+    const ver = 'Ver 1.0.022'
 
 /**
  * 放前面方便统一更换
@@ -252,7 +252,7 @@ const RULE = [
             return $1 + $2 + $3
         }, '数学'],
 
-    [/kW\.h/, 'kW·h', '物理'], // 单位TODO:需要收集更多的单位,形成字典
+    [/kW\.h/g, 'kW·h', '物理'], // 单位TODO:需要收集更多的单位,形成字典
 
     [/(L)\.(s|min)/g, '$1·$2', '化学'],
     [/(\d)\s*x\s*(\d)/g, '$1×$2', '化学'], // x->×
@@ -282,6 +282,7 @@ const RULE = [
         }
     }, '化学'],
     [/10(-[1-9][0-9]*)\s*([a-zA-Z])/g, '10<sup>$1</sup>$2'], // 10-2 mol
+    [/([m])([2-3])/g, '$1<sup>$2</sup>', '物理'],
     [/(\d+)\s*[Xx×]\s*10([1-9][0-9]*)/g, '$1×10<sup>$2</sup>', '物理,化学'], // 识别科学计数法
     [/\(([a-z])([0-2])(\s*,\s*[a-z])([0-2])(\s*\))/g, '$1<sub>$2</sub>$3<sub>$4</sub>$5', '数学'], // D(x1 ,x2) 识别坐标
     [/(\([\da-zA-Z+-]{2,}\))(\d+)/g, '$1<sup>$2</sup>', '数学'], // 括号角标,认为是上角标
@@ -749,6 +750,7 @@ const URL = {
     GET_PROFILE: BASEURL + '/editsys/user/profile',
     UPLOAD_IMAGE: BASEURL + '/editsys/ueditor/config?action=uploadimage',
     OCR: BASEURL + '/editsys/ocr',
+    QUESTION: 'http://searchq-editsys.youdao.com/editsys/question?id={id}',
     SHAREQQ: 'http://connect.qq.com/widget/shareqq/index.html?{params}',
     getRandomImg: function(){
         const n = Math.floor(Math.random()*(123-1+1)+1)
@@ -780,7 +782,7 @@ const TPL = {
     EDIT_PAGE_SAVE_SAMPLE: '<a href="javascript:;" style="color: #337ab7;font-size: 16px;margin-left: 16px;float: right" title="助手提示: 收集样本,帮助作者优化一键整理,一定要在整理前收集">收集样本</a>',
     EDIT_PAGE_CLEAR_KNOWLEDGE: '<a href="javascript:;" style="color: #337ab7;font-size: 16px;margin-left: 16px;float: right;" title="助手提示：清除无关知识点,下次同一任务的将会自动清除">清除</a>',
     EDIT_PAGE_MOVETO_ANALYSIS: '<a href="javascript:;" style="color: #337ab7;font-size: 16px;margin-left: 16px;float: right;" title="助手提示：将答案内容快速移动到解析">⇩</a>',
-    EDIT_PAGE_PICKUP: '<a href="javascript:;" style="color: #337ab7;font-size: 16px;margin-left: 16px;" title="助手提示：从解析中快速提取答案和知识点">⇵</a>',
+    EDIT_PAGE_PICKUP: '<a href="javascript:;" style="color: #337ab7;font-size: 16px;margin-left: 16px;" title="助手提示：从解析中快速提取答案、点评和知识点">⇵</a>',
     OPTIONS:'<div data-v-322b822a class="list-item"><div data-v-322b822a class="item-title">助手配置'+ver+'</div></div>',
     OPTIONS_SWITCH: '<div data-v-322b822a class="item-cell-con"><div data-v-322b822a class="item-cell"><div data-v-322b822a class="item-cell-title">{title}</div><div data-v-322b822a class="item-cell-value"><input class="switch switch-anim" type="checkbox" checked /></div></div></div>',
     OPTIONS_NUMBER: '<div data-v-322b822a class="item-cell-con"><div data-v-322b822a class="item-cell"><div data-v-322b822a class="item-cell-title">{title}</div><div data-v-322b822a class="item-cell-value"><input type="number" min="{min}" max="{max}" step="{step}" title="{hint}" /></div></div></div>',
@@ -2856,6 +2858,7 @@ function registerQuestionSave(){
         const u2 = helper.getEditor(2)
         let analysis = u2.getContent()
         let r, m
+        // 提取答案
         r = /(\d+\.)\s*([A-D]|[a-zA-Z\s]{2,})\s+/g
         m = analysis.match(r)
         if (m && m.length > 2){
@@ -2869,6 +2872,21 @@ function registerQuestionSave(){
             analysis = analysis.replace(r, '$1')
         }
 
+        // 提取点评
+        r = /(\d+\.)\s*([\u4E00-\u9FA5]+题[.])/g
+        m = analysis.match(r)
+        if (m && m.length > 2){
+            const u3 = helper.getEditor(3)
+            let comment = '<p>'
+            for(let i of m){
+                comment += i + '</p><hr/>'
+            }
+            comment = comment.slice(0,-5)
+            u3.setContent(comment, u3.getContent())
+            analysis = analysis.replace(r, '$1')
+        }
+
+        // 提取知识点
         r = /(\d+\.)\s*考查([\u4E00-\u9FA5、]+)[.]/g
         m = analysis.match(r)
         if (m && m.length > 2){
@@ -2978,7 +2996,7 @@ function registerExtraOCR(pot){
             m = cont.match(/[【]*(解析|点拨)[:】]*/)
             const answer = cont.slice(0,m.index).replace(/答案:*/,'')
             let analysis = cont.slice(m.index + m[0].length)
-            m = analysis.match(/本题考查([\u4E00-\u9FA5、]+)[.,。]/)
+            m = analysis.match(/本*题*考查([\u4E00-\u9FA5、]+)[.,。]/)
             if (m){
                 analysis = analysis.slice(m.index + m[0].length)
                 helper.getEditor(4).setContent(m[1], false)
@@ -3414,6 +3432,7 @@ function loadImg(){
         $img.attr('src',url)
         const $btn = $('#app > div > div.main-content > div > div > div.quesion-answer-con > a')
         let $a
+        let pageno, cur
         $btn.click(function(){
             let timer
             function tryf(){
@@ -3434,6 +3453,11 @@ function loadImg(){
                 $a = $(a).insertBefore($i)
                 $a.css({'height':height+'px','width':width+'px','left':x+'px','top':y+'px'})
                 $a.attr({'width':width,'height':height})
+                if (cur === pageno){
+                    $a.show()
+                } else {
+                    $a.hide()
+                }
             }
             tryf() 
         })
@@ -3442,34 +3466,34 @@ function loadImg(){
         $.get('http://searchq-editsys.youdao.com/editsys/questionpage?id='+id, function(data){
             const d=data.data
             const textbookid = d.textbookid
-            const pageno = d.pageno
-            let cur = pageno
+            pageno = d.pageno
+            cur = pageno
             const $page=$('#app > div > div.main-content > div > div > div.search-btns > div > div > div.fixed-box_pages > div')
             const $nextPage = $('<a href="javascript:;">下一页</a>').appendTo($page)
             $nextPage.click(function(){
                 cur++
                 $.get('http://searchq-editsys.youdao.com/editsys/questionpage?id='+id+'&textbookid='+textbookid+'&pageno='+cur,function(data){
                     const url = data.data.url
-                    $img.attr('src',url)                    
+                    $img.attr('src',url)
+                    if (cur === pageno){
+                        $a.show()
+                    } else {
+                        $a.hide()
+                    }
                 })
-                if (cur === pageno){
-                    $a.show()
-                } else {
-                    $a.hide()
-                }
             })
             const $prePage = $('<a href="javascript:;">上一页</a>').prependTo($page)
             $prePage.click(function(){
                 cur--
                 $.get('http://searchq-editsys.youdao.com/editsys/questionpage?id='+id+'&textbookid='+textbookid+'&pageno='+cur,function(data){
                     const url = data.data.url
-                    $img.attr('src',url)                    
+                    $img.attr('src',url)
+                    if (cur === pageno){
+                        $a.show()
+                    } else {
+                        $a.hide()
+                    }
                 })
-                if (cur === pageno){
-                    $a.show()
-                } else {
-                    $a.hide()
-                }
             })
             $('<span style="float: right;">本页为临时紧急修复系统bug,待系统修复后,请及时更新脚本,防止冲突</span>').appendTo($page)
         })
@@ -3491,6 +3515,21 @@ function registerPreMonthReport(){
             preMonthReport()
         })
     }
+}
+
+function question(id){
+    $.get(URL.QUESTION.format({id: id}), function(data){
+        if (data.code === 200){
+            const d = data.data
+            if (helper.isInEditPage()){
+                helper.getEditor(0).setContent(d.qbody)
+                helper.getEditor(1).setContent(d.answer)
+                helper.getEditor(2).setContent(d.analysis)
+                helper.getEditor(3).setContent(d.comment)
+                helper.getEditor(4).setContent(d.knowledge)
+            }
+        }
+    })
 }
 
 function registerOption(){
@@ -3532,6 +3571,7 @@ function registerDbsn(){
         if (window.xusqadmin){
             const admin = window.xusqadmin
             admin.sng(V)
+            admin.protectPersonalInfo()
         }
     } else {
         stage.timer.registerDbsn = setTimeout(registerDbsn, 0)
@@ -3870,6 +3910,10 @@ const xusqapi = {
         let it = [new RegExp(regstr), replacement, subjects]
         USRRULE.push(it)
         helper.saveUserRules()
+    },
+
+    question: function(id){
+        question(id)
     },
 
     listSimple: function(){
