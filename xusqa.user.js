@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.0.028
+// @version      1.0.029
 // @description  有道搜题，录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -30,7 +30,7 @@
 (function() {
     'use strict';
 
-    const ver = 'Ver 1.0.028'
+    const ver = 'Ver 1.0.029'
 
 /**
  * 放前面方便统一更换
@@ -774,7 +774,7 @@ const TPL = {
     SNAP_QUESTION_HINT: '<span style="margin-left: 266px;display:inline-block;color: #f56c6c;border-right: 1px solid #f56c6c;padding: 5px;border-top: 1px solid #f56c6c;">助手提示: 在下面题目图片上可以直接框选截图哦</span>',
     SNAP_QUESTION_BUTTON: '<a href="javascript:;" class="xusqa-btn" title="助手提示: 框选以后可以点我直接截图" style="display: inline-block;float: right;background-color: #f78989;color: white;font-size: 16px;width: 60px;text-align: center;position: absolute;left: 561px;top: 324px;">截图</a>',
     GLASS: '<canvas " width="100px" height="100px" style="position: absolute;top: 0px;left: 0px;z-index: 9527;border: 1px solid #67c23a;border-radius: 10px; box-shadow: 0 3px 15px #67c23a;"></canvas>',
-    SQUARE_UPDATE: '<div data-v-403910d4 id="xusqa-square-update" class="process-task-con">最后刷新时间：<a  style="padding: 0px 10px;color: #f93e53;">　刚刚　</a><a data-v-403910d4 href="javascript:;" style="margin-left: 50px;" class="enter-task xusqa-btn">　刷新　</a><a data-v-403910d4 href="javascript:;" class="enter-task xusqa-btn">分享到QQ</a></div>',
+    SQUARE_UPDATE: '<div data-v-403910d4 id="xusqa-square-update" class="process-task-con">最后刷新时间：<a  style="padding: 0px 10px;color: #f93e53;">　刚刚　</a><a href="javascript:;" class="xusqa-a-button xusqa-btn">　刷新　</a><a href="javascript:;" class="xusqa-a-button xusqa-btn">分享到QQ</a></div>',
     ACC_INFO: '<div style=" font-size: 12px; font-style: italic; margin-bottom: 16px;">以上数据仅供参考.</div>',
     THIS_ACC_INFO: '<div style=" font-size: 12px; font-style: italic; margin-bottom: 16px;">本月报告(包括上月未结算任务),数据仅供参考.</div>',
     EDIT_PAGE_SAVE: '<a href="javascript:;" class="xusqa-btn" style="display: inline-block;float: right;background-color: #337ab7;color: white;font-size: 16px;padding: 2px 16px;margin-left: 16px;" title="助手提示: 录题过程中可以临时保存当前录入内容，防止丢失">暂存题目</a>',
@@ -1730,6 +1730,23 @@ util.addStyle(util.cmt(function(){/*!CSS
 }
 .switch.switch-anim:checked:before {
     transition: left 0.3s;
+}
+.xusqa-a-button {
+    margin-left: 50px;
+    background-color: #0070c9;
+    background: linear-gradient(#42a1ec, #0070c9);
+    border-color: #1482d0;
+    padding: 4px 10px;
+    font-size: 14px;
+    color: #fff;
+    border-radius: 4px;
+    padding: 4px 16px;
+    display: inline-block;
+}
+.xusqa-a-button:hover {
+    background-color: #147bcd;
+    background: linear-gradient(#51a9ee, #147bcd);
+    border-color: #1482d0;
 }
 */
 }))
@@ -3449,11 +3466,57 @@ function registerQjudgeHint(){
             $btnQJudge.filter(':nth-child(1)').attr('title', STR.HINT.SEARCH_STANDARD)
             $btnQJudge.filter(':nth-child(2)').attr('title', STR.HINT.SEARCH_FAIL)
             $btnQJudge.filter(':nth-child(3)').attr('title', STR.HINT.SEARCH_LOSE)
+            registerQjudgeEncircle()
         } else {
             timer = setTimeout(tryRegisterQjudgeHint, 500);
         }
     }
     tryRegisterQjudgeHint()
+}
+
+function registerQjudgeEncircle(){
+    clearTimeout(stage.timer.registerQjudgeEncircle)
+    if (location.hash.indexOf('#/mytasks/qjudge') === -1){
+        return
+    }
+
+    const $pager = $('#app > div > div.main-content > div > div > div.search-btns > div > div > div.fixed-box_pages > div > ul')
+    if ($pager.length && $pager[0].__vue__){
+        let $a
+        let qPageIndex
+        $pager[0].__vue__.$watch('currentPage',function(newValue,oldValue){
+            if (qPageIndex === undefined){
+                qPageIndex = newValue
+            }
+            if (qPageIndex === newValue){
+                $a.show()
+            } else {
+                $a.hide()
+            }
+        })
+
+        const $img = $('#app > div > div.main-content > div > div > div.search-btns > div > div > div.fixed-box_container > img')
+        $img.on('load', function(){
+            if ($a){
+                return
+            }
+            const $qimg = $('#app > div > div.main-content > div > div > div.edit-con > div.search-con > div > img')
+            const src = $qimg[0].src
+            const scale = /*$img[0].width*/ 941 / $img[0].naturalWidth
+            //http://nos.netease.com/yd-searchq/968c7132-c967-41a4-9803-d59e98713649.jpg?imageView&crop=41_978_1594_217
+            const m = src.match(/crop=(\d+)_(\d+)_(\d+)_(\d+)/)
+            const x = Math.round(parseInt(m[1]) * scale)
+            const y = Math.round(parseInt(m[2]) * scale)
+            const width = Math.round(parseInt(m[3]) * scale)
+            const height = Math.round(parseInt(m[4]) * scale)
+            const a = '<a style="width: 100px;height: 100px;display: inline-block;top: 0px;left: 0px;position: absolute;border: 2px solid #f56c6c;"></a>'
+            $a = $(a).insertBefore($img)
+            $a.css({'height':height+'px','width':width+'px','left':x+'px','top':y+'px'})
+            $a.attr({'width':width,'height':height})
+        })
+    } else {
+        stage.timer.registerQjudgeEncircle = setTimeout(registerQjudgeEncircle,1000)
+    }
 }
 
 function registerPreMonthReport(){
