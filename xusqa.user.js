@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.0.027
+// @version      1.0.028
 // @description  有道搜题，录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -30,7 +30,7 @@
 (function() {
     'use strict';
 
-    const ver = 'Ver 1.0.027'
+    const ver = 'Ver 1.0.028'
 
 /**
  * 放前面方便统一更换
@@ -774,7 +774,7 @@ const TPL = {
     SNAP_QUESTION_HINT: '<span style="margin-left: 266px;display:inline-block;color: #f56c6c;border-right: 1px solid #f56c6c;padding: 5px;border-top: 1px solid #f56c6c;">助手提示: 在下面题目图片上可以直接框选截图哦</span>',
     SNAP_QUESTION_BUTTON: '<a href="javascript:;" class="xusqa-btn" title="助手提示: 框选以后可以点我直接截图" style="display: inline-block;float: right;background-color: #f78989;color: white;font-size: 16px;width: 60px;text-align: center;position: absolute;left: 561px;top: 324px;">截图</a>',
     GLASS: '<canvas " width="100px" height="100px" style="position: absolute;top: 0px;left: 0px;z-index: 9527;border: 1px solid #67c23a;border-radius: 10px; box-shadow: 0 3px 15px #67c23a;"></canvas>',
-    SQUARE_UPDATE: '<div data-v-0544f45b id="xusqa-square-update" class="process-task-con">最后刷新时间：<a  style="padding: 0px 10px;color: #f93e53;">　刚刚　</a><a data-v-0544f45b href="javascript:;" style="margin-left: 50px;" class="enter-task xusqa-btn">　刷新　</a><a data-v-0544f45b href="javascript:;" class="enter-task xusqa-btn">分享到QQ</a></div>',
+    SQUARE_UPDATE: '<div data-v-403910d4 id="xusqa-square-update" class="process-task-con">最后刷新时间：<a  style="padding: 0px 10px;color: #f93e53;">　刚刚　</a><a data-v-403910d4 href="javascript:;" style="margin-left: 50px;" class="enter-task xusqa-btn">　刷新　</a><a data-v-403910d4 href="javascript:;" class="enter-task xusqa-btn">分享到QQ</a></div>',
     ACC_INFO: '<div style=" font-size: 12px; font-style: italic; margin-bottom: 16px;">以上数据仅供参考.</div>',
     THIS_ACC_INFO: '<div style=" font-size: 12px; font-style: italic; margin-bottom: 16px;">本月报告(包括上月未结算任务),数据仅供参考.</div>',
     EDIT_PAGE_SAVE: '<a href="javascript:;" class="xusqa-btn" style="display: inline-block;float: right;background-color: #337ab7;color: white;font-size: 16px;padding: 2px 16px;margin-left: 16px;" title="助手提示: 录题过程中可以临时保存当前录入内容，防止丢失">暂存题目</a>',
@@ -1412,7 +1412,7 @@ util.importCssFile([
 
 function refreshNavImage(){
     if (O.navImage){
-        util.addStyle('.nav[data-v-3f6ca4fa] {background: url(https://bing.ioliu.cn/v1/rand?w=180&h=1280);}', 'xusqa-nav-img')
+        util.addStyle('.nav[data-v-3f6ca4fa] {background: url(https://bing.ioliu.cn/v1/rand?w=180&h=1280);} .list li a[data-v-3f6ca4fa] {color: #999;}', 'xusqa-nav-img')
     } else {
         $('#xusqa-nav-img').remove()
     }
@@ -1468,7 +1468,7 @@ util.addStyle(util.cmt(function(){/*!CSS
     overflow: hidden;
 }
 
-.process-title[data-v-0544f45b] {
+.process-title[data-v-403910d4] {
     margin-right: 150px;
 }
 */
@@ -3449,99 +3449,11 @@ function registerQjudgeHint(){
             $btnQJudge.filter(':nth-child(1)').attr('title', STR.HINT.SEARCH_STANDARD)
             $btnQJudge.filter(':nth-child(2)').attr('title', STR.HINT.SEARCH_FAIL)
             $btnQJudge.filter(':nth-child(3)').attr('title', STR.HINT.SEARCH_LOSE)
-            if (O.fixSysBug){
-                setTimeout(loadImg,3000)
-            }
         } else {
             timer = setTimeout(tryRegisterQjudgeHint, 500);
         }
     }
     tryRegisterQjudgeHint()
-}
-
-//临时，待系统修复后删除
-function loadImg(){
-    clearTimeout(stage.timer.loadImg)
-    if (location.hash.indexOf('#/mytasks/qjudge') === -1){
-        return
-    }
-    C.count('loadImg()')
-    const $d = $('#app > div > div.main-content > div > div')
-    if ($d.length && $d[0].__vue__ && $d[0].__vue__.data && $d[0].__vue__.data.url){
-        let s = $d[0].__vue__.data.url
-        let url = s.slice(0, s.indexOf('?'))
-        const $img = $('#app > div > div.main-content > div > div > div.search-btns > div > div > div.fixed-box_container > img')
-        $img.attr('src',url)
-        const $btn = $('#app > div > div.main-content > div > div > div.quesion-answer-con > a')
-        let $a
-        let pageno, cur
-        $btn.click(function(){
-            let timer
-            function tryf(){
-                clearTimeout(timer)
-                const $i = $('#app > div > div.main-content > div > div > div.search-btns > div > div > div.fixed-box_container > img')
-                const scale = $i[0].width / $i[0].naturalWidth
-                if (scale === 1 || scale === 0){
-                    timer = setTimeout(tryf,0)
-                    return
-                }
-                //http://nos.netease.com/yd-searchq/968c7132-c967-41a4-9803-d59e98713649.jpg?imageView&crop=41_978_1594_217
-                const m = s.match(/crop=(\d+)_(\d+)_(\d+)_(\d+)/)
-                const x = Math.round(parseInt(m[1]) * scale)
-                const y = Math.round(parseInt(m[2]) * scale)
-                const width = Math.round(parseInt(m[3]) * scale)
-                const height = Math.round(parseInt(m[4]) * scale)
-                const a = '<a style="width: 100px;height: 100px;display: inline-block;top: 0px;left: 0px;position: absolute;border: 2px solid #f56c6c;"></a>'
-                $a = $(a).insertBefore($i)
-                $a.css({'height':height+'px','width':width+'px','left':x+'px','top':y+'px'})
-                $a.attr({'width':width,'height':height})
-                if (cur === pageno){
-                    $a.show()
-                } else {
-                    $a.hide()
-                }
-            }
-            tryf() 
-        })
-
-        const id = $d[0].__vue__.data.id
-        $.get('http://searchq-editsys.youdao.com/editsys/questionpage?id='+id, function(data){
-            const d=data.data
-            const textbookid = d.textbookid
-            pageno = d.pageno
-            cur = pageno
-            const $page=$('#app > div > div.main-content > div > div > div.search-btns > div > div > div.fixed-box_pages > div')
-            const $nextPage = $('<a href="javascript:;">下一页</a>').appendTo($page)
-            $nextPage.click(function(){
-                cur++
-                $.get('http://searchq-editsys.youdao.com/editsys/questionpage?id='+id+'&textbookid='+textbookid+'&pageno='+cur,function(data){
-                    const url = data.data.url
-                    $img.attr('src',url)
-                    if (cur === pageno){
-                        $a.show()
-                    } else {
-                        $a.hide()
-                    }
-                })
-            })
-            const $prePage = $('<a href="javascript:;">上一页</a>').prependTo($page)
-            $prePage.click(function(){
-                cur--
-                $.get('http://searchq-editsys.youdao.com/editsys/questionpage?id='+id+'&textbookid='+textbookid+'&pageno='+cur,function(data){
-                    const url = data.data.url
-                    $img.attr('src',url)
-                    if (cur === pageno){
-                        $a.show()
-                    } else {
-                        $a.hide()
-                    }
-                })
-            })
-            $('<span style="float: right;">本页为临时紧急修复系统bug,待系统修复后,请及时更新脚本,防止冲突</span>').appendTo($page)
-        })
-    } else {
-        stage.timer.loadImg = setTimeout(loadImg,1000)
-    }
 }
 
 function registerPreMonthReport(){
@@ -3588,13 +3500,13 @@ function registerOption(){
     $switch_autoSliceAnalysis.prop('checked', O.autoSliceAnalysis).on('change', function(){
         O.autoSliceAnalysis = $switch_autoSliceAnalysis.prop('checked')
     })
-    const $switch_fixSysBug = $(TPL.OPTIONS_SWITCH.format({title: '修复判题查看题目所在页空白'})).appendTo($option).find('input')
-    $switch_fixSysBug.prop('checked', O.fixSysBug).on('change', function(){
-        O.fixSysBug = $switch_fixSysBug.prop('checked')
-    })
+    //const $switch_fixSysBug = $(TPL.OPTIONS_SWITCH.format({title: '修复判题查看题目所在页空白'})).appendTo($option).find('input')
+    //$switch_fixSysBug.prop('checked', O.fixSysBug).on('change', function(){
+    //    O.fixSysBug = $switch_fixSysBug.prop('checked')
+    //})
 
     $(TPL.OPTIONS_SEPARATE).appendTo($option)
-    const $switch_navImage = $(TPL.OPTIONS_SWITCH.format({title: '导航栏显示随机图片'})).appendTo($option).find('input')
+    const $switch_navImage = $(TPL.OPTIONS_SWITCH.format({title: '导航栏随机背景图片'})).appendTo($option).find('input')
     $switch_navImage.prop('checked', O.navImage).on('change', function(){
         O.navImage = $switch_navImage.prop('checked')
         refreshNavImage()
