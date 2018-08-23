@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.0.029
+// @version      1.0.030
 // @description  有道搜题，录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -30,7 +30,7 @@
 (function() {
     'use strict';
 
-    const ver = 'Ver 1.0.029'
+    const ver = 'Ver 1.0.030'
 
 /**
  * 放前面方便统一更换
@@ -1412,7 +1412,25 @@ util.importCssFile([
 
 function refreshNavImage(){
     if (O.navImage){
-        util.addStyle('.nav[data-v-3f6ca4fa] {background: url(https://bing.ioliu.cn/v1/rand?w=180&h=1280);} .list li a[data-v-3f6ca4fa] {color: #999;}', 'xusqa-nav-img')
+        util.addStyle(util.cmt(function(){/*!CSS
+            .nav[data-v-3f6ca4fa] {
+                background: url(https://bing.ioliu.cn/v1/rand?w=180&h=1280);
+            }
+            .list li a[data-v-3f6ca4fa] {
+                background: linear-gradient(135deg, #333, #fff);
+                -webkit-background-clip: text;
+                color: transparent;
+            }
+            .list li .router-link-active[data-v-3f6ca4fa] {
+                background: linear-gradient(135deg, #67c23a, #f56c6c);
+                -webkit-background-clip: text;
+                color: transparent;
+            }
+            .show-btn[data-v-3f6ca4fa] {
+                opacity: 0.7;
+            }
+            */
+        }))
     } else {
         $('#xusqa-nav-img').remove()
     }
@@ -3484,7 +3502,7 @@ function registerQjudgeEncircle(){
     if ($pager.length && $pager[0].__vue__){
         let $a
         let qPageIndex
-        $pager[0].__vue__.$watch('currentPage',function(newValue,oldValue){
+        $pager[0].__vue__.$watch('currentPage',function(newValue/*,oldValue*/){
             if (qPageIndex === undefined){
                 qPageIndex = newValue
             }
