@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.0.030
+// @version      1.0.031
 // @description  有道搜题，录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -30,7 +30,7 @@
 (function() {
     'use strict';
 
-    const ver = 'Ver 1.0.030'
+    const ver = 'Ver 1.0.031'
 
 /**
  * 放前面方便统一更换
@@ -1427,10 +1427,13 @@ function refreshNavImage(){
                 color: transparent;
             }
             .show-btn[data-v-3f6ca4fa] {
-                opacity: 0.7;
+                background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACMAAAAjCAYAAAAe2bNZAAABGElEQVRYhe2WwU3EMBBF/4y404KTCrYEt0AFbAlsB3QAdBA6yXZABbZLoAJ/LnuBTIjXwkFa+Um+jKzMUyb+MdDpdG4QsYokkVLyANiiqXPuLLJsfWdtDiE8AXhpIXJ5/gnAa5GMqs4kz61kRGQ261aRbDKd742NMWnzrldQLBNjnBp6ACiUiTFOJB//XWYvkU2ZPUWAlaNdInLJovuapqr6BuCzSCaldCx4I9WhmHMWAM9FMs65KcbofxNS1Yec86FGRlUX6QtshN7PUY3jaO6v4erQG4bhKCLvfyWwxebR3ltoAcnFCiFMVr12WfQf5RprOXMg2exyJSInAB9FMjlnD8C3kiHpLZmtO3ATnHOz9c10Op2b5At2T8CLPCQKsgAAAABJRU5ErkJggg==) 50% 50% no-repeat;
+            }
+            .nav-wrap.hide .show-btn[data-v-3f6ca4fa] {
+                background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACMAAAAjCAYAAAAe2bNZAAABS0lEQVRYhe2X0U3DMBRFjxH/eARvQNigI3QDugFlAjpCOwFsABvQTECZoO0EzQaXD9vECQToh2M+cqSoflKjHPn52glMTJyHAZAEYIFr4AgcRpUwpi0kWUl7tcwlMdYVuQy/S8AlskvgJYwd8JhxYt7D8z5lDr0/NL1xnVFm16nCdK1Di7aSXIk2pQu4GHEBXxS16NGXcSUkIlHGAq/AHjgBVQmZmKYFMAtjC6x79XNGhxpYpTJ/uSEXX6JtJe1CtBtJ1X+IdoXfABtGJEZ72meGSGWeAOHjXSTasU0LuidzTTfadxkdGmPMBtpou19uuAlSOfg22k0S7VnpaFt8a3YUeu2coj1EKrMC3vCHYq7F+iPpqf0QxhW+ffNQO+A2o8MRv8cNRjudGQfcA1eZZDadKryAx2hLhb6b0jQ5fLu24RqNzhflxMQZfAD5sixWHxwsSwAAAABJRU5ErkJggg==) 50% 50% no-repeat;
             }
             */
-        }))
+        }), 'xusqa-nav-img')
     } else {
         $('#xusqa-nav-img').remove()
     }
