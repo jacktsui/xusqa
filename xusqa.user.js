@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.0.031
+// @version      1.0.032
 // @description  有道搜题，录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -30,7 +30,7 @@
 (function() {
     'use strict';
 
-    const ver = 'Ver 1.0.031'
+    const ver = 'Ver 1.0.032'
 
 /**
  * 放前面方便统一更换
@@ -2813,6 +2813,10 @@ function registerLocateButton(pot){
  * 在题目图片上可以直接拖拽框选，双击截图插入
  */
 function registerQuestionSnap(){
+    function ein(e, el){
+        return e.clientX >= el.offsetLeft && e.clientX <= (el.offsetLeft + el.clientWidth) &&
+            e.clientY >= el.offsetTop && e.clientY <= (el.offsetTop + el.clientHeight)
+    }
     const $imgQ = $(DOM.QUESTION_IMG)
     let $btnSnap
     let $box = $('#xusqa_selection_question_box')
@@ -2832,8 +2836,7 @@ function registerQuestionSnap(){
         },
         onSelectEnd: () => {
             $(document).on('mousedown.xusqa_event', function(e) {
-                if (e.clientX >= $imgQ[0].offsetLeft && e.clientX <= ($imgQ[0].offsetLeft + $imgQ[0].width) &&
-                    e.clientY >= $imgQ[0].offsetTop && e.clientY <= ($imgQ[0].offsetTop + $imgQ[0].height)) {
+                if (ein(e, $imgQ[0]) || ein(e, $btnSnap[0])) {
                     return
                 } else {
                     $imgQ.imgAreaSelect({
@@ -2891,6 +2894,7 @@ function registerQuestionSnap(){
         }
 
         $btnSnap.hide()
+        $(document).off('mousedown.xusqa_event')
         $imgQ.imgAreaSelect({
             hide: true
         })
@@ -2939,7 +2943,7 @@ function registerQuestionSave(){
         let analysis = u2.getContent()
         let r, m
         // 提取答案
-        r = /(\d+\.)\s*([A-D]|[a-zA-Z\s]{2,})\s+/g
+        r = /(\d+\.)\s*([A-D]|[a-zA-Z\/]{2,})\s+/g
         m = analysis.match(r)
         if (m && m.length > 2){
             const u1 = helper.getEditor(1)
@@ -2953,7 +2957,7 @@ function registerQuestionSave(){
         }
 
         // 提取点评
-        r = /(\d+\.)\s*([\u4E00-\u9FA5]+题[.])/g
+        r = /(\d+\.)\s*([\u4E00-\u9FA5]+[题法][.])/g
         m = analysis.match(r)
         if (m && m.length > 2){
             const u3 = helper.getEditor(3)
@@ -2967,19 +2971,22 @@ function registerQuestionSave(){
         }
 
         // 提取知识点
-        r = /(\d+\.)\s*考查([\u4E00-\u9FA5、]+)[.]/g
+        //r = /(\d+\.)\s*本*题*考查([\u4E00-\u9FA5、]+)[.]/g
+        r = /\s*本*题*考查([\u4E00-\u9FA5、]+)[.。]/g
         m = analysis.match(r)
-        if (m && m.length > 2){
+        if (m && m.length){
             const u4 = helper.getEditor(4)
             let knowledge = '<p>'
             let e = r.exec(analysis)
             while(e){
-                knowledge += e[2] + ','            
+                if (knowledge.indexOf(e[1]) === -1){
+                    knowledge += e[1] + ','
+                }
                 e = r.exec(analysis)
             }
             knowledge = knowledge.slice(0,-1)
             u4.setContent(knowledge, u4.getContent())
-            analysis = analysis.replace(r, '$1')
+            analysis = analysis.replace(r, '')
         }
 
         u2.setContent(analysis, false)
@@ -3487,7 +3494,7 @@ function registerQjudgeHint(){
             $btnQJudge.filter(':nth-child(1)').attr('title', STR.HINT.SEARCH_STANDARD)
             $btnQJudge.filter(':nth-child(2)').attr('title', STR.HINT.SEARCH_FAIL)
             $btnQJudge.filter(':nth-child(3)').attr('title', STR.HINT.SEARCH_LOSE)
-            registerQjudgeEncircle()
+            execCommand('registerQjudgeEncircle')
         } else {
             timer = setTimeout(tryRegisterQjudgeHint, 500);
         }
@@ -3505,9 +3512,13 @@ function registerQjudgeEncircle(){
     if ($pager.length && $pager[0].__vue__){
         let $a
         let qPageIndex
-        $pager[0].__vue__.$watch('currentPage',function(newValue/*,oldValue*/){
+        $pager[0].__vue__.$watch('currentPage',function(newValue, oldValue){
             if (qPageIndex === undefined){
-                qPageIndex = newValue
+                if (oldValue === 1){
+                    qPageIndex = 1
+                } else {
+                    qPageIndex = newValue
+                }
             }
             if (qPageIndex === newValue){
                 $a.show()
@@ -3590,7 +3601,7 @@ function registerOption(){
     //})
 
     $(TPL.OPTIONS_SEPARATE).appendTo($option)
-    const $switch_navImage = $(TPL.OPTIONS_SWITCH.format({title: '导航栏随机背景图片'})).appendTo($option).find('input')
+    const $switch_navImage = $(TPL.OPTIONS_SWITCH.format({title: '左侧导航栏随机背景图片'})).appendTo($option).find('input')
     $switch_navImage.prop('checked', O.navImage).on('change', function(){
         O.navImage = $switch_navImage.prop('checked')
         refreshNavImage()
@@ -3862,6 +3873,7 @@ const exportFun = {
     'doOneKeyGetTask': doOneKeyGetTask,
     'doExtendEditPage': doExtendEditPage,
     'doExtendUE': doExtendUE,
+    'registerQjudgeEncircle': registerQjudgeEncircle,
 }
 
 function execCommand(cmd){
