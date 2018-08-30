@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.0.033
+// @version      1.0.034
 // @description  有道搜题，录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -30,7 +30,7 @@
 (function() {
     'use strict';
 
-    const ver = 'Ver 1.0.033'
+    const ver = 'Ver 1.0.034'
 
 /**
  * 放前面方便统一更换
@@ -2943,7 +2943,7 @@ function registerQuestionSave(){
         let analysis = u2.getContent()
         let r, m
         // 提取答案
-        r = /(\d+\.)\s*([A-D]|[a-zA-Z\/]{2,})\s+/g
+        r = /(\d+\.)\s*([A-DTF]|[a-zA-Z\/]+)\s+/g
         m = analysis.match(r)
         if (m && m.length > 2){
             const u1 = helper.getEditor(1)
@@ -2957,7 +2957,7 @@ function registerQuestionSave(){
         }
 
         // 提取点评
-        r = /(\d+\.)\s*([\u4E00-\u9FA5]+[题法][.])/g
+        r = /(\d+\.)\s*([\u4E00-\u9FA5]+[题][.])/g
         m = analysis.match(r)
         if (m && m.length > 2){
             const u3 = helper.getEditor(3)
@@ -2972,6 +2972,22 @@ function registerQuestionSave(){
 
         // 提取知识点
         //r = /(\d+\.)\s*本*题*考查([\u4E00-\u9FA5、]+)[.]/g
+        r = /(\d+\.)\s*本*题*考查([\u4E00-\u9FA5、]+)[.。]/g
+        m = analysis.match(r)
+        if (m && m.length > 2){
+            const u4 = helper.getEditor(4)
+            let knowledge = '<p>'
+            let e = r.exec(analysis)
+            while(e){
+                knowledge += e[1] + e[2] + '</p><hr/>'
+                e = r.exec(analysis)
+            }
+            knowledge = knowledge.slice(0,-5)
+            u4.setContent(knowledge, u4.getContent())
+            analysis = analysis.replace(r, '$1')
+        }
+
+        /*
         r = /\s*本*题*考查([\u4E00-\u9FA5、]+)[.。]/g
         m = analysis.match(r)
         if (m && m.length){
@@ -2987,7 +3003,7 @@ function registerQuestionSave(){
             knowledge = knowledge.slice(0,-1)
             u4.setContent(knowledge, u4.getContent())
             analysis = analysis.replace(r, '')
-        }
+        } */
 
         u2.setContent(analysis, false)
     })
