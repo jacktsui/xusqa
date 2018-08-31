@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.0.034
+// @version      1.0.035
 // @description  有道搜题，录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -30,7 +30,7 @@
 (function() {
     'use strict';
 
-    const ver = 'Ver 1.0.034'
+    const ver = 'Ver 1.0.035'
 
 /**
  * 放前面方便统一更换
@@ -68,7 +68,7 @@ const SE = {
     '政治-初中': NaN,
     '地理-初中': NaN,
     '数学-小学': 0.5,
-    '英语-小学': NaN,
+    '英语-小学': 0.4,
     '语文-小学': 1.1,
     '历史-小学': NaN,
     '政治-小学': NaN,
@@ -585,7 +585,7 @@ const PRERULE = [ // 处理的是html全文,主要处理需要上下文关系的
         }
     }, '英语', '0'],
 
-    [/[A-G]{4,}/,function(_){ // 英语答案 ABCDABCD,多于4个开始执行
+    [/[A-GT]{4,}/,function(_){ // 英语答案 ABCDABCD,多于4个开始执行
         let str = '1.' + _[0]
         for(let i = 1, l = _.length; i < l; i++){
             str += DIC.HR + (i+1) + '.' + _[i]
