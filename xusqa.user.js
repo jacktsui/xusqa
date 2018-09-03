@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.0.036
+// @version      1.0.037
 // @description  有道搜题，录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -30,7 +30,7 @@
 (function() {
     'use strict';
 
-    const ver = 'Ver 1.0.036'
+    const ver = 'Ver 1.0.037'
 
 /**
  * 放前面方便统一更换
@@ -331,7 +331,7 @@ const RULE = [
 ]
 
 /**
- * 处理的是ORC返回的结果,最先执行,只对框的准有效,自动执行
+ * 处理的是ORC返回的结果,最先执行,只对框的狠有效,自动执行
  * 先留出接口,备用,暂时用不到
  */
 const ORCRULE = [
@@ -608,7 +608,7 @@ const STR = {
         TASK_PREMONTH: '上月结算',
         TASK_PAST: '往期结算',
         EXTRA_TASK_SQUARE: '任务广场',
-        EXTRA_OCR: '框的准',
+        EXTRA_OCR: '框的狠',
         ONEKEY_GET_TASK: '一键领取',
         ONEKEY_FORMAT: '一键整理',
         SNAP: '截图',
@@ -720,8 +720,8 @@ const DOM = {
 
     ANSWER_BOX: '#app > div > div.main-content > div > div > div.quesion-answer-con > div:nth-child(4)',
     ANSWER_BOX_CLOSE: 'div.fixed-box_header a.fixed-box_close',
-    ANSWER_BOX_JUMP_INPUT: 'div.fixed-box_header div.fixed-box_pages input',
-    ANSWER_BOX_JUMP_BTN: 'div.fixed-box_header div.fixed-box_pages button',
+    ANSWER_BOX_JUMP_INPUT: '> div > div.fixed-box_pages > div > span > div > input',
+    //ANSWER_BOX_JUMP_BTN: 'div.fixed-box_header div.fixed-box_pages button',
     ANSWER_BOX_ADD_CUT: 'div.fixed-box_header > div.region-con > a.add-cut',
     ANSWER_BOX_LATEX_BTN: '> div > div.region-con > a.submit-region.latex',
     ANSWER_BOX_MIN: 'div.fixed-box_header a.fixed-box_min',
@@ -775,7 +775,8 @@ const TPL = {
     SNAP_QUESTION_HINT: '<span style="margin-left: 266px;display:inline-block;color: #f56c6c;border-right: 1px solid #f56c6c;padding: 5px;border-top: 1px solid #f56c6c;">助手提示: 在下面题目图片上可以直接框选截图哦</span>',
     SNAP_QUESTION_BUTTON: '<a href="javascript:;" class="xusqa-btn" title="助手提示: 框选以后可以点我直接截图" style="display: inline-block;float: right;background-color: #f78989;color: white;font-size: 16px;width: 60px;text-align: center;position: absolute;left: 561px;top: 324px;">截图</a>',
     GLASS: '<canvas " width="100px" height="100px" style="position: absolute;top: 0px;left: 0px;z-index: 9527;border: 1px solid #67c23a;border-radius: 10px; box-shadow: 0 3px 15px #67c23a;"></canvas>',
-    SQUARE_UPDATE: '<div data-v-403910d4 id="xusqa-square-update" class="process-task-con">最后刷新时间：<a  style="padding: 0px 10px;color: #f93e53;">　刚刚　</a><a href="javascript:;" class="xusqa-a-button xusqa-btn">　刷新　</a><a href="javascript:;" class="xusqa-a-button xusqa-btn">分享到QQ</a></div>',
+    LOCATE_ANSWER: '<a href="javascript:;" class="xusqa-btn" style="margin-left: 30px;display: inline-block;padding: 3px 10px;border: 1px solid #c0c4cc;border-radius: 3px;color: #606266;font-size: 13px;" title="{title}">{text}<a/>',
+    SQUARE_UPDATE: '<div data-v-403910d4 id="xusqa-square-update" class="process-task-con">最后刷新时间：<a  style="padding: 0px 10px;color: #f93e53;" >　刚刚　</a><a href="javascript:;" class="xusqa-a-button xusqa-btn">　刷新　</a><a href="javascript:;" class="xusqa-a-button xusqa-btn">分享到QQ</a></div>',
     ACC_INFO: '<div style=" font-size: 12px; font-style: italic; margin-bottom: 16px;">以上数据仅供参考.</div>',
     THIS_ACC_INFO: '<div style=" font-size: 12px; font-style: italic; margin-bottom: 16px;">本月报告(包括上月未结算任务),数据仅供参考.</div>',
     EDIT_PAGE_SAVE: '<a href="javascript:;" class="xusqa-btn" style="display: inline-block;float: right;background-color: #337ab7;color: white;font-size: 16px;padding: 2px 16px;margin-left: 16px;" title="助手提示: 录题过程中可以临时保存当前录入内容，防止丢失">暂存题目</a>',
@@ -1474,7 +1475,8 @@ util.addStyle(util.cmt(function(){/*!CSS
 #answerCutBox {
     top: 182px;
 }
-.box_min .region-con[data-v-22e7772e] {
+
+.box_min .region-con[data-v-ce69c62c] {
     display: block;
 }
 
@@ -2772,7 +2774,7 @@ function doExtendUE(){
 function registerLocateButton(pot){
     stage.scroll.flag = 0
     const v = pot.$box[0].__vue__
-    helper.cloneButton(pot.$jmp, STR.MODULE.LOCATE_ANSWER, STR.HINT.LOCATE_ANSWER).insertAfter(pot.$jmp).on('click', function() {
+    $(TPL.LOCATE_ANSWER.format({text: STR.MODULE.LOCATE_ANSWER, title: STR.HINT.LOCATE_ANSWER})).insertAfter(pot.$ipt).on('click', function() {
         if (!S.hasOwnProperty('xusqa_locatePosition')){
             helper.msg.error(STR.LOCATE_ANSWER.LOCATE_PAGENO_ERROR)
             return
@@ -2785,7 +2787,8 @@ function registerLocateButton(pot){
             // https://segmentfault.com/q/1010000004427798
             pot.$ipt[0].value = pos.currentPage
             pot.$ipt[0].dispatchEvent(new window.Event('input'))
-            pot.$jmp.click()
+            v.pageChange(pos.currentPage)
+            //pot.$jmp.click()
             
             const ctn = $(pot.ctn)
             ctn.scrollTop(pos.scrollTop || 0)
@@ -3401,7 +3404,7 @@ function doExtendEditPage(){
 
         registerLocateButton({
             $box: $boxA,
-            $jmp: $boxA.find(DOM.ANSWER_BOX_JUMP_BTN),
+            //$jmp: $boxA.find(DOM.ANSWER_BOX_JUMP_BTN),
             $ipt: $boxA.find(DOM.ANSWER_BOX_JUMP_INPUT),
             ctn: DOM.ANSWER_BOX_IMG_CTN,
             cls: DOM.ANSWER_BOX_CLOSE
@@ -3489,7 +3492,7 @@ function leaveQuestionInput(to,from){
             textbookId: v.textbookid,
             scrollTop: ctn.scrollTop || stage.scroll.top,
             scrollLeft: ctn.scrollLeft || stage.scroll.left,
-            currentPage: v.currentPage,
+            currentPage: v.currentPageno,
         }
         S.xusqa_locatePosition = JSON.stringify(pos)
     }
@@ -3527,15 +3530,14 @@ function registerQjudgeEncircle(){
 
     const $pager = $('#app > div > div.main-content > div > div > div.search-btns > div > div > div.fixed-box_pages > div > ul')
     if ($pager.length && $pager[0].__vue__){
+        const v = $pager[0].__vue__
         let $a
-        let qPageIndex
-        $pager[0].__vue__.$watch('currentPage',function(newValue, oldValue){
+        let qPageIndex //v.$parent.currentPage
+        //const $box = $('#app > div > div.main-content > div > div > div.search-btns > div')
+        //qPageIndex = $box[0].__vue__.pageno
+        v.$watch('currentPage',function(newValue, oldValue){
             if (qPageIndex === undefined){
-                if (oldValue === 1){
-                    qPageIndex = 1
-                } else {
-                    qPageIndex = newValue
-                }
+                qPageIndex = newValue
             }
             if (qPageIndex === newValue){
                 $a.show()
@@ -3551,7 +3553,7 @@ function registerQjudgeEncircle(){
             }
             const $qimg = $('#app > div > div.main-content > div > div > div.edit-con > div.search-con > div > img')
             const src = $qimg[0].src
-            const scale = /*$img[0].width*/ 941 / $img[0].naturalWidth
+            const scale = /*$img[0].width*/ 960 / $img[0].naturalWidth
             //http://nos.netease.com/yd-searchq/968c7132-c967-41a4-9803-d59e98713649.jpg?imageView&crop=41_978_1594_217
             const m = src.match(/crop=(\d+)_(\d+)_(\d+)_(\d+)/)
             const x = Math.round(parseInt(m[1]) * scale)
@@ -3608,7 +3610,7 @@ function registerOption(){
     $switch_newNum.prop('checked', O.newNum).on('change', function(){
         O.newNum = $switch_newNum.prop('checked')
     })
-    const $switch_autoSliceAnalysis = $(TPL.OPTIONS_SWITCH.format({title: '框的准自动分割答案和解析'})).appendTo($option).find('input')
+    const $switch_autoSliceAnalysis = $(TPL.OPTIONS_SWITCH.format({title: '框的狠自动分割答案和解析'})).appendTo($option).find('input')
     $switch_autoSliceAnalysis.prop('checked', O.autoSliceAnalysis).on('change', function(){
         O.autoSliceAnalysis = $switch_autoSliceAnalysis.prop('checked')
     })
