@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.0.035
+// @version      1.0.036
 // @description  有道搜题，录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -30,7 +30,7 @@
 (function() {
     'use strict';
 
-    const ver = 'Ver 1.0.035'
+    const ver = 'Ver 1.0.036'
 
 /**
  * 放前面方便统一更换
@@ -39,6 +39,7 @@
  * 备用cdn服务器
  * https://cdn.bootcss.com/
  * https://cdn.staticfile.org/
+ * https://cdnjs.cloudflare.com/ajax/libs
  *
  */
 const CDN = 'https://cdn.bootcss.com/'
@@ -711,7 +712,7 @@ const DOM = {
     QUESTION_CON: '#app > div > div.main-content > div > div > div.quesion-answer-con',
     QUESTION_BOX: '#app > div > div.main-content > div > div > div.quesion-answer-con > div:nth-child(3)',
     QUESTION_BOX_ADD_CUT: 'div.region-con > a.add-cut',
-    QUESTION_BOX_LATEX_BUTTON: 'div.region-con a.submit-region.latex',
+    QUESTION_BOX_LATEX_BUTTON: '> div > div.region-con > a.submit-region.latex',
     QUESTION_BOX_MIN: 'div.fixed-box_header a.fixed-box_min',
     QUESTION_BOX_IMG_CTN: 'div.fixed-box_container.has-cut-box',
     QUESTION_BOX_IMG: 'div.fixed-box_container.has-cut-box img',
@@ -722,7 +723,7 @@ const DOM = {
     ANSWER_BOX_JUMP_INPUT: 'div.fixed-box_header div.fixed-box_pages input',
     ANSWER_BOX_JUMP_BTN: 'div.fixed-box_header div.fixed-box_pages button',
     ANSWER_BOX_ADD_CUT: 'div.fixed-box_header > div.region-con > a.add-cut',
-    ANSWER_BOX_LATEX_BTN: 'div.fixed-box_header div.region-con a.submit-region.latex',
+    ANSWER_BOX_LATEX_BTN: '> div > div.region-con > a.submit-region.latex',
     ANSWER_BOX_MIN: 'div.fixed-box_header a.fixed-box_min',
     ANSWER_BOX_IMG_CTN: '#answerCutBox',
     ANSWER_BOX_IMG: '#answerCutBox > img',
@@ -1477,11 +1478,11 @@ util.addStyle(util.cmt(function(){/*!CSS
     display: block;
 }
 
-.latex[data-v-1e6a8d39] {
+.latex[data-v-ce69c62c] {
     margin-right: 16px;
 }
 
-.latex[data-v-22e7772e] {
+.latex[data-v-69bf5445] {
     margin-right: 16px;
 }
 
