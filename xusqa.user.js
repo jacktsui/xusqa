@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.0.037
+// @version      1.0.038
 // @description  有道搜题，录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -30,7 +30,7 @@
 (function() {
     'use strict';
 
-    const ver = 'Ver 1.0.037'
+    const ver = 'Ver 1.0.038'
 
 /**
  * 放前面方便统一更换
@@ -121,7 +121,12 @@ const DIC = {
     P: '</p><p>',
     ULB: '<span style="text-decoration: underline;">', ULE: '</span>',
 }
-
+let RULEFLAG
+function setRuleFlag(html){
+    if (/数列/.test(html)){
+        RULEFLAG = 1001
+    }
+}
 const USRRULE = []
 const RULE = [
     /*\
@@ -282,6 +287,12 @@ const RULE = [
             return str.replace(sm, sp)
         }
     }, '化学'],
+    [function(/*str*/){
+        if( RULEFLAG === 1001){
+            return [[/([abS])([n]|\d+)/g, '$1<sub>$2</sub>'], ]
+        }
+    },'数学'],
+    [/(log)(\d+)/g, '$1<sub>$2</sub>', '数学'],
     [/10(-[1-9][0-9]*)\s*([a-zA-Z])/g, '10<sup>$1</sup>$2'], // 10-2 mol
     [/([m])([2-3])/g, '$1<sup>$2</sup>', '物理'],
     [/(\d+)\s*[Xx×]\s*10([1-9][0-9]*)/g, '$1×10<sup>$2</sup>', '物理,化学'], // 识别科学计数法
@@ -648,7 +659,7 @@ const STR = {
         SUCCESS: '配置成功',
     },
     HINT: {
-        EXTRA_OCR: '助手提示: 用于替代系统[提交文字框选]功能,原框选位置不准',
+        EXTRA_OCR: '助手提示: 增强框选功能,自动填充答案和解析等',
         LOCATE_ANSWER: '助手提示: 第一次找到答案后，点我可以直接跳过去',
         QUESTION_BOX_ADD_CUT: '助手提示: 现在点击新增框选会自动定位到题目',
         ANSWER_BOX_ADD_CUT: '助手提示: 修复新增框选不在可视范围的bug',
@@ -2745,13 +2756,17 @@ function doExtendUE(){
                 }
 
                 const cont = me.document.body
-                const root = U.htmlparser(preFormat(cont.innerHTML))
+                const html = cont.innerHTML
+                setRuleFlag(html)
+                const root = U.htmlparser(preFormat(html))
                 root.traversal(function(node) {
                     if (node.type === 'text') {
                         node.data = format(node.data)
                     }
                 })
                 cont.innerHTML = afterFormat(root.toHtml())
+
+                RULEFLAG = undefined
             }
         })
 
@@ -3535,7 +3550,7 @@ function registerQjudgeEncircle(){
         let qPageIndex //v.$parent.currentPage
         //const $box = $('#app > div > div.main-content > div > div > div.search-btns > div')
         //qPageIndex = $box[0].__vue__.pageno
-        v.$watch('currentPage',function(newValue, oldValue){
+        v.$watch('currentPage',function(newValue/*, oldValue*/){
             if (qPageIndex === undefined){
                 qPageIndex = newValue
             }
