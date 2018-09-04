@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.0.038
+// @version      1.0.039
 // @description  有道搜题，录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -30,7 +30,7 @@
 (function() {
     'use strict';
 
-    const ver = 'Ver 1.0.038'
+    const ver = 'Ver 1.0.039'
 
 /**
  * 放前面方便统一更换
@@ -786,7 +786,7 @@ const TPL = {
     SNAP_QUESTION_HINT: '<span style="margin-left: 266px;display:inline-block;color: #f56c6c;border-right: 1px solid #f56c6c;padding: 5px;border-top: 1px solid #f56c6c;">助手提示: 在下面题目图片上可以直接框选截图哦</span>',
     SNAP_QUESTION_BUTTON: '<a href="javascript:;" class="xusqa-btn" title="助手提示: 框选以后可以点我直接截图" style="display: inline-block;float: right;background-color: #f78989;color: white;font-size: 16px;width: 60px;text-align: center;position: absolute;left: 561px;top: 324px;">截图</a>',
     GLASS: '<canvas " width="100px" height="100px" style="position: absolute;top: 0px;left: 0px;z-index: 9527;border: 1px solid #67c23a;border-radius: 10px; box-shadow: 0 3px 15px #67c23a;"></canvas>',
-    LOCATE_ANSWER: '<a href="javascript:;" class="xusqa-btn" style="margin-left: 30px;display: inline-block;padding: 3px 10px;border: 1px solid #c0c4cc;border-radius: 3px;color: #606266;font-size: 13px;" title="{title}">{text}<a/>',
+    LOCATE_ANSWER: '<a href="javascript:;" class="xusqa-btn" style="margin-left: 30px;display: inline-block;padding: 3px 10px;border: 1px solid #c0c4cc;border-radius: 3px;color: #606266;font-size: 13px;background-color: white;" title="{title}">{text}<a/>',
     SQUARE_UPDATE: '<div data-v-403910d4 id="xusqa-square-update" class="process-task-con">最后刷新时间：<a  style="padding: 0px 10px;color: #f93e53;" >　刚刚　</a><a href="javascript:;" class="xusqa-a-button xusqa-btn">　刷新　</a><a href="javascript:;" class="xusqa-a-button xusqa-btn">分享到QQ</a></div>',
     ACC_INFO: '<div style=" font-size: 12px; font-style: italic; margin-bottom: 16px;">以上数据仅供参考.</div>',
     THIS_ACC_INFO: '<div style=" font-size: 12px; font-style: italic; margin-bottom: 16px;">本月报告(包括上月未结算任务),数据仅供参考.</div>',
@@ -1461,10 +1461,13 @@ util.addStyle(util.cmt(function(){/*!CSS
 body { background-color: var(--bgcolor) !important; }
 table { background-color: var(--bgcolor)}
 td { background-color: var(--bgcolor)}
-.fixed-box_content[data-v-1e6a8d39] {
+.fixed-box_content[data-v-69bf5445] {
     background: var(--bgcolor);
 }
-.fixed-box_content[data-v-22e7772e] {
+.fixed-box_content[data-v-69bf5445] {
+    background: var(--bgcolor);
+}
+.fixed-box_content[data-v-ce69c62c] {
     background: var(--bgcolor);
 }
 .el-table th, .el-table tr {
@@ -1499,7 +1502,7 @@ util.addStyle(util.cmt(function(){/*!CSS
     margin-right: 16px;
 }
 
-.submit-region[data-v-22e7772e] {
+.submit-region[data-v-ce69c62c] {
     overflow: hidden;
 }
 
@@ -3113,9 +3116,9 @@ function registerExtraOCR(pot){
         }
 
         const qe2 = helper.getEditor(2)
-        let m = cont.match(/[【]*(解析|点拨)[:】]*/g)
+        let m = cont.match(/[\[【]*(解析|点拨)[:】\]]*/g)
         if (m && m.length === 1){
-            m = cont.match(/[【]*(解析|点拨)[:】]*/)
+            m = cont.match(/[\[【]*(解析|点拨)[:】\]]*/)
             const answer = cont.slice(0,m.index).replace(/答案:*/,'')
             let analysis = cont.slice(m.index + m[0].length)
             m = analysis.match(/本*题*考查([\u4E00-\u9FA5、]+)[.,。]/)
