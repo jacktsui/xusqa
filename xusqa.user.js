@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.0.039
+// @version      1.0.040
 // @description  有道搜题，录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -30,7 +30,7 @@
 (function() {
     'use strict';
 
-    const ver = 'Ver 1.0.039'
+    const ver = 'Ver 1.0.040'
 
 /**
  * 放前面方便统一更换
@@ -3806,10 +3806,10 @@ function initVue(){
         V.$router.beforeEach((to, from, next) => {
             try{
                 if (from.name === 'QuestionInput') {
-                    leaveQuestionInput(to, from)
                     if (to.name === 'Login'){ // 录题提交的时候,如果转到重新登录的话保存题目
                         helper.saveQuestion()
                     }
+                    leaveQuestionInput(to, from)
                 }
             } catch(error){
                 C.error(error)
