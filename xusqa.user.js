@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.0.042
+// @version      1.0.043
 // @description  有道搜题，录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -31,7 +31,7 @@
 (function() {
     'use strict';
 
-    const ver = 'Ver 1.0.042'
+    const ver = 'Ver 1.0.043'
 
 /**
  * 放前面方便统一更换
@@ -1006,7 +1006,14 @@ const O = {/* jshint +W003 */
     },
     set navImage(navImage){
         this.setOptions('navImage', navImage)
-    }
+    },
+
+    get clearFlag(){
+        return this.opts.hasOwnProperty('clearFlag') ? this.opts.clearFlag : -1
+    },
+    set clearFlag(clearFlag){
+        this.setOptions('clearFlag', clearFlag)
+    },
 }
 
 // 暂存器,数据只在脚本运行期间有效,不保存
@@ -1396,6 +1403,19 @@ const helper = {/* jshint +W003 */
 
     getFirstDay: function(now){
         return new Date(now.getFullYear(), now.getMonth(), 1);
+    },
+
+    getPreMonthFirstDay: function(now){
+        let y = now.getFullYear()
+        let m = now.getMonth()
+        if (m === 0){
+            m = 11
+            y = y - 1
+        } else {
+            m = m - 1
+        }
+
+        return new Date(y, m, 1)
     },
 
     getPreMonth: function(now){
@@ -2224,6 +2244,7 @@ function myTaskReport() {
     const checkedTaskArray = helper.getCheckedTaskIdArray()
     const now = new Date()
     const firstDay = helper.getFirstDay(now)
+    const preMonthFirstDay = helper.getPreMonthFirstDay(now)
     const accMonth = 'xusqa_acc_month_' + helper.getPreMonth(now)
     const createAcc = !S.hasOwnProperty(accMonth)
     let tcc = 0
@@ -2270,11 +2291,9 @@ function myTaskReport() {
                         continue
                     }
                 }
-
-                if (t.salary){
+                if (t.finishedtime > preMonthFirstDay && t.salary){
                     tsc++
                 }
-
                 c(arrtask, t)
             }
         }
@@ -3973,15 +3992,23 @@ function execCommand(cmd){
 }
 
 /**
- * 清除旧版本的无用数据
+ * 清除旧版本的无用数据,修复异常
  */
 function doClear(){
-    S.removeItem('xusqa_taskId')
-    S.removeItem('xusqa_textbookId')
-    S.removeItem('xusqa_pageno')
-    S.removeItem('xusqa_scrollLeft')
-    S.removeItem('xusqa_scrollTop')
+    if (O.clearFlag !== 200){
+        S.removeItem('xusqa_taskId')
+        S.removeItem('xusqa_textbookId')
+        S.removeItem('xusqa_pageno')
+        S.removeItem('xusqa_scrollLeft')
+        S.removeItem('xusqa_scrollTop')
+
+        // 修复9月份结算数据异常
+        S.removeItem('xusqa_acc_month_201808')
+
+        O.clearFlag = 200
+    }
 }
+doClear()
 
 /*\
  * API 调用方法：
@@ -4067,6 +4094,13 @@ const xusqapi = {
     },
     set epColor(index){
         O.epColor = index
+    },
+
+    get clearFlag(){
+        return O.clearFlag
+    },
+    set clearFlag(clearFlag){
+        O.clearFlag = clearFlag
     },
     /*\
      * method:
