@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.0.041
+// @version      1.0.042
 // @description  有道搜题，录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -17,7 +17,7 @@
 // @note         一键整理为实验性功能
 // @note         编写原则: 助手尽量保持系统原有行为和样貌,修改过的地方都打了标记
 // @note         未来计划: 重点维护一键整理功能,提高录题效率是脚本的终极目标
-// @note         最近更新：2018.09.04 添加个人中心脚本配置(护眼色等)),其他优化和bug修复
+// @note         最近更新：2018.09.04 添加个人中心脚本配置(护眼色等)),本月报告及其他优化和bug修复
 // @note         最近更新：2018.08.11 框的准自动切割答案和解析
 // @note         最近更新：2018.08.05 添加题目保存和恢复功能及其他小功能
 // @note         最近更新：2018.07.23 添加万能点(`)功能
@@ -31,7 +31,7 @@
 (function() {
     'use strict';
 
-    const ver = 'Ver 1.0.041'
+    const ver = 'Ver 1.0.042'
 
 /**
  * 放前面方便统一更换
@@ -790,7 +790,7 @@ const TPL = {
     LOCATE_ANSWER: '<a href="javascript:;" class="xusqa-btn" style="margin-left: 30px;display: inline-block;padding: 3px 10px;border: 1px solid #c0c4cc;border-radius: 3px;color: #606266;font-size: 13px;background-color: white;" title="{title}">{text}<a/>',
     SQUARE_UPDATE: '<div data-v-403910d4 id="xusqa-square-update" class="process-task-con">最后刷新时间：<a  style="padding: 0px 10px;color: #f93e53;" >　刚刚　</a><a href="javascript:;" class="xusqa-a-button xusqa-btn">　刷新　</a><a href="javascript:;" class="xusqa-a-button xusqa-btn">分享到QQ</a></div>',
     ACC_INFO: '<div style=" font-size: 12px; font-style: italic; margin-bottom: 16px;">以上数据仅供参考.</div>',
-    THIS_ACC_INFO: '<div style=" font-size: 12px; font-style: italic; margin-bottom: 16px;">本月报告(包括上月未结算任务),数据仅供参考.</div>',
+    THIS_ACC_INFO: '<div style=" font-size: 12px; font-style: italic; margin-bottom: 16px;">{remark}数据仅供参考.</div>',
     EDIT_PAGE_SAVE: '<a href="javascript:;" class="xusqa-btn" style="display: inline-block;float: right;background-color: #337ab7;color: white;font-size: 16px;padding: 2px 16px;margin-left: 16px;" title="助手提示: 录题过程中可以临时保存当前录入内容，防止丢失">暂存题目</a>',
     EDIT_PAGE_RESTORE: '<a href="javascript:;" class="xusqa-btn" style="display: inline-block;float: right;background-color: gray;color: white;font-size: 16px;padding: 2px 16px;margin-left: 16px;" title="助手提示: 恢复为最后一次保存时的状态">恢复题目</a>',
     EDIT_PAGE_SAVE_SAMPLE: '<a href="javascript:;" style="color: #337ab7;font-size: 16px;margin-left: 16px;float: right" title="助手提示: 收集样本,帮助作者优化一键整理,一定要在整理前收集">收集样本</a>',
@@ -1392,6 +1392,10 @@ const helper = {/* jshint +W003 */
         }
 
         return false
+    },
+
+    getFirstDay: function(now){
+        return new Date(now.getFullYear(), now.getMonth(), 1);
     },
 
     getPreMonth: function(now){
@@ -2213,38 +2217,23 @@ function preMonthReport() {
  */
 function myTaskReport() {
     const arrtask = {}
+    const arrTaskThisMonth = {}
     let totalPages
 
     const closeTaskId = [] // 保存已经结算的数据
     const checkedTaskArray = helper.getCheckedTaskIdArray()
     const now = new Date()
+    const firstDay = helper.getFirstDay(now)
     const accMonth = 'xusqa_acc_month_' + helper.getPreMonth(now)
     const createAcc = !S.hasOwnProperty(accMonth)
     let tcc = 0
     let tsc = 0
 
     function doCollect(task) {
-        let cc = 0
-        for (let t of task) {
-            if ((t.finishedcount === 0 || t.salary)){
-                if (createAcc){
-                    const id = t.id
-                    if (!checkedTaskArray.length || (checkedTaskArray.indexOf(id) === -1)){
-                        closeTaskId.push(id)
-                    }
-                } else {
-                    cc++
-                    continue
-                }
-            }
-
-            if (t.salary){
-                tsc++
-            }
-
+        function c(arr, t){
             const key = t.subject + '-' + t.education
-            if (!arrtask.hasOwnProperty(key)) {
-                arrtask[key] = {
+            if (!arr.hasOwnProperty(key)) {
+                arr[key] = {
                     totalcount: 0,
                     finishedcount: 0,
                     returntimes: 0,
@@ -2255,15 +2244,39 @@ function myTaskReport() {
                     salary: 0.0
                 }
             }
-            arrtask[key].totalcount += t.totalcount
-            arrtask[key].finishedcount += t.finishedcount
-            arrtask[key].returntimes += (t.status === '已退回' ? 1 : 0)
+            arr[key].totalcount += t.totalcount
+            arr[key].finishedcount += t.finishedcount
+            arr[key].returntimes += (t.status === '已退回' ? 1 : 0)
             const ic = parseInt(t.remark.match(/\d+/))
-            arrtask[key].inputcount += ic// 录完2题
+            arr[key].inputcount += ic// 录完2题
             const [d0,d1] = t.remark2.match(/\d+/g) // 已被审核4题，通过4题
-            arrtask[key].checkcount += parseInt(d0)
-            arrtask[key].passcount += parseInt(d1)
-            arrtask[key].salary += t.salary
+            arr[key].checkcount += parseInt(d0)
+            arr[key].passcount += parseInt(d1)
+            arr[key].salary += t.salary
+        }
+        let cc = 0
+        for (let t of task) {
+            if (t.finishedtime > firstDay){
+                c(arrTaskThisMonth, t)
+            } else {
+                if ((t.finishedcount === 0 || t.salary)){
+                    if (createAcc){
+                        const id = t.id
+                        if (!checkedTaskArray.length || (checkedTaskArray.indexOf(id) === -1)){
+                            closeTaskId.push(id)
+                        }
+                    } else {
+                        cc++
+                        continue
+                    }
+                }
+
+                if (t.salary){
+                    tsc++
+                }
+
+                c(arrtask, t)
+            }
         }
 
         if (cc === task.length){
@@ -2276,82 +2289,108 @@ function myTaskReport() {
         return true
     }
 
-    function createTable(result) {
-        let nTotal = 0, nFinished = 0, nReturnTimes = 0, nInput = 0, nCheck = 0, nPass = 0, dPreSalary=0.0, dSalary=0.0
-        let nCheck2 = 0, nPass2 = 0
-        let thtm = '<table style="margin: 10px 20px 10px 0px;font-size: 14px;border-collapse:collapse;;border: none;">'
+    function createTable() {
+        let nsTotal = 0, nsFinished = 0, nsReturnTimes = 0, nsInput = 0, nsCheck = 0, nsPass = 0, dsPreSalary=0.0, dsSalary=0.0
+        function c(result, title){
+            let nTotal = 0, nFinished = 0, nReturnTimes = 0, nInput = 0, nCheck = 0, nPass = 0, dPreSalary=0.0, dSalary=0.0
+            let tr = ''
+            tr += '<tr style="border-bottom:1px solid #808080;">'
+            tr += '<th>' + title + '</th><th>总量</th><th>完成量</th><th>已退回</th><th>录入量</th><th>已审核</th><th>通过</th><th>通过率</th></th><th>劳务预估</th><th>劳务结算</th>'
+            tr += '</tr>';
 
-        thtm += '<caption>查询时间: ' + new Date().format('yyyy-MM-dd hh:mm:ss') + '</caption>'
-        thtm += '<tr style="border-bottom:2px solid #808080;">'
-        thtm += '<th>&nbsp;</th><th>总量</th><th>完成量</th><th>已退回</th><th>录入量</th><th>已审核</th><th>通过</th><th>通过率</th></th><th>劳务预估</th><th>劳务结算</th>'
-        thtm += '</tr>';
+            for (let key in result) {
+                nTotal += result[key].totalcount
+                nFinished += result[key].finishedcount
+                nReturnTimes += result[key].returntimes
+                nInput += result[key].inputcount
+                nCheck += result[key].checkcount
+                nPass += result[key].passcount
+                let passrate = (result[key].passcount / result[key].checkcount)
+                passrate = passrate > 1 ? 1 : passrate //
+                dSalary += result[key].salary
 
-        for (let key in result) {
-            nTotal += result[key].totalcount
-            nFinished += result[key].finishedcount
-            nReturnTimes += result[key].returntimes
-            nInput += result[key].inputcount
-            nCheck += result[key].checkcount
-            nPass += result[key].passcount
-            let passrate = (result[key].passcount / result[key].checkcount)
-            passrate = passrate > 1 ? 1 : passrate //
-            dSalary += result[key].salary
+                result[key].price = SE[key]
+                result[key].presalary = result[key].passcount * SE[key] + // 通过的 数量*价格
+                    //(result[key].checkcount - result[key].passcount) * SE[key] * (1 - 0.2) + // 未审核通过的题扣除20%
+                    (result[key].checkcount - result[key].passcount) * SE[key] * (1 - 0.0) +
+                    (result[key].finishedcount - result[key].inputcount) * 0.05 // 判好题的 数量*0.05
 
-            if (result[key].salary > 0){
-                nCheck2 += result[key].checkcount
-                nPass2 += result[key].passcount
+                // 未审核的按照当前通过率预估
+                if (result[key].inputcount >= result[key].checkcount) { // why appear, i don't know
+                    let notcheck = result[key].inputcount - result[key].checkcount
+                    let prepass = (notcheck * (passrate ? passrate : 0)).toFixed(0)
+                    result[key].presalary += prepass * SE[key] + (notcheck - prepass) * SE[key] * 0.8
+                }
+
+                dPreSalary += result[key].presalary || 0
+
+                tr += '<tr class="xusqa-c-message--tr" style="border-top:1px solid #D3D3D3;">' +
+                    '<td style="text-align: center;">' + key + '</td>' + // ex. 高中-数学
+                    '<td style="text-align: right;">' + result[key].totalcount + '</td>' + // 总量
+                    '<td style="text-align: right;">' + result[key].finishedcount + '</td>' + // 完成量
+                    '<td style="text-align: right;">' + result[key].returntimes + '</td>' + // 退回次数
+                    '<td style="text-align: right;">' + result[key].inputcount + '</td>' + // 录入量
+                    '<td style="text-align: right;">' + result[key].checkcount + '</td>' + // 已审核
+                    '<td style="text-align: right;">' + result[key].passcount + '</td>' + // 通过
+                    '<td style="text-align: right;">' + (passrate * 100).toFixed(2) + (passrate ? '%' : '') + '</td>' + // 通过率
+                    '<td style="text-align: right;">' + (result[key].presalary).toFixed(2) + '</td>' + // 劳务费预估
+                    '<td style="text-align: right;">' + (result[key].salary).toFixed(2) + '</td>' + // 劳务结算
+                    '</tr>'
             }
 
-            result[key].price = SE[key]
-            result[key].presalary = result[key].passcount * SE[key] + // 通过的 数量*价格
-                //(result[key].checkcount - result[key].passcount) * SE[key] * (1 - 0.2) + // 未审核通过的题扣除20%
-                (result[key].checkcount - result[key].passcount) * SE[key] * (1 - 0.0) +
-                (result[key].finishedcount - result[key].inputcount) * 0.05 // 判好题的 数量*0.05
+            let passrate = nPass / nCheck
+            //dPreSalary = (nInput >=500 && passrate > 0.8) ? (dPreSalary * 1.2) : dPreSalary // 奖励条件：录满500题，通过率超过80%,单价加成1.2倍
 
-            // 未审核的按照当前通过率预估
-            if (result[key].inputcount >= result[key].checkcount) { // why appear, i don't know
-                let notcheck = result[key].inputcount - result[key].checkcount
-                let prepass = (notcheck * (passrate ? passrate : 0)).toFixed(0)
-                result[key].presalary += prepass * SE[key] + (notcheck - prepass) * SE[key] * 0.8
-            }
+            //if (nCheck2 >=500 && nPass2 / nCheck2 > 0.8){ // 满足奖励条件
+            //    dSalary = dSalary * 1.2
+            //}
 
-            dPreSalary += result[key].presalary || 0
-
-            thtm += '<tr class="xusqa-c-message--tr" style="border-bottom:1px solid #D3D3D3;">' +
-                '<td style="text-align: center;">' + key + '</td>' + // ex. 高中-数学
-                '<td style="text-align: right;">' + result[key].totalcount + '</td>' + // 总量
-                '<td style="text-align: right;">' + result[key].finishedcount + '</td>' + // 完成量
-                '<td style="text-align: right;">' + result[key].returntimes + '</td>' + // 退回次数
-                '<td style="text-align: right;">' + result[key].inputcount + '</td>' + // 录入量
-                '<td style="text-align: right;">' + result[key].checkcount + '</td>' + // 已审核
-                '<td style="text-align: right;">' + result[key].passcount + '</td>' + // 通过
-                '<td style="text-align: right;">' + (passrate * 100).toFixed(1) + (passrate ? '%' : '') + '</td>' + // 通过率
-                '<td style="text-align: right;">' + (result[key].presalary).toFixed(2) + '</td>' + // 劳务费预估
-                '<td style="text-align: right;">' + (result[key].salary).toFixed(2) + '</td>' + // 劳务结算
+            nsTotal += nTotal
+            nsFinished += nFinished
+            nsReturnTimes += nReturnTimes
+            nsInput += nInput
+            nsCheck += nCheck
+            nsPass += nPass
+            dsPreSalary += dPreSalary
+            dsSalary += dSalary
+            tr += '<tr style="border-top:1px solid #808080;font-style: italic;">' +
+                '<td style="text-align: center;">小计:</td>' +
+                '<td style="text-align: right;">' + nTotal + '</td>' +
+                '<td style="text-align: right;">' + nFinished + '</td>' +
+                '<td style="text-align: right;">' + nReturnTimes + '</td>' +
+                '<td style="text-align: right;">' + nInput + '</td>' +
+                '<td style="text-align: right;">' + nCheck + '</td>' +
+                '<td style="text-align: right;">' + nPass + '</td>' +
+                '<td style="text-align: right;">' + (passrate * 100).toFixed(1) + '%</td>' +
+                '<td style="text-align: right;">' + dPreSalary + '</td>' +
+                '<td style="text-align: right;">' + dSalary.toFixed(2) + '</td>' +
                 '</tr>'
+
+            return tr
         }
 
-        let passrate = nPass / nCheck
-        dPreSalary = (nInput >=500 && passrate > 0.8) ? (dPreSalary * 1.2) : dPreSalary // 奖励条件：录满500题，通过率超过80%,单价加成1.2倍
-
-        if (nCheck2 >=500 && nPass2 / nCheck2 > 0.8){ // 满足奖励条件
-            dSalary = dSalary * 1.2
-        }
-
-        thtm += '<tr style="border-top:2px solid #808080;font-weight:bold">' +
-            '<td style="text-align: center;">全部</td>' +
-            '<td style="text-align: right;">' + nTotal + '</td>' +
-            '<td style="text-align: right;">' + nFinished + '</td>' +
-            '<td style="text-align: right;">' + nReturnTimes + '</td>' +
-            '<td style="text-align: right;">' + nInput + '</td>' +
-            '<td style="text-align: right;">' + nCheck + '</td>' +
-            '<td style="text-align: right;">' + nPass + '</td>' +
-            '<td style="text-align: right;">' + (passrate * 100).toFixed(1) + '%</td>' +
-            '<td style="text-align: right;">' + dPreSalary.toFixed(2) + '</td>' +
-            '<td style="text-align: right;">' + dSalary.toFixed(2) + '</td>' +
+        let thtm = '<table style="margin: 10px 20px 10px 0px;font-size: 14px;border-collapse:collapse;;border: none;">'
+        thtm += '<caption>查询时间: ' + new Date().format('yyyy-MM-dd hh:mm:ss') + '</caption>'
+        thtm += c(arrTaskThisMonth, '本月录入')
+        thtm += c(arrtask, '上月未结')
+        let b = nsCheck >=500 && nsPass / nsCheck > 0.8
+        dsPreSalary = b ? dsPreSalary*1.2 : dsPreSalary
+        dsSalary = b ? dsSalary*1.2 : dsSalary
+        thtm += '<tr style="border-top:1px solid #808080;font-weight:bold">' +
+            '<td style="text-align: center;">合计:</td>' +
+            '<td style="text-align: right;">' + nsTotal + '</td>' +
+            '<td style="text-align: right;">' + nsFinished + '</td>' +
+            '<td style="text-align: right;">' + nsReturnTimes + '</td>' +
+            '<td style="text-align: right;">' + nsInput + '</td>' +
+            '<td style="text-align: right;">' + nsCheck + '</td>' +
+            '<td style="text-align: right;">' + nsPass + '</td>' +
+            '<td style="text-align: right;">' + (nsPass/nsCheck * 100).toFixed(1) + '%</td>' +
+            '<td style="text-align: right;">' + dsPreSalary.toFixed(2) + '</td>' +
+            '<td style="text-align: right;">' + dsSalary.toFixed(2) + '</td>' +
             '</tr>'
 
         thtm += '</table>'
+        thtm += TPL.THIS_ACC_INFO.format({remark: b ? '(满足奖励条件,合计结算金额已×1.2)' : '(未满足奖励条件)'})
 
         return thtm
     }
@@ -2359,14 +2398,14 @@ function myTaskReport() {
     function collectionFinished(){
         helper.closeMessage()
         $.message({
-            message: createTable(arrtask) + TPL.THIS_ACC_INFO,
+            message: createTable(),
             showClose: true,
             autoClose: false
         })
 
         if (createAcc && tsc > 0){
             S[accMonth] = JSON.stringify(closeTaskId)
-            helper.msg.success('数据整理完毕,再次查询将显示本月报告(包括上月未结算任务)')
+            helper.msg.success('上月数据结算完成,再次查询将显示本月报告')
         }
     }
 
