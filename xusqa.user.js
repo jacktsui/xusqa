@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.0.043
+// @version      1.0.044
 // @description  有道搜题，录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -31,7 +31,7 @@
 (function() {
     'use strict';
 
-    const ver = 'Ver 1.0.043'
+    const ver = 'Ver 1.0.044'
 
 /**
  * 放前面方便统一更换
@@ -2236,7 +2236,7 @@ function preMonthReport() {
  * 服务器没有对连续请求做优化,查询一页再查询另一页会非常慢;异步查询会返回全部数据,没法控制停止时机
  */
 function myTaskReport() {
-    const arrtask = {}
+    let arrtask = {}
     const arrTaskThisMonth = {}
     let totalPages
 
@@ -2246,7 +2246,7 @@ function myTaskReport() {
     const firstDay = helper.getFirstDay(now)
     const preMonthFirstDay = helper.getPreMonthFirstDay(now)
     const accMonth = 'xusqa_acc_month_' + helper.getPreMonth(now)
-    const createAcc = !S.hasOwnProperty(accMonth)
+    const closeAcc = S.hasOwnProperty(accMonth)
     let tcc = 0
     let tsc = 0
 
@@ -2280,8 +2280,12 @@ function myTaskReport() {
             if (t.finishedtime > firstDay){
                 c(arrTaskThisMonth, t)
             } else {
+                if (closeAcc && S.hasOwnProperty('xusqa_acc_premonth')){
+                    arrtask = JSON.parse(S.xusqa_acc_premonth)
+                    return false
+                }
                 if ((t.finishedcount === 0 || t.salary)){
-                    if (createAcc){
+                    if (!closeAcc){
                         const id = t.id
                         if (!checkedTaskArray.length || (checkedTaskArray.indexOf(id) === -1)){
                             closeTaskId.push(id)
@@ -2422,9 +2426,14 @@ function myTaskReport() {
             autoClose: false
         })
 
-        if (createAcc && tsc > 0){
+        if (!closeAcc && tsc > 0){
             S[accMonth] = JSON.stringify(closeTaskId)
+            S.removeItem('xusqa_acc_premonth')
             helper.msg.success('上月数据结算完成,再次查询将显示本月报告')
+        }
+
+        if(closeAcc && !S.hasOwnProperty('xusqa_acc_premonth')){
+            S.xusqa_acc_premonth = JSON.stringify(arrtask)
         }
     }
 
