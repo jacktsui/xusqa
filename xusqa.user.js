@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.0.045
+// @version      1.0.046
 // @description  有道搜题，录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -31,7 +31,7 @@
 (function() {
     'use strict';
 
-    const ver = 'Ver 1.0.045'
+    const ver = 'Ver 1.0.046'
 
 /**
  * 放前面方便统一更换
@@ -2368,7 +2368,6 @@ function myTaskReport() {
 
             let passrate = nPass / nCheck
             //dPreSalary = (nInput >=500 && passrate > 0.8) ? (dPreSalary * 1.2) : dPreSalary // 奖励条件：录满500题，通过率超过80%,单价加成1.2倍
-
             //if (nCheck2 >=500 && nPass2 / nCheck2 > 0.8){ // 满足奖励条件
             //    dSalary = dSalary * 1.2
             //}
@@ -2389,8 +2388,8 @@ function myTaskReport() {
                 '<td style="text-align: right;">' + nInput + '</td>' +
                 '<td style="text-align: right;">' + nCheck + '</td>' +
                 '<td style="text-align: right;">' + nPass + '</td>' +
-                '<td style="text-align: right;">' + (passrate * 100).toFixed(1) + '%</td>' +
-                '<td style="text-align: right;">' + dPreSalary + '</td>' +
+                '<td style="text-align: right;">' + (passrate * 100).toFixed(2) + '%</td>' +
+                '<td style="text-align: right;">' + dPreSalary.toFixed(2) + '</td>' +
                 '<td style="text-align: right;">' + dSalary.toFixed(2) + '</td>' +
                 '</tr>'
 
@@ -2412,7 +2411,7 @@ function myTaskReport() {
             '<td style="text-align: right;">' + nsInput + '</td>' +
             '<td style="text-align: right;">' + nsCheck + '</td>' +
             '<td style="text-align: right;">' + nsPass + '</td>' +
-            '<td style="text-align: right;">' + (nsPass/nsCheck * 100).toFixed(1) + '%</td>' +
+            '<td style="text-align: right;">' + (nsPass/nsCheck * 100).toFixed(2) + '%</td>' +
             '<td style="text-align: right;">' + dsPreSalary.toFixed(2) + '</td>' +
             '<td style="text-align: right;">' + dsSalary.toFixed(2) + '</td>' +
             '</tr>'
