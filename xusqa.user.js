@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.0.044
+// @version      1.0.045
 // @description  有道搜题，录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -31,7 +31,7 @@
 (function() {
     'use strict';
 
-    const ver = 'Ver 1.0.044'
+    const ver = 'Ver 1.0.045'
 
 /**
  * 放前面方便统一更换
@@ -297,7 +297,7 @@ const RULE = [
     [/10(-[1-9][0-9]*)\s*([a-zA-Z])/g, '10<sup>$1</sup>$2'], // 10-2 mol
     [/([m])([2-3])/g, '$1<sup>$2</sup>', '物理'],
     [/(\d+)\s*[Xx×]\s*10([1-9][0-9]*)/g, '$1×10<sup>$2</sup>', '物理,化学'], // 识别科学计数法
-    [/\(([a-z])([0-2])(\s*,\s*[a-z])([0-2])(\s*\))/g, '$1<sub>$2</sub>$3<sub>$4</sub>$5', '数学'], // D(x1 ,x2) 识别坐标
+    [/(\([a-z])([0-2])(\s*,\s*[a-z])([0-2])(\s*\))/g, '$1<sub>$2</sub>$3<sub>$4</sub>$5', '数学'], // D(x1 ,x2) 识别坐标
     [/(\([\da-zA-Z+-]{2,}\))(\d+)/g, '$1<sup>$2</sup>', '数学'], // 括号角标,认为是上角标
     [/([a-z])([2-9][0-9]*)/g, '$1<sup>$2</sup>', '数学'], // 上下角标,执行简单规则:2以上认为是上角标,0和1认为是下角标,后续优化根据上下文关系
     [/([A-Z][A-Z])([2-9])/g, '$1<sup>$2</sup>', '数学'], // 比如直角三角形:AC2=AB2+BC2,上角标
@@ -1455,14 +1455,15 @@ function refreshNavImage(){
                 background: url(https://bing.ioliu.cn/v1/rand?w=180&h=1280);
             }
             .list li a[data-v-3f6ca4fa] {
-                background: linear-gradient(135deg, #333, #fff);
+                background: linear-gradient(30deg, #333, #fff);
                 -webkit-background-clip: text;
                 color: transparent;
             }
             .list li .router-link-active[data-v-3f6ca4fa] {
-                background: linear-gradient(135deg, #67c23a, #f56c6c);
+                background: linear-gradient(30deg, #67c23a, #f56c6c);
                 -webkit-background-clip: text;
                 color: transparent;
+                text-shadow: 6px 6px 18px #ffffffdd;
             }
             .show-btn[data-v-3f6ca4fa] {
                 background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACMAAAAjCAYAAAAe2bNZAAABGElEQVRYhe2WwU3EMBBF/4y404KTCrYEt0AFbAlsB3QAdBA6yXZABbZLoAJ/LnuBTIjXwkFa+Um+jKzMUyb+MdDpdG4QsYokkVLyANiiqXPuLLJsfWdtDiE8AXhpIXJ5/gnAa5GMqs4kz61kRGQ261aRbDKd742NMWnzrldQLBNjnBp6ACiUiTFOJB//XWYvkU2ZPUWAlaNdInLJovuapqr6BuCzSCaldCx4I9WhmHMWAM9FMs65KcbofxNS1Yec86FGRlUX6QtshN7PUY3jaO6v4erQG4bhKCLvfyWwxebR3ltoAcnFCiFMVr12WfQf5RprOXMg2exyJSInAB9FMjlnD8C3kiHpLZmtO3ATnHOz9c10Op2b5At2T8CLPCQKsgAAAABJRU5ErkJggg==) 50% 50% no-repeat;
@@ -1533,6 +1534,10 @@ util.addStyle(util.cmt(function(){/*!CSS
 
 .process-title[data-v-403910d4] {
     margin-right: 150px;
+}
+
+.item-cell-title[data-v-322b822a], .item-cell-value[data-v-322b822a] {
+    vertical-align: middle;
 }
 */
 }))
@@ -2428,11 +2433,11 @@ function myTaskReport() {
 
         if (!closeAcc && tsc > 0){
             S[accMonth] = JSON.stringify(closeTaskId)
-            S.removeItem('xusqa_acc_premonth')
+            S.removeItem('xusqa_acc_premonth') // 移除旧的未结算数据
             helper.msg.success('上月数据结算完成,再次查询将显示本月报告')
         }
 
-        if(closeAcc && !S.hasOwnProperty('xusqa_acc_premonth')){
+        if(closeAcc && !S.hasOwnProperty('xusqa_acc_premonth')){ // 保存新的结算数据
             S.xusqa_acc_premonth = JSON.stringify(arrtask)
         }
     }
@@ -3688,7 +3693,7 @@ function question(id){
 
 function registerOption(){
     const $option = $(TPL.OPTIONS).insertAfter($(DOM.POSITION))
-    const $number_glassMinZoom = $(TPL.OPTIONS_NUMBER.format({title: '放大镜最小放大倍数[1.0,5.0]',hint: '助手提示: 建议设为 1.5-3 倍', min:1, max:5, step:0.1})).appendTo($option).find('input')
+    const $number_glassMinZoom = $(TPL.OPTIONS_NUMBER.format({title: '放大镜最小放大倍数 [1,5]',hint: '助手提示: 建议设为 1.5-3 倍', min:1, max:5, step:0.1})).appendTo($option).find('input')
     $number_glassMinZoom.val(O.glassMinzoom).on('change', function(){
         O.glassMinzoom = $number_glassMinZoom.val()
     })
@@ -3711,7 +3716,7 @@ function registerOption(){
         O.navImage = $switch_navImage.prop('checked')
         refreshNavImage()
     })
-    const $switch_epColor = $(TPL.OPTIONS_BUTTON.format({title: '设置护眼色,点击切换'})).appendTo($option).find('button')
+    const $switch_epColor = $(TPL.OPTIONS_BUTTON.format({title: '设置护眼色,点击按钮切换'})).appendTo($option).find('button')
     $switch_epColor.find('span').text(EPCOLOR[O.epColor][0])
     $switch_epColor.on('click', function(){
         O.epColor = (O.epColor + 1) % EPCOLOR.length
