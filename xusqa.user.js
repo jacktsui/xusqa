@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.0.046
+// @version      1.0.047
 // @description  有道搜题，录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -31,7 +31,7 @@
 (function() {
     'use strict';
 
-    const ver = 'Ver 1.0.046'
+    const ver = 'Ver 1.0.047'
 
 /**
  * 放前面方便统一更换
@@ -797,10 +797,11 @@ const TPL = {
     EDIT_PAGE_CLEAR_KNOWLEDGE: '<a href="javascript:;" style="color: #337ab7;font-size: 16px;margin-left: 16px;float: right;" title="助手提示：清除无关知识点,下次同一任务的将会自动清除">清除</a>',
     EDIT_PAGE_MOVETO_ANALYSIS: '<a href="javascript:;" style="color: #337ab7;font-size: 16px;margin-left: 16px;float: right;" title="助手提示：将答案内容快速移动到解析">⇩</a>',
     EDIT_PAGE_PICKUP: '<a href="javascript:;" style="color: #337ab7;font-size: 16px;margin-left: 16px;" title="助手提示：从解析中快速提取答案、点评和知识点">⇵</a>',
-    OPTIONS:'<div data-v-322b822a class="list-item"><div data-v-322b822a class="item-title">助手配置'+ver+'</div></div>',
+    OPTIONS:'<div data-v-322b822a class="list-item"><div data-v-322b822a class="item-title">助手配置{ver}'+ver+'</div></div>',
     OPTIONS_SWITCH: '<div data-v-322b822a class="item-cell-con"><div data-v-322b822a class="item-cell"><div data-v-322b822a class="item-cell-title">{title}</div><div data-v-322b822a class="item-cell-value"><input class="switch switch-anim" type="checkbox" checked /></div></div></div>',
     OPTIONS_NUMBER: '<div data-v-322b822a class="item-cell-con"><div data-v-322b822a class="item-cell"><div data-v-322b822a class="item-cell-title">{title}</div><div data-v-322b822a class="item-cell-value"><input type="number" min="{min}" max="{max}" step="{step}" title="{hint}" /></div></div></div>',
     OPTIONS_BUTTON: '<div data-v-322b822a class="item-cell-con"><div data-v-322b822a class="item-cell"><div data-v-322b822a class="item-cell-title">{title}</div><div data-v-322b822a class="item-cell-value"><button data-v-322b822a="" type="button" class="el-button el-button--info el-button--small"><span>{text}</span></button></div></div></div>',
+    OPTIONS_INPUTBUTTON: '<div data-v-322b822a class="item-cell-con"><div data-v-322b822a class="item-cell"><div data-v-322b822a class="item-cell-title">{title}</div><div data-v-322b822a class="item-cell-value"><input readonly="readonly" style="width: 220px;margin-right: 10px;"><button data-v-322b822a="" type="button" class="el-button el-button--info el-button--small"><span>{text}</span></button></div></div></div>',
     OPTIONS_SEPARATE: '<div data-v-322b822a="" class="item-cell-con"><div data-v-322b822a="" class="item-cell"><hr></div></div>',
 }
 
@@ -996,9 +997,26 @@ const O = {/* jshint +W003 */
             this.setOptions('epColor', index)
             document.documentElement.style.setProperty('--bgcolor', EPCOLOR[index][1])
             document.documentElement.style.setProperty('--navbgcolor', index === 0 ? '#337ab7' : '#606266')
+            if (index === 0){
+                document.documentElement.style.setProperty('--navbg', '#337ab7')
+            } else {
+                if (this.navImage){
+                    document.documentElement.style.setProperty('--navbg', '#606266')
+                } else {
+                    document.documentElement.style.setProperty('--navbg', O.epNavBg)
+                }
+            }
         } else {
             C.log('数值无效,设置护眼色,序号 0-'+(EPCOLOR.length-1))
         }
+    },
+
+    get epNavBg(){
+        return this.opts.hasOwnProperty('epNavBg') && this.opts.epNavBg ? this.opts.epNavBg : 'url(http://pde64pw8u.bkt.clouddn.com/c.jpg) no-repeat bottom'
+    },
+    set epNavBg(bg){
+        this.setOptions('epNavBg', bg)
+        document.documentElement.style.setProperty('--navbg', this.epNavBg)
     },
 
     get navImage(){
@@ -1441,6 +1459,17 @@ const helper = {/* jshint +W003 */
             return V.$store.getters.isLogin
         }
     },
+
+    getUrlFromepNavBg: function(){
+        if (O.epNavBg){
+            const m = O.epNavBg.match(/url\((.+)\)/)
+            if (m){
+                return m[1]
+            }
+        }
+
+        return ''
+    }
 }
 
 // css------>
@@ -1449,6 +1478,7 @@ util.importCssFile([
 ])
 
 function refreshNavImage(){
+    O.epColor = O.epColor
     if (O.navImage){
         util.addStyle(util.cmt(function(){/*!CSS
             .nav[data-v-3f6ca4fa] {
@@ -1482,11 +1512,18 @@ function refreshNavImage(){
 util.addStyle(util.cmt(function(){/*!CSS
 :root{
     --bgcolor: #FFFFFF;
+    --navbg: #337ab7;
     --navbgcolor: #337ab7;
 }
-body { background-color: var(--bgcolor) !important; }
-table { background-color: var(--bgcolor)}
-td { background-color: var(--bgcolor)}
+body {
+    background-color: var(--bgcolor) !important;
+}
+table {
+    background-color: var(--bgcolor);
+}
+td {
+    background-color: var(--bgcolor);
+}
 .fixed-box_content[data-v-69bf5445] {
     background: var(--bgcolor);
 }
@@ -1502,6 +1539,7 @@ td { background-color: var(--bgcolor)}
 .nav[data-v-3f6ca4fa] {
     background-color: var(--navbgcolor);
     box-shadow: 3px 0 15px var(--navbgcolor);
+    background: var(--navbg);
 }
 header[data-v-7b90ba54] {
     background: var(--navbgcolor);
@@ -3691,7 +3729,7 @@ function question(id){
 }
 
 function registerOption(){
-    const $option = $(TPL.OPTIONS).insertAfter($(DOM.POSITION))
+    const $option = $(TPL.OPTIONS.format({ver: stage.profile.isValidSN ? '(专业版)' : ''})).insertAfter($(DOM.POSITION))
     const $number_glassMinZoom = $(TPL.OPTIONS_NUMBER.format({title: '放大镜最小放大倍数 [1,5]',hint: '助手提示: 建议设为 1.5-3 倍', min:1, max:5, step:0.1})).appendTo($option).find('input')
     $number_glassMinZoom.val(O.glassMinzoom).on('change', function(){
         O.glassMinzoom = $number_glassMinZoom.val()
@@ -3715,6 +3753,15 @@ function registerOption(){
         O.navImage = $switch_navImage.prop('checked')
         refreshNavImage()
     })
+    const $inputbutton_epNavBg = $(TPL.OPTIONS_INPUTBUTTON.format({title: '自定义左侧导航栏背景图片',text:'自定义'})).appendTo($option)
+    const $button_epNavBg = $inputbutton_epNavBg.find('input').val(helper.getUrlFromepNavBg())
+    $inputbutton_epNavBg.find('button').on('click', function(){
+        V.$prompt('请输入图片地址,什么都不填并确认将恢复为默认', '图片地址').then(function(result){
+            const url = result.value
+            $button_epNavBg.val(url)
+            O.epNavBg = url ? 'url(' + url + ')' : ''
+        })
+    })
     const $switch_epColor = $(TPL.OPTIONS_BUTTON.format({title: '设置护眼色,点击按钮切换'})).appendTo($option).find('button')
     $switch_epColor.find('span').text(EPCOLOR[O.epColor][0])
     $switch_epColor.on('click', function(){
@@ -3728,7 +3775,7 @@ function registerDbsn(){
     const $sn = $(DOM.DBSN)
     if ($sn.length){
         $sn.dblclick(function(){
-            V.$prompt('序列号','请输入序列号').then(function(result){
+            V.$prompt('请确认QQ号是否一致,并输入序列号','序列号').then(function(result){
                     const sn = result.value
                     if (sn){
                         O.sn = sn
@@ -3824,8 +3871,6 @@ function registerUI() {
             }
         }
     })
-
-    refreshNavImage()
 }
 
 function initUE(){
@@ -3929,7 +3974,7 @@ function waitLogin(){
 }
 
 function init(){
-    O.epColor = O.epColor
+    refreshNavImage()
     initVue()
     waitLogin()
 }
@@ -4107,6 +4152,19 @@ const xusqapi = {
     },
     set epColor(index){
         O.epColor = index
+    },
+
+    get epNavBg(){
+        return O.epNavBg
+    },
+    set epNavBg(bg){
+        O.epNavBg = bg
+    },
+    get epNavBgUrl(){
+        return helper.getUrlFromepNavBg()
+    },
+    set epNavBgUrl(url){
+        O.epNavBg = url ? 'url(' + url + ')' : ''
     },
 
     get clearFlag(){
