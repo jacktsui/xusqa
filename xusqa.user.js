@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.0.047
+// @version      1.0.048
 // @description  有道搜题，录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -31,7 +31,7 @@
 (function() {
     'use strict';
 
-    const ver = 'Ver 1.0.047'
+    const ver = 'Ver 1.0.048'
 
 /**
  * 放前面方便统一更换
@@ -995,17 +995,6 @@ const O = {/* jshint +W003 */
     set epColor(index){
         if (index >=0 && index < EPCOLOR.length){
             this.setOptions('epColor', index)
-            document.documentElement.style.setProperty('--bgcolor', EPCOLOR[index][1])
-            document.documentElement.style.setProperty('--navbgcolor', index === 0 ? '#337ab7' : '#606266')
-            if (index === 0){
-                document.documentElement.style.setProperty('--navbg', '#337ab7')
-            } else {
-                if (this.navImage){
-                    document.documentElement.style.setProperty('--navbg', '#606266')
-                } else {
-                    document.documentElement.style.setProperty('--navbg', O.epNavBg)
-                }
-            }
         } else {
             C.log('数值无效,设置护眼色,序号 0-'+(EPCOLOR.length-1))
         }
@@ -1016,7 +1005,6 @@ const O = {/* jshint +W003 */
     },
     set epNavBg(bg){
         this.setOptions('epNavBg', bg)
-        document.documentElement.style.setProperty('--navbg', this.epNavBg)
     },
 
     get navImage(){
@@ -1478,33 +1466,51 @@ util.importCssFile([
 ])
 
 function refreshNavImage(){
-    O.epColor = O.epColor
+    function navTextStyle(on){
+        if (on){
+            if ($('#xusqa-nav-img').length){
+                return
+            }
+            util.addStyle(util.cmt(function(){/*!CSS
+                .nav[data-v-3f6ca4fa] {
+                    background: ;
+                }
+                .list li a[data-v-3f6ca4fa] {
+                    background: linear-gradient(30deg, #333, #fff);
+                    -webkit-background-clip: text;
+                    color: transparent;
+                }
+                .list li .router-link-active[data-v-3f6ca4fa] {
+                    background: linear-gradient(30deg, #67c23a, #f56c6c);
+                    -webkit-background-clip: text;
+                    color: transparent;
+                    text-shadow: 6px 6px 18px #ffffffdd;
+                }
+                .show-btn[data-v-3f6ca4fa] {
+                    background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACMAAAAjCAYAAAAe2bNZAAABGElEQVRYhe2WwU3EMBBF/4y404KTCrYEt0AFbAlsB3QAdBA6yXZABbZLoAJ/LnuBTIjXwkFa+Um+jKzMUyb+MdDpdG4QsYokkVLyANiiqXPuLLJsfWdtDiE8AXhpIXJ5/gnAa5GMqs4kz61kRGQ261aRbDKd742NMWnzrldQLBNjnBp6ACiUiTFOJB//XWYvkU2ZPUWAlaNdInLJovuapqr6BuCzSCaldCx4I9WhmHMWAM9FMs65KcbofxNS1Yec86FGRlUX6QtshN7PUY3jaO6v4erQG4bhKCLvfyWwxebR3ltoAcnFCiFMVr12WfQf5RprOXMg2exyJSInAB9FMjlnD8C3kiHpLZmtO3ATnHOz9c10Op2b5At2T8CLPCQKsgAAAABJRU5ErkJggg==) 50% 50% no-repeat;
+                }
+                .nav-wrap.hide .show-btn[data-v-3f6ca4fa] {
+                    background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACMAAAAjCAYAAAAe2bNZAAABS0lEQVRYhe2X0U3DMBRFjxH/eARvQNigI3QDugFlAjpCOwFsABvQTECZoO0EzQaXD9vECQToh2M+cqSoflKjHPn52glMTJyHAZAEYIFr4AgcRpUwpi0kWUl7tcwlMdYVuQy/S8AlskvgJYwd8JhxYt7D8z5lDr0/NL1xnVFm16nCdK1Di7aSXIk2pQu4GHEBXxS16NGXcSUkIlHGAq/AHjgBVQmZmKYFMAtjC6x79XNGhxpYpTJ/uSEXX6JtJe1CtBtJ1X+IdoXfABtGJEZ72meGSGWeAOHjXSTasU0LuidzTTfadxkdGmPMBtpou19uuAlSOfg22k0S7VnpaFt8a3YUeu2coj1EKrMC3vCHYq7F+iPpqf0QxhW+ffNQO+A2o8MRv8cNRjudGQfcA1eZZDadKryAx2hLhb6b0jQ5fLu24RqNzhflxMQZfAD5sixWHxwsSwAAAABJRU5ErkJggg==) 50% 50% no-repeat;
+                }
+                */
+            }), 'xusqa-nav-img')
+        } else {
+            $('#xusqa-nav-img').remove()
+        }
+    }
+    document.documentElement.style.setProperty('--bgcolor', EPCOLOR[O.epColor][1])
+    document.documentElement.style.setProperty('--navbgcolor', O.epColor === 0 ? '#337ab7' : '#606266')
+    document.documentElement.style.setProperty('--navbg', O.epColor === 0 ? '#337ab7' : '#606266')
     if (O.navImage){
-        util.addStyle(util.cmt(function(){/*!CSS
-            .nav[data-v-3f6ca4fa] {
-                background: url(https://bing.ioliu.cn/v1/rand?w=180&h=1280);
-            }
-            .list li a[data-v-3f6ca4fa] {
-                background: linear-gradient(30deg, #333, #fff);
-                -webkit-background-clip: text;
-                color: transparent;
-            }
-            .list li .router-link-active[data-v-3f6ca4fa] {
-                background: linear-gradient(30deg, #67c23a, #f56c6c);
-                -webkit-background-clip: text;
-                color: transparent;
-                text-shadow: 6px 6px 18px #ffffffdd;
-            }
-            .show-btn[data-v-3f6ca4fa] {
-                background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACMAAAAjCAYAAAAe2bNZAAABGElEQVRYhe2WwU3EMBBF/4y404KTCrYEt0AFbAlsB3QAdBA6yXZABbZLoAJ/LnuBTIjXwkFa+Um+jKzMUyb+MdDpdG4QsYokkVLyANiiqXPuLLJsfWdtDiE8AXhpIXJ5/gnAa5GMqs4kz61kRGQ261aRbDKd742NMWnzrldQLBNjnBp6ACiUiTFOJB//XWYvkU2ZPUWAlaNdInLJovuapqr6BuCzSCaldCx4I9WhmHMWAM9FMs65KcbofxNS1Yec86FGRlUX6QtshN7PUY3jaO6v4erQG4bhKCLvfyWwxebR3ltoAcnFCiFMVr12WfQf5RprOXMg2exyJSInAB9FMjlnD8C3kiHpLZmtO3ATnHOz9c10Op2b5At2T8CLPCQKsgAAAABJRU5ErkJggg==) 50% 50% no-repeat;
-            }
-            .nav-wrap.hide .show-btn[data-v-3f6ca4fa] {
-                background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACMAAAAjCAYAAAAe2bNZAAABS0lEQVRYhe2X0U3DMBRFjxH/eARvQNigI3QDugFlAjpCOwFsABvQTECZoO0EzQaXD9vECQToh2M+cqSoflKjHPn52glMTJyHAZAEYIFr4AgcRpUwpi0kWUl7tcwlMdYVuQy/S8AlskvgJYwd8JhxYt7D8z5lDr0/NL1xnVFm16nCdK1Di7aSXIk2pQu4GHEBXxS16NGXcSUkIlHGAq/AHjgBVQmZmKYFMAtjC6x79XNGhxpYpTJ/uSEXX6JtJe1CtBtJ1X+IdoXfABtGJEZ72meGSGWeAOHjXSTasU0LuidzTTfadxkdGmPMBtpou19uuAlSOfg22k0S7VnpaFt8a3YUeu2coj1EKrMC3vCHYq7F+iPpqf0QxhW+ffNQO+A2o8MRv8cNRjudGQfcA1eZZDadKryAx2hLhb6b0jQ5fLu24RqNzhflxMQZfAD5sixWHxwsSwAAAABJRU5ErkJggg==) 50% 50% no-repeat;
-            }
-            */
-        }), 'xusqa-nav-img')
+        navTextStyle(true)
+        document.documentElement.style.setProperty('--navbg', 'url(https://bing.ioliu.cn/v1/rand?w=180&h=1280)')
     } else {
-        $('#xusqa-nav-img').remove()
+        if (O.epColor === 0){
+            navTextStyle(false)
+        } else {
+            navTextStyle(true)
+            document.documentElement.style.setProperty('--navbg', O.epNavBg)
+        }
     }
 }
 
@@ -3760,12 +3766,14 @@ function registerOption(){
             const url = result.value
             $button_epNavBg.val(url)
             O.epNavBg = url ? 'url(' + url + ')' : ''
+            refreshNavImage()
         })
     })
     const $switch_epColor = $(TPL.OPTIONS_BUTTON.format({title: '设置护眼色,点击按钮切换'})).appendTo($option).find('button')
     $switch_epColor.find('span').text(EPCOLOR[O.epColor][0])
     $switch_epColor.on('click', function(){
         O.epColor = (O.epColor + 1) % EPCOLOR.length
+        refreshNavImage()
         $switch_epColor.find('span').text(EPCOLOR[O.epColor][0])
     })
 }
