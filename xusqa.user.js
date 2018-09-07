@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.0.049
+// @version      1.0.050
 // @description  有道搜题，录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -31,7 +31,7 @@
 (function() {
     'use strict';
 
-    const ver = 'Ver 1.0.049'
+    const ver = 'Ver 1.0.050'
 
 /**
  * 放前面方便统一更换
@@ -816,7 +816,7 @@ const EPCOLOR = [
     ['极光灰', '#EAEAEF'],
 ]
 
-const $ = window.$
+const $ = window.jQuery
 const C = window.console, S = window.localStorage
 let U, V
 
@@ -2281,7 +2281,7 @@ function preMonthReport() {
  * 汇总任务,计算录入量,通过率等
  * 服务器没有对连续请求做优化,查询一页再查询另一页会非常慢;异步查询会返回全部数据,没法控制停止时机
  */
-function myTaskReport() {
+function myTaskReport(stopDate) {
     let arrtask = {}
     const arrTaskThisMonth = {}
     let totalPages
@@ -2320,12 +2320,17 @@ function myTaskReport() {
             arr[key].checkcount += parseInt(d0)
             arr[key].passcount += parseInt(d1)
             arr[key].salary += t.salary
+
+            return true
         }
         let cc = 0
         for (let t of task) {
             if (t.finishedtime > firstDay){
                 c(arrTaskThisMonth, t)
             } else {
+                if (stopDate && stopDate > t.finishedtime){
+                    return false
+                }
                 if (closeAcc && S.hasOwnProperty('xusqa_acc_premonth')){
                     arrtask = JSON.parse(S.xusqa_acc_premonth)
                     return false
@@ -2348,7 +2353,7 @@ function myTaskReport() {
             }
         }
 
-        if (cc === task.length){
+        if (!stopDate && cc === task.length){
             tcc++
             if (tcc > 3){ // 终止查询条件:超过3页都已结算
                 return false
@@ -4211,6 +4216,10 @@ const xusqapi = {
 
     execCommand: function(cmd){
         execCommand(cmd)
+    },
+
+    myTaskReport: function(stopDate){
+        myTaskReport(stopDate)
     },
 }
 window.xusqapi = xusqapi
