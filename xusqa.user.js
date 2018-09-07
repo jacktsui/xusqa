@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.0.048
+// @version      1.0.049
 // @description  有道搜题，录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -31,7 +31,7 @@
 (function() {
     'use strict';
 
-    const ver = 'Ver 1.0.048'
+    const ver = 'Ver 1.0.049'
 
 /**
  * 放前面方便统一更换
@@ -1001,7 +1001,7 @@ const O = {/* jshint +W003 */
     },
 
     get epNavBg(){
-        return this.opts.hasOwnProperty('epNavBg') && this.opts.epNavBg ? this.opts.epNavBg : 'url(http://pde64pw8u.bkt.clouddn.com/c.jpg) no-repeat bottom'
+        return this.opts.hasOwnProperty('epNavBg') && this.opts.epNavBg ? this.opts.epNavBg : '#606266 url(http://pde64pw8u.bkt.clouddn.com/c.jpg) no-repeat bottom'
     },
     set epNavBg(bg){
         this.setOptions('epNavBg', bg)
@@ -1472,9 +1472,6 @@ function refreshNavImage(){
                 return
             }
             util.addStyle(util.cmt(function(){/*!CSS
-                .nav[data-v-3f6ca4fa] {
-                    background: ;
-                }
                 .list li a[data-v-3f6ca4fa] {
                     background: linear-gradient(30deg, #333, #fff);
                     -webkit-background-clip: text;
@@ -1500,12 +1497,12 @@ function refreshNavImage(){
     }
     document.documentElement.style.setProperty('--bgcolor', EPCOLOR[O.epColor][1])
     document.documentElement.style.setProperty('--navbgcolor', O.epColor === 0 ? '#337ab7' : '#606266')
-    document.documentElement.style.setProperty('--navbg', O.epColor === 0 ? '#337ab7' : '#606266')
     if (O.navImage){
         navTextStyle(true)
-        document.documentElement.style.setProperty('--navbg', 'url(https://bing.ioliu.cn/v1/rand?w=180&h=1280)')
+        document.documentElement.style.setProperty('--navbg', '#606266 url(https://bing.ioliu.cn/v1/rand?w=180&h=1280)')
     } else {
         if (O.epColor === 0){
+            document.documentElement.style.setProperty('--navbg', '#337ab7')
             navTextStyle(false)
         } else {
             navTextStyle(true)
@@ -4172,7 +4169,7 @@ const xusqapi = {
         return helper.getUrlFromepNavBg()
     },
     set epNavBgUrl(url){
-        O.epNavBg = url ? 'url(' + url + ')' : ''
+        O.epNavBg = url ? '#606266 url(' + url + ')' : ''
     },
 
     get clearFlag(){
