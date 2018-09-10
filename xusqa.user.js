@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.0.050
+// @version      1.0.051
 // @description  有道搜题，录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -31,7 +31,7 @@
 (function() {
     'use strict';
 
-    const ver = 'Ver 1.0.050'
+    const ver = 'Ver 1.0.051'
 
 /**
  * 放前面方便统一更换
@@ -395,8 +395,6 @@ const PRERULE = [ // 处理的是html全文,主要处理需要上下文关系的
     // 加分割线hr
     [/<hr>/g, ''], // 先清空hr,避免重复添加,TODO:寻找更优雅的办法
     [/<p><\/p>/g, ''],
-    [/(\(*[1-9]\)|\(*[1-3][0-9]\))/g, DIC.HR + '$1', '英语', '0'], // (1),(2),1),2)
-    [/(\(*[2-9]\)|\(*[1-3][0-9]\))/g, DIC.HR + '$1', '英语', '^0'],
     [/(\([1-9]\))/g, DIC.HR + '$1', '语文,数学,物理,化学', '0'], // (1),(2)
     [/(\([2-9]\))/g, DIC.HR + '$1', '语文,数学,物理,化学', '^0'],
     [function(str, uid){ // 语文分割线
@@ -468,7 +466,7 @@ const PRERULE = [ // 处理的是html全文,主要处理需要上下文关系的
         }
         if (is){ // (考虑根据题目要求“根据对话内容,从方框内选出能填入空白处的最佳选项。其中有两项为多余选项。”判断是不是补全对话)
             //r = /([A-Za-z]+:\s)(\d{1,2})\.*(\s)/g
-            r = /(\s)(\d{1,2})[,?\.\s]/g
+            r = /(\s)\(*(\d{1,2})\)*[,?\.\s]/g
             let start = util.getStartFromMatch(str.match(r)), cur = -1
             let num = 1
             let e = r.exec(str)
@@ -597,6 +595,8 @@ const PRERULE = [ // 处理的是html全文,主要处理需要上下文关系的
             return util.replByMatch(str, ra)
         }
     }, '英语', '0'],
+    [/(\(*[1-9]\)|\(*[1-3][0-9]\))/g, DIC.HR + '$1', '英语', '0'], // (1),(2),1),2)
+    [/(\(*[2-9]\)|\(*[1-3][0-9]\))/g, DIC.HR + '$1', '英语', '^0'],
 
     [/[A-GT]{4,}/,function(_){ // 英语答案 ABCDABCD,多于4个开始执行
         let str = '1.' + _[0]
@@ -1408,7 +1408,7 @@ const helper = {/* jshint +W003 */
     },
 
     getFirstDay: function(now){
-        return new Date(now.getFullYear(), now.getMonth(), 1);
+        return new Date(now.getFullYear(), now.getMonth(), 1).getTime();
     },
 
     getPreMonthFirstDay: function(now){
@@ -1421,7 +1421,7 @@ const helper = {/* jshint +W003 */
             m = m - 1
         }
 
-        return new Date(y, m, 1)
+        return new Date(y, m, 1).getTime()
     },
 
     getPreMonth: function(now){
@@ -3083,13 +3083,16 @@ function registerQuestionSave(){
         let analysis = u2.getContent()
         let r, m
         // 提取答案
-        r = /(\d+\.)\s*([A-DTF]|[a-zA-Z\/]+)\s+/g
+        //r = /(\d+\.)\s*([A-DTF]|[a-zA-Z\/]+)\s+/g
+        r = /(\d+\.)\s*(([A-GT])\s+|([a-zA-Z\/\s]+)[,.]+)/g
         m = analysis.match(r)
         if (m && m.length > 2){
             const u1 = helper.getEditor(1)
             let answer = '<p>'
-            for(let i of m){
-                answer += i + '</p><hr/>'
+            let e = r.exec(analysis)
+            while(e){
+                answer += e[1] + (e[3] || e[4]) + '</p><hr/>'
+                e = r.exec(analysis)
             }
             answer = answer.slice(0, -5) // 去掉末尾的<hr/>
             u1.setContent(answer, u1.getContent())
@@ -4218,8 +4221,14 @@ const xusqapi = {
         execCommand(cmd)
     },
 
-    myTaskReport: function(stopDate){
-        myTaskReport(stopDate)
+    fixReport: function(stopDate){
+        const r = /^(?:(?!0000)[0-9]{4}-(?:(?:0[1-9]|1[0-2])-(?:0[1-9]|1[0-9]|2[0-8])|(?:0[13-9]|1[0-2])-(?:29|30)|(?:0[13578]|1[02])-31)|(?:[0-9]{2}(?:0[48]|[2468][048]|[13579][26])|(?:0[48]|[2468][048]|[13579][26])00)-02-29)$/
+        if (r.test(stopDate)){
+            S.removeItem('xusqa_acc_premonth')
+            myTaskReport(new Date(stopDate).getTime())
+        } else {
+            C.log('命令日期格式错误，请使用以下格式: xusqapi.fixReport(\'2018-08-01\')')
+        }
     },
 }
 window.xusqapi = xusqapi
