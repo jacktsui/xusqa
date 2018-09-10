@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.0.051
+// @version      1.0.052
 // @description  有道搜题，录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -9,7 +9,7 @@
 // @homepageURL  https://github.com/jacktsui/xusqa
 // @supportURL   https://github.com/jacktsui/xusqa/issues
 // @UpdateURL    https://github.com/jacktsui/xusqa/raw/master/xusqa.user.js
-// @require      https://cdn.bootcss.com/jquery/3.3.1/jquery.js
+// @require      https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js
 // @require      https://cdn.bootcss.com/imgareaselect/0.9.10/js/jquery.imgareaselect.min.js
 // @match        http://searchq-editsys.youdao.com/
 // @grant        none
@@ -31,7 +31,7 @@
 (function() {
     'use strict';
 
-    const ver = 'Ver 1.0.051'
+    const ver = 'Ver 1.0.052'
 
 /**
  * 放前面方便统一更换
