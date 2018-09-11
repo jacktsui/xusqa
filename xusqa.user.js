@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.0.052
+// @version      1.0.053
 // @description  有道搜题，录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -31,7 +31,7 @@
 (function() {
     'use strict';
 
-    const ver = 'Ver 1.0.052'
+    const ver = 'Ver 1.0.053'
 
 /**
  * 放前面方便统一更换
@@ -466,7 +466,7 @@ const PRERULE = [ // 处理的是html全文,主要处理需要上下文关系的
         }
         if (is){ // (考虑根据题目要求“根据对话内容,从方框内选出能填入空白处的最佳选项。其中有两项为多余选项。”判断是不是补全对话)
             //r = /([A-Za-z]+:\s)(\d{1,2})\.*(\s)/g
-            r = /(\s)\(*(\d{1,2})\)*[,?\.\s]/g
+            r = /(\s)\(*(\d{1,2})\)*([,?\.\s<])/g
             let start = util.getStartFromMatch(str.match(r)), cur = -1
             let num = 1
             let e = r.exec(str)
@@ -476,7 +476,7 @@ const PRERULE = [ // 处理的是html全文,主要处理需要上下文关系的
                     break
                 }
                 if (cur - start === num - 1){
-                    ra.push([e[0], e.index, e[1] + DIC.US3 + (b ? num : cur) + DIC.US3])
+                    ra.push([e[0], e.index, e[1] + DIC.US3 + (b ? num : cur) + DIC.US3 + e[3]])
                     num++
                 }
                 e = r.exec(str)
@@ -1484,10 +1484,7 @@ function refreshNavImage(){
                     text-shadow: 6px 6px 18px #ffffffdd;
                 }
                 .show-btn[data-v-3f6ca4fa] {
-                    background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACMAAAAjCAYAAAAe2bNZAAABGElEQVRYhe2WwU3EMBBF/4y404KTCrYEt0AFbAlsB3QAdBA6yXZABbZLoAJ/LnuBTIjXwkFa+Um+jKzMUyb+MdDpdG4QsYokkVLyANiiqXPuLLJsfWdtDiE8AXhpIXJ5/gnAa5GMqs4kz61kRGQ261aRbDKd742NMWnzrldQLBNjnBp6ACiUiTFOJB//XWYvkU2ZPUWAlaNdInLJovuapqr6BuCzSCaldCx4I9WhmHMWAM9FMs65KcbofxNS1Yec86FGRlUX6QtshN7PUY3jaO6v4erQG4bhKCLvfyWwxebR3ltoAcnFCiFMVr12WfQf5RprOXMg2exyJSInAB9FMjlnD8C3kiHpLZmtO3ATnHOz9c10Op2b5At2T8CLPCQKsgAAAABJRU5ErkJggg==) 50% 50% no-repeat;
-                }
-                .nav-wrap.hide .show-btn[data-v-3f6ca4fa] {
-                    background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACMAAAAjCAYAAAAe2bNZAAABS0lEQVRYhe2X0U3DMBRFjxH/eARvQNigI3QDugFlAjpCOwFsABvQTECZoO0EzQaXD9vECQToh2M+cqSoflKjHPn52glMTJyHAZAEYIFr4AgcRpUwpi0kWUl7tcwlMdYVuQy/S8AlskvgJYwd8JhxYt7D8z5lDr0/NL1xnVFm16nCdK1Di7aSXIk2pQu4GHEBXxS16NGXcSUkIlHGAq/AHjgBVQmZmKYFMAtjC6x79XNGhxpYpTJ/uSEXX6JtJe1CtBtJ1X+IdoXfABtGJEZ72meGSGWeAOHjXSTasU0LuidzTTfadxkdGmPMBtpou19uuAlSOfg22k0S7VnpaFt8a3YUeu2coj1EKrMC3vCHYq7F+iPpqf0QxhW+ffNQO+A2o8MRv8cNRjudGQfcA1eZZDadKryAx2hLhb6b0jQ5fLu24RqNzhflxMQZfAD5sixWHxwsSwAAAABJRU5ErkJggg==) 50% 50% no-repeat;
+                    filter: invert(100%);
                 }
                 */
             }), 'xusqa-nav-img')
