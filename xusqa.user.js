@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.0.053
+// @version      1.0.054
 // @description  有道搜题，录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -31,7 +31,7 @@
 (function() {
     'use strict';
 
-    const ver = 'Ver 1.0.053'
+    const ver = 'Ver 1.0.054'
 
 /**
  * 放前面方便统一更换
@@ -453,17 +453,17 @@ const PRERULE = [ // 处理的是html全文,主要处理需要上下文关系的
 
         ra.splice(0,ra.length)
         let is = false
-        r = /([A-Za-z]+:\s)/g
+        r = /([A-Z]|[A-Z][a-z]+):\s/g
         m = str.match(r)
         if (m && m.length > 2){// 判断是不是补全对话
             is = true
-        } else {
+        }/* else {
             r = /\s\d{1,2}\s\(/g
             m = str.match(r)
             if (m && m.length > 2){ //单词填空
                 is =true
             }
-        }
+        }*/
         if (is){ // (考虑根据题目要求“根据对话内容,从方框内选出能填入空白处的最佳选项。其中有两项为多余选项。”判断是不是补全对话)
             //r = /([A-Za-z]+:\s)(\d{1,2})\.*(\s)/g
             r = /(\s)\(*(\d{1,2})\)*([,?\.\s<])/g
