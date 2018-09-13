@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.0.054
+// @version      1.0.055
 // @description  有道搜题，录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -31,7 +31,7 @@
 (function() {
     'use strict';
 
-    const ver = 'Ver 1.0.054'
+    const ver = 'Ver 1.0.055'
 
 /**
  * 放前面方便统一更换
@@ -92,8 +92,10 @@ const DIC = {
     PUN:{
         ',':'，', '.':'。', ':':'：', ';':'；', '?':'？', '!':'！',
     },
-    SN:{ // \u2460-\u2469
-        '1':'①','2':'②','3':'③','4':'④','5':'⑤','6':'⑥','7':'⑦','8':'⑧','9':'⑨','0':'⑩',
+    SN:{// \u2460-\u2469
+        '1':'①','2':'②','3':'③','4':'④','5':'⑤','6':'⑥','7':'⑦','8':'⑧','9':'⑨','10':'⑩',
+        // \u246a-\u2473
+        '11':'⑪','12':'⑫','13':'⑬','14':'⑭','15':'⑮','16':'⑯','17':'⑰','18':'⑱','19':'⑲','20':'⑳',
     },
     RN:{ // \u2160-\u2169
         '1':'Ⅰ','2':'Ⅱ','3':'Ⅲ','4':'Ⅳ','5':'Ⅴ','6':'Ⅵ','7':'Ⅶ','8':'Ⅷ','9':'Ⅸ','0':'Ⅹ',
@@ -362,7 +364,7 @@ const PRERULE = [ // 处理的是html全文,主要处理需要上下文关系的
     // 英语数字前面`: `1->___1___,相关代码在上面f里
     [/`{2}([\u4E00-\u9FA5]{2})/g, DIC.ULB + '$1' + DIC.ULE, '语文'], // 两个点后面两个汉字加下划线
     [/`([\u4E00-\u9FA5])/g, DIC.ULB + '$1' + DIC.ULE, '语文'], // 语文里面`代表给后面的汉字加下划线
-    [/`([0-9])/g, function(_,$1){ // 语文数字前面加`:`1->①
+    [/`([1-9]|1[0-9]|20)/g, function(_,$1){ // 语文数字前面加`:`1->①
         return DIC.SN[$1] || $1
     }, '语文'],
     [/`([\u2460-\u2469])/g, '<sup>$1</sup>', '语文'], // \u2460-\u2469表示:①->⑩,语文序号前面加`变上标:`①-><sup>①</sup>
@@ -1175,6 +1177,37 @@ const util = {/* jshint +W003 */
         }
         return out
     },
+
+    binarySearch: function(arr, target) {
+        let s = 0;
+        let e = arr.length - 1;
+        let m = Math.floor((s + e) / 2);
+        let sortTag = arr[s] <= arr[e];
+        //确定排序顺序
+
+        while (s < e && arr[m] !== target) {
+            if (arr[m] > target) {
+                if (sortTag) {
+                    e = m - 1
+                } else {
+                    s = m + 1
+                }
+            } else {
+                if (sortTag) {
+                    s = m + 1
+                } else {
+                    e = m - 1
+                }
+            }
+            m = Math.floor((s + e) / 2);
+        }
+
+        if (arr[m] == target) {
+            return true
+        } else {
+            return false
+        }
+    },
 }
 // util end------>
 
@@ -1374,6 +1407,14 @@ const helper = {/* jshint +W003 */
         }
 
         return a
+    },
+
+    getPreCheckedTaskIdArray: function(now){
+        const preMonth = helper.getPreMonth(now)
+        const k = 'xusqa_acc_month_' + preMonth
+        if (S.hasOwnProperty(k)){
+            return JSON.parse(S[k])
+        }
     },
 
     getPre2CheckedTaskIdArray: function(){
@@ -2114,17 +2155,29 @@ function todayTaskReport() {
  * 汇总上月结算数据
  */
 function preMonthReport() {
-    const arrtask = {}
+    let arrtask = {}
     let totalPages
-    let finishedPages = 0
-
-    const checkedTaskArray = helper.getPre2CheckedTaskIdArray()
     const now = new Date()
+
+    const checkedTaskArray = helper.getPreCheckedTaskIdArray(now)
     const prem = helper.getPreMonth(now)
+    let accCls = false
+    const k = 'xusqa_cls_month_' + prem
+    if (S.hasOwnProperty(k)){
+        arrtask = JSON.parse(S[k])
+        accCls = true
+    }
 
     function doCollect(task) {
         for (let t of task) {
-            if (t.salary === 0 || ~checkedTaskArray.indexOf(t.id)){
+            if (t.id > checkedTaskArray[0]){
+                continue
+            }
+            if (t.id < checkedTaskArray[checkedTaskArray.length - 1]){
+                return false
+            }
+
+            if (t.finishedcount === 0 || !util.binarySearch(checkedTaskArray, t.id)){
                 continue
             }
 
@@ -2152,10 +2205,7 @@ function preMonthReport() {
             arrtask[key].salary += t.salary
         }
 
-        finishedPages++
-        if (finishedPages === totalPages) {
-            collectionFinished()
-        }
+        return true
     }
 
     function createTable(result) {
@@ -2239,6 +2289,9 @@ function preMonthReport() {
     }
 
     function collectionFinished(){
+        if (!accCls){
+            S[k] = JSON.stringify(arrtask)
+        }
         helper.closeMessage()
         $.message({
             message: createTable(arrtask) + TPL.ACC_INFO,
@@ -2257,18 +2310,27 @@ function preMonthReport() {
             "totalSalary":0, "pageno":1, "totalPages":22, "lastMonthSalary":0, "totalElements":218
         }, "message":"SUCCESS" }
     \*/
+    if (accCls){
+        collectionFinished()
+        return
+    }
+
     $.get(URL.GET_MY_TASK.format({pageno: 1}), function(data/*, status*/) {
         totalPages = data.data.totalPages
-        doCollect(data.data.task)
+        if (doCollect(data.data.task)){
+            collectByPageno(2)
+        } else {
+            collectionFinished()
+        }
 
         function collectByPageno(i){
             $.get(URL.GET_MY_TASK.format({pageno: i}), function(data/*, status*/) {
-                doCollect(data.data.task)
+                if (doCollect(data.data.task) && i < totalPages){
+                    collectByPageno(i+1)
+                } else {
+                    collectionFinished()
+                }
             })
-        }
-
-        for (let i = 2; i <= totalPages; i++) {
-            collectByPageno(i)
         }
     })
 }
@@ -3081,7 +3143,7 @@ function registerQuestionSave(){
         let r, m
         // 提取答案
         //r = /(\d+\.)\s*([A-DTF]|[a-zA-Z\/]+)\s+/g
-        r = /(\d+\.)\s*(([A-GT])\s+|([a-zA-Z\/\s]+)[,.]+)/g
+        r = /(\d+\.)\s*(([A-GT])|([a-zA-Z\/]+)[\s,.]+)/g
         m = analysis.match(r)
         if (m && m.length > 2){
             const u1 = helper.getEditor(1)
@@ -4195,6 +4257,10 @@ const xusqapi = {
         let it = [new RegExp(regstr), replacement, subjects]
         USRRULE.push(it)
         helper.saveUserRules()
+    },
+
+    saveQuestion: function(){
+        helper.saveQuestion()
     },
 
     question: function(id){
