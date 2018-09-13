@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.0.055
+// @version      1.0.056
 // @description  有道搜题，录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -17,7 +17,7 @@
 // @note         一键整理为实验性功能
 // @note         编写原则: 助手尽量保持系统原有行为和样貌,修改过的地方都打了标记
 // @note         未来计划: 重点维护一键整理功能,提高录题效率是脚本的终极目标
-// @note         最近更新：2018.09.04 添加个人中心脚本配置(护眼色等)),本月报告及其他优化和bug修复
+// @note         最近更新：2018.09.13 添加个人中心脚本配置(护眼色等)),本月报告及上月结算优化、缓存和bug修复
 // @note         最近更新：2018.08.11 框的准自动切割答案和解析
 // @note         最近更新：2018.08.05 添加题目保存和恢复功能及其他小功能
 // @note         最近更新：2018.07.23 添加万能点(`)功能
@@ -31,7 +31,7 @@
 (function() {
     'use strict';
 
-    const ver = 'Ver 1.0.055'
+    const ver = 'Ver 1.0.056'
 
 /**
  * 放前面方便统一更换
@@ -1591,6 +1591,13 @@ header[data-v-7b90ba54] {
 
 // css 替换
 util.addStyle(util.cmt(function(){/*!CSS
+.process-title[data-v-403910d4] {
+    margin-right: 20px;
+}
+.process-task-con[data-v-403910d4] {
+    min-width: 0px;
+}
+
 #answerCutBox {
     top: 182px;
 }
@@ -1609,10 +1616,6 @@ util.addStyle(util.cmt(function(){/*!CSS
 
 .submit-region[data-v-ce69c62c] {
     overflow: hidden;
-}
-
-.process-title[data-v-403910d4] {
-    margin-right: 150px;
 }
 
 .item-cell-title[data-v-322b822a], .item-cell-value[data-v-322b822a] {
@@ -2166,6 +2169,9 @@ function preMonthReport() {
     if (S.hasOwnProperty(k)){
         arrtask = JSON.parse(S[k])
         accCls = true
+    } else {
+        helper.msg.error(prem + '未结算!')
+        return
     }
 
     function doCollect(task) {
@@ -3777,6 +3783,7 @@ function registerPreMonthReport(){
     } else {
         const text = helper.checkPre2CheckedTaskIdArray() ? STR.MODULE.TASK_PREMONTH : STR.MODULE.TASK_PAST
         const btnPrem = helper.cloneButton($btnAddTime, text, STR.HINT.PAST)
+        btnPrem.css({'float': 'right','display': 'block','margin-right': '20px'})
         btnPrem.insertAfter($btnAddTime.parent()).click(function(){
             preMonthReport()
         })
