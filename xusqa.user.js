@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.0.059
-// @description  有道搜题，录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
+// @version      1.1.060
+// @description  有道搜题,录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
 // @license      MIT https://mit-license.org/
@@ -31,7 +31,7 @@
 (function() {
     'use strict';
 
-    const ver = 'Ver 1.0.059'
+    const ver = 'Ver 1.1.060'
 
 /**
  * 放前面方便统一更换
@@ -324,7 +324,8 @@ const RULE = [
     [/([a-zA-Z])([2-9]*[+-])$/g, '$1<sup>$2</sup>', '化学'], // 末尾的离子上标
 
     [/(\([A-Z][1-9a-zA-Z]+\))([2-9]|[1-9][0-9])/g, '$1<sub>$2</sub>', '化学'], // 化学分子符号下标
-    [/([a-zA-Z]+)([2-9])/g, '$1<sub>$2</sub>', '化学'], // 下标
+    [/([A-Z]|[A-Z][a-z])([1-9][0-9]*)/g, '$1<sub>$2</sub>', '化学'], // 下标
+    [/([v])\s*([正逆])/g, '$1<sub>$2</sub>', '化学'],
     [/([nN])A/g, '$1<sub>A</sub>', '化学'], // 阿伏伽德罗常数
 
     // 整理括号
@@ -2979,6 +2980,47 @@ function doExtendUE(){
     })
 }
 
+function extrakfe(str){
+    function strToLaTex(str){
+        const subject = helper.getInputSubject()
+        const arrow = [
+            ['=', '\\xlongequal {\\placeholder } {\\placeholder }'],
+            ['→', '\\xlongequal {\\placeholder } {\\placeholder }'],
+            ['⇌', '\\xrightleftharpoons {\\placeholder } {\\placeholder }'],
+        ]
+        if (subject === '化学'){
+            str = str.replace(/(\([a-zA-Z0-9]+\))(\d+)/g, '{$1}_{$2}')
+
+            str = str.replace(/\((\w*)([A-Z][a-z]*)(\d)(\d*[+-])\)/g, '($1{$2}^{$4}_{$3})')
+            str = str.replace(/([A-Z][a-z]*)(\d)(\d*[+-])([+=-])/g, '{$1}^{$3}_{$2}$4')
+            str = str.replace(/([A-Z][a-z]*)(\d)(\d*[+-])$/g, '{$1}^{$3}_{$2}')
+
+            str = str.replace(/\((\w*)([A-Z][a-z]*)([+-])\)/g, '($1{$2}^{$3})')
+            str = str.replace(/([A-Z][a-z]*)([+-])([+=-])/g, '{$1}^{$2}$3')
+            str = str.replace(/([A-Z][a-z]*)([+-])$/g, '{$1}^{$2}')
+
+            //str = str.replace(/([A-Z]|[A-Z][a-z])<sub>(\d+[+-]*)<\/sub>/g, '{$1}_{$2}')
+            str = str.replace(/([A-Z][a-z]*)(\d+)/g, '{$1}_{$2}')
+
+            for (let i of arrow){
+                str = str.replace(i[0], i[1])
+            }
+            return str
+        }
+    }
+    const $kfe = $('iframe:last')
+    const kfe = $kfe[0].contentWindow.kfe
+    if (kfe){
+        const ue = $kfe[0].contentWindow.editor
+        ue.focus()
+        const txt = ue.selection.getText()
+        if (txt){
+            kfe.execCommand('render', str || strToLaTex(txt))
+        }
+        kfe.execCommand('focus')
+    }
+}
+
 /**
  * 功能: 定位答案添加定位到上次位置
  */
@@ -4310,6 +4352,14 @@ const xusqapi = {
             C.log('命令日期格式错误，请使用以下格式: xusqapi.fixReport(\'2018-08-01\')')
         }
     },
+
+    kfe: function(str){
+        extrakfe(str)
+    },
+
+    get subject(){
+        return helper.getInputSubject()
+    }
 }
 window.xusqapi = xusqapi
 
