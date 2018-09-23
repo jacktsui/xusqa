@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.0.058
+// @version      1.0.059
 // @description  有道搜题，录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -31,7 +31,7 @@
 (function() {
     'use strict';
 
-    const ver = 'Ver 1.0.058'
+    const ver = 'Ver 1.0.059'
 
 /**
  * 放前面方便统一更换
@@ -44,6 +44,13 @@
  *
  */
 const CDN = 'https://cdn.bootcss.com/'
+
+/**
+ * chrome 插件伴侣下载地址: http://crxhelp.bj.bcebos.com/crxhelp.zip
+ * chrome 插件离线下载网站: https://www.crx4chrome.com/
+ * 油猴4.7稳定版下载地址: https://www.crx4chrome.com/down/755/crx/
+ * https://www.crx4chrome.com/go.php?d=84899&i=13792&p=755&s=1&l=https%3A%2F%2Ff.crx4chrome.com%2Fcrx.php%3Fi%3Ddhdgffkkebhmkfjojejmpbldmpobfkfo%26v%3D4.7
+ */
 
 /*->->->->->-> 配置区 ->->->->->->*/
 const SE = {
@@ -275,7 +282,7 @@ const RULE = [
     [/([A-Za-z])([xX])(\d+)/g, '$1×$2', '物理,化学'],
 
     [function(str){ // 电子结构式?忘了是个什么东西了,长这样的1s22s22p63s2
-        const r = /([1-4][sp][1-6])/g
+        const r = /([1-4][spd])([1-6])/g
         let sm = '', sp = ''
         let t = 0
 
@@ -283,7 +290,7 @@ const RULE = [
         while (e){
             t++
             sm += e[0]
-            sp += e[0][0] + e[0][1] + DIC.SUPB + e[0][2] + DIC.SUPE
+            sp += e[1] + '<sup>' + e[2] + '</sup>'
             e = r.exec(str)
         }
 
