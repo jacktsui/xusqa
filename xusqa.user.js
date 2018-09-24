@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.1.062
+// @version      1.1.063
 // @description  有道搜题,录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -16,7 +16,7 @@
 // @run-at       document-start
 // @note         一键整理为实验性功能
 // @note         编写原则: 助手尽量保持系统原有行为和样貌,修改过的地方都打了标记
-// @note         未来计划: 重点维护一键整理功能,提高录题效率是脚本的终极目标
+// @note         未来计划: 重点维护录题功能,提高录题效率是脚本的终极目标
 // @note         最近更新：2018.09.24 文本快速进公式编辑器编辑,该功能需要单独安装
 // @note         最近更新：2018.09.13 添加个人中心脚本配置(护眼色等)),本月报告及上月结算优化、缓存和bug修复
 // @note         最近更新：2018.08.11 框的准自动切割答案和解析
@@ -32,7 +32,7 @@
 (function() {
     'use strict';
 
-    const ver = 'Ver 1.1.062'
+    const ver = 'Ver 1.1.063'
 
 /**
  * 放前面方便统一更换
@@ -257,7 +257,7 @@ const RULE = [
     [/[0。]\s*([做是为点])/g, 'O $1', '数学'],
     [/(角|sin|cos|tan)\s*a/g, '$1 α', '数学'],
     [/又\s*[:.]{2,}/g, '又∵ ', '数学'],
-    [/^[:.]{2,}/g, '∴', '数学'], // TODO:因为所以,待测试
+    [/^[:.]{2,}/g, '∴', '数学'], //
     [/,*[:.]{2,}/g, ', ∴', '数学'],
     [/([\(\[][+-]*\d+)\,\s*\+[0o]+\)/g, '$1,+∞)', '数学'], // A.(-1,+0) B.(1,+o) C.(-1,1)
     [/\(-[0o]+\,\s*([+\-]*\d+[\)\]])/g, '(-∞,$1', '数学'], // D.(-00,1)
@@ -387,6 +387,14 @@ const PRERULE = [ // 处理的是html全文,主要处理需要上下文关系的
 
     // 万能点`·
     // 英语数字前面`: `1->___1___,相关代码在上面f里
+    [/1`(\d+)/,function(_){ // 1`10:1.______,2.______,...10.______
+        let l = parseInt(_.split('`')[1])
+        let s = ''
+        for(let i = 1; i <= l; i++){
+            s += DIC.HR + i + '.' + DIC.US6
+        }
+        return s
+    }, '英语', '0'],
     [/`{2}([\u4E00-\u9FA5]{2})/g, DIC.ULB + '$1' + DIC.ULE, '语文'], // 两个点后面两个汉字加下划线
     [/`([\u4E00-\u9FA5])/g, DIC.ULB + '$1' + DIC.ULE, '语文'], // 语文里面`代表给后面的汉字加下划线
     [/`([1-9]|1[0-9]|20)/g, function(_,$1){ // 语文数字前面加`:`1->①
@@ -409,17 +417,34 @@ const PRERULE = [ // 处理的是html全文,主要处理需要上下文关系的
     }, '^英语', '0'],
 
     [function(str){ // 如果就一道题的话,去掉题号
-        let m = str.match(/\d+[·.,]*\s*([A-Za-z])/)
-        if (m && m.index < 7){ //
-            str = str.slice(0,m.index) + str.slice(m.index + m[0].length - m[1].length)
-            return str
+        let num = 1
+        const r = /\d+/g
+        let m = str.match(r)
+        if (m && m.length > 1){
+            let start = util.getStartFromMatch(m), cur = -1
+            let e = r.exec(str)
+            while(e){
+                cur = parseInt(e[1])
+                if (cur - start === num - 1){
+                    num++
+                }
+                e = r.exec(str)
+            }
         }
-    }, '英语', '0'],
+
+        if (num < 2){ // 不是多个小题
+            m = str.match(/\d+[·.,]*\s*([A-Za-z\u2E80-\u9FFF\-])/)
+            if (m && m.index < 7){ //
+                str = str.slice(0,m.index) + str.slice(m.index + m[0].length - m[1].length)
+                return str
+            }
+        }
+    }, '英语', '0'], // TODO: 待测试
 
     [/(\d)[·,]([\u4E00-\u9FA5])/g,'$1.$2', '语文'], // 纠正ocr点识别错误,将1.识别为1·,1,
 
     // 加分割线hr
-    [/<hr>/g, ''], // 先清空hr,避免重复添加,TODO:寻找更优雅的办法
+    [/<hr>/g, ''], // 先清空hr,避免重复添加
     [/<p><\/p>/g, ''],
     [/(\([1-9]\))/g, DIC.HR + '$1', '语文,数学,物理,化学', '0'], // (1),(2)
     [/(\([2-9]\))/g, DIC.HR + '$1', '语文,数学,物理,化学', '^0'],
@@ -492,7 +517,7 @@ const PRERULE = [ // 处理的是html全文,主要处理需要上下文关系的
         }*/
         if (is){ // (考虑根据题目要求“根据对话内容,从方框内选出能填入空白处的最佳选项。其中有两项为多余选项。”判断是不是补全对话)
             //r = /([A-Za-z]+:\s)(\d{1,2})\.*(\s)/g
-            r = /(\s)\(*(\d{1,2})\)*([,?\.\s<])/g
+            r = /(\s)\(*(\d{1,2})\)*\.*([,?\s<\.])/g
             let start = util.getStartFromMatch(str.match(r)), cur = -1
             let num = 1
             let e = r.exec(str)
@@ -515,7 +540,7 @@ const PRERULE = [ // 处理的是html全文,主要处理需要上下文关系的
 
         ra.splice(0, ra.length)
         str = str.replace(/&nbsp;(\d+)/g, ' $1') // 发现数字前面有&nbsp;的题目,影响解析
-        m = str.match(/[a-z]\s\d{1,2}\.*\s[a-z]/g)
+        m = str.match(/[a-z]\s\d{1,2}\.*\s[a-z\(]/g)
         if (m && m.length > 2){ // TODO:判断是不是完型填空,算法需要优化
             //r = /(\D)(\d{1,2})\.*(\D)/g
             //r = /([^0-9#:%>])(\d{1,2})\.*([^0-9#:%])/g
@@ -547,7 +572,8 @@ const PRERULE = [ // 处理的是html全文,主要处理需要上下文关系的
         //r = /([^0-9_]])(\(*\)*)(\d{1,2})([\.,]*)([^0-9_])/g
         //r = /([^_#3])(\(*\)*)(\d{1,2})([\.,]*)([^_#:])/g //'3': &#39;单引号,':'排除时间
         str = str.replace(/\(&nbsp;&nbsp;&nbsp;&nbsp;\)/g, '()')
-        r = /([^_#:0-9])(\(*\)*)\s*(\d+)([\.,]*)([^_:])/g //'3': &#39;单引号,':'排除时间
+        //r = /([^_#:0-9])(\(*\)*)\s*(\d+)([\.,]*)([^_:])/g //'3': &#39;单引号,':'排除时间
+        r = /([^_#:0-9])(\(*\)*)\s*(\d{1,3})([\.,]*)([^_:])/g
         m = str.match(r)
         if (m && m.length > 2){ // 匹配超过3个以上
             let start = util.getStartFromMatch(str.match(r)), cur = -1, num = 1
@@ -2849,7 +2875,6 @@ function doOneKeyGetTask() {
 /**
  * 功能: 一键智能优化OCR结果
  * 标点符号半角全角,智能换行等
- * TODO: 当一条规则无效时,不影响其他规则继续运行,让规则执行引擎更健壮一点
  */
 function execRule(str,r, subject, uid, d){
     function include(group, item){
@@ -3268,23 +3293,15 @@ function registerQuestionSave(){
             analysis = analysis.replace(r, '$1')
         }
 
-        /*
         r = /\s*本*题*考查([\u4E00-\u9FA5、]+)[.。]/g
         m = analysis.match(r)
-        if (m && m.length){
+        if (m && m.length === 1){
             const u4 = helper.getEditor(4)
-            let knowledge = '<p>'
-            let e = r.exec(analysis)
-            while(e){
-                if (knowledge.indexOf(e[1]) === -1){
-                    knowledge += e[1] + ','
-                }
-                e = r.exec(analysis)
-            }
-            knowledge = knowledge.slice(0,-1)
+            m = analysis.match(/\s*本*题*考查([\u4E00-\u9FA5、]+)[.。]/)
+            let knowledge = m[1]
             u4.setContent(knowledge, u4.getContent())
-            analysis = analysis.replace(r, '')
-        } */
+            analysis = analysis.slice(0, m.index) + analysis.slice(m.index+m[0].length)
+        }
 
         u2.setContent(analysis, false)
     })
