@@ -26,7 +26,7 @@ let ue, kfe
 
 function txt2LaTex(str){
     const arrow = [
-        ['=', '\\xlongequal {\\placeholder } {\\placeholder }'], 
+        ['=', '\\xlongequal {\\placeholder } {\\placeholder }'],
         ['→', '\\xlongequal {\\placeholder } {\\placeholder }'],
         ['⇌', '\\xrightleftharpoons {\\placeholder } {\\placeholder }'],
     ]
@@ -51,6 +51,7 @@ function txt2LaTex(str){
         return str
     }
 }
+
 let timer
 function inikfe(){
     clearTimeout(timer)
@@ -67,7 +68,6 @@ function inikfe(){
         timer = setTimeout(inikfe, 100)
     }
 }
-
 inikfe()
 
 })()
