@@ -1,13 +1,14 @@
 // ==UserScript==
 // @name         有道搜题录题助手-公式
 // @namespace    jacktsui
-// @version      0.1.002
+// @version      0.1.003
 // @description  有道搜题,录题员助手(公式加强)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
 // @license      MIT https://mit-license.org/
 // @homepageURL  https://github.com/jacktsui/xusqa
 // @supportURL   https://github.com/jacktsui/xusqa/issues
+// @UpdateURL    https://github.com/jacktsui/xusqa/raw/master/xusqa.kfe.user.js
 // @match        http://searchq-editsys.youdao.com/static/Ueditor/kityformula-plugin/*
 // @grant        none
 // @run-at       document-end

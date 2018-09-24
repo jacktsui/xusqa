@@ -46,6 +46,7 @@
 const CDN = 'https://cdn.bootcss.com/'
 
 /**
+ * 使用手册: https://github.com/jacktsui/jscore/blob/master/README.md
  * chrome 插件伴侣下载地址: http://crxhelp.bj.bcebos.com/crxhelp.zip
  * chrome 插件离线下载网站: https://www.crx4chrome.com/
  * 油猴4.7稳定版下载地址: https://www.crx4chrome.com/down/755/crx/
