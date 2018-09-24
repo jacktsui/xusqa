@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.1.060
+// @version      1.1.061
 // @description  有道搜题,录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -31,7 +31,7 @@
 (function() {
     'use strict';
 
-    const ver = 'Ver 1.1.060'
+    const ver = 'Ver 1.1.061'
 
 /**
  * 放前面方便统一更换
@@ -910,6 +910,14 @@ const O = {/* jshint +W003 */
         this.setOptions('sn', sn)
     },
 
+    get passport(){
+        return this.opts.hasOwnProperty('passport') && this.opts.passport
+    },
+
+    set passport(pass){
+        this.setOptions('passport', pass)
+    },
+
     get onekeyGetTaskSEs(){
         return this.opts.hasOwnProperty('onekeyGetTaskSEs') ? this.opts.onekeyGetTaskSEs : helper.getDefaultSEs()
     },
@@ -1049,7 +1057,7 @@ const stage = {
     profile: {
         qqnumber: undefined,
         permission: null,
-        isValidSN: O.crazyMode || O.sn !== '',
+        isValidSN: O.passport,
     },
     timer:{}, // 用来统一存放计时器,用于清理计时器,目前没有做特别处理
     squareUpdateTime: new Date(), // 任务广场最后更新时间
@@ -4083,6 +4091,7 @@ function getProfile(){
             stage.profile.permission = a
             stage.profile.isValidSN = util.de(O.sn) === data.data.qqnumber
             stage.profile.qqnumber = data.data.qqnumber
+            O.passport = stage.profile.isValidSN
         }
     })
 }
@@ -4359,7 +4368,11 @@ const xusqapi = {
 
     get subject(){
         return helper.getInputSubject()
-    }
+    },
+
+    get passport(){
+        return O.passport
+    },
 }
 window.xusqapi = xusqapi
 

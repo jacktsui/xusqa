@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手-公式
 // @namespace    jacktsui
-// @version      0.1.001
+// @version      0.1.002
 // @description  有道搜题,录题员助手(公式加强)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -11,16 +11,19 @@
 // @match        http://searchq-editsys.youdao.com/static/Ueditor/kityformula-plugin/*
 // @grant        none
 // @run-at       document-end
-// @note         2018-09-23 初版,化学公式
+// @note         2018-09-23 初版,化学方程式
 // ==/UserScript==
 
 (function() {
     'use strict';
 
 const xusqapi = window.top.xusqapi
+if (!xusqapi.passport){
+    return
+}
 let ue, kfe
 
-function str2LaTex(str){
+function txt2LaTex(str){
     const arrow = [
         ['=', '\\xlongequal {\\placeholder } {\\placeholder }'], 
         ['→', '\\xlongequal {\\placeholder } {\\placeholder }'],
@@ -56,7 +59,7 @@ function inikfe(){
         ue.focus()
         const txt = ue.selection.getText()
         if (txt){
-            kfe.execCommand('render', str2LaTex(txt))
+            kfe.execCommand('render', txt2LaTex(txt))
         }
         kfe.execCommand('focus')
     } else {
