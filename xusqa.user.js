@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.1.063
+// @version      1.1.065
 // @description  有道搜题,录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -32,7 +32,7 @@
 (function() {
     'use strict';
 
-    const ver = 'Ver 1.1.063'
+    const ver = 'Ver 1.1.065'
 
 /**
  * 放前面方便统一更换
@@ -1896,8 +1896,8 @@ util.addStyle(util.cmt(function(){/*!CSS
     width: 57px;
     height: 28px;
     position: relative;
-    border: 1px solid #dfdfdf;
-    background-color: #fdfdfd;
+    border: 1px solid #cdcdcd;
+    background-color: #dfdfdf;
     box-shadow: #dfdfdf 0 0 0 0 inset;
     border-radius: 20px;
     background-clip: content-box;
@@ -1918,9 +1918,9 @@ util.addStyle(util.cmt(function(){/*!CSS
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 .switch:checked {
-    border-color: #a6a9ad;
-    box-shadow: #a6a9ad 0 0 0 16px inset;
-    background-color: #a6a9ad;
+    border-color: #3a8ee6;
+    box-shadow: #fdfdfd 0 0 0 16px inset;
+    background-color: #fdfdfd;
 }
 .switch:checked:before {
     left: 30px;
@@ -1932,8 +1932,8 @@ util.addStyle(util.cmt(function(){/*!CSS
     transition: left 0.3s;
 }
 .switch.switch-anim:checked {
-    box-shadow: #a6a9ad 0 0 0 16px inset;
-    background-color: #a6a9ad;
+    box-shadow: #409eff 0 0 0 16px inset;
+    background-color: #fdfdfd;
     transition: border ease 0.4s, box-shadow ease 0.4s, background-color ease 1.2s;
 }
 .switch.switch-anim:checked:before {
