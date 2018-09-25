@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.1.070
+// @version      1.1.071
 // @description  有道搜题,录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -32,7 +32,7 @@
 (function() {
     'use strict';
 
-    const ver = 'Ver 1.1.070'
+    const ver = 'Ver 1.1.071'
 
 /**
  * 放前面方便统一更换
@@ -1948,6 +1948,7 @@ util.addStyle(util.cmt(function(){/*!CSS
     border: 1px solid #cdcdcd;
 }
 .options-button {
+    width: 57px;
     padding: 7px 9px;
     margin: 3px 4px 3px 4px;
 }
@@ -3929,26 +3930,34 @@ function registerOption(){
         O.autoSliceAnalysis = $switch_autoSliceAnalysis.prop('checked')
     })
 
-    const $switch_showHint = $(TPL.OPTIONS_SWITCH.format({title: '查看助手提示'})).appendTo($option).find('input')
+    const $switch_showHint = $(TPL.OPTIONS_SWITCH.format({title: '显示助手提示'})).appendTo($option).find('input')
     $switch_showHint.prop('checked', O.showHint).on('change', function(){
         O.showHint = $switch_showHint.prop('checked')
     })
 
     $(TPL.OPTIONS_SEPARATE).appendTo($option)
-    const $switch_navImage = $(TPL.OPTIONS_SWITCH.format({title: '左侧导航栏随机背景图片'})).appendTo($option).find('input')
-    $switch_navImage.prop('checked', O.navImage).on('change', function(){
-        O.navImage = $switch_navImage.prop('checked')
-        refreshNavImage()
-    })
-    const $inputbutton_epNavBg = $(TPL.OPTIONS_INPUTBUTTON.format({title: '自定义左侧导航栏背景图片',text:'自定义'})).appendTo($option)
+    //const $switch_navImage = $(TPL.OPTIONS_SWITCH.format({title: '左侧导航栏随机背景图片'})).appendTo($option).find('input')
+    //$switch_navImage.prop('checked', O.navImage).on('change', function(){
+    //    O.navImage = $switch_navImage.prop('checked')
+    //    refreshNavImage()
+    //})
+
+    const $inputbutton_epNavBg = $(TPL.OPTIONS_INPUTBUTTON.format({title: '自定义左侧导航栏背景图片',text:(O.navImage ? '随机' : '自定义')})).appendTo($option)
     const $button_epNavBg = $inputbutton_epNavBg.find('input').val(helper.getUrlFromepNavBg())
-    $inputbutton_epNavBg.find('button').on('click', function(){
-        V.$prompt('请输入图片地址,什么都不填并确认将恢复为默认', '图片地址').then(function(result){
+    $button_epNavBg.toggle(!O.navImage)
+    $button_epNavBg.on('click', function(){
+        V.$prompt('请输入图片地址,什么都不填并确认将恢复为助手默认', '图片地址').then(function(result){
             const url = result.value
             $button_epNavBg.val(url)
             O.epNavBg = url ? 'url(' + url + ')' : ''
             refreshNavImage()
         })
+    })
+    $inputbutton_epNavBg.find('button').on('click', function(){
+        O.navImage = !O.navImage
+        $inputbutton_epNavBg.find('span').text(O.navImage ? '随机' : '自定义')
+        $button_epNavBg.toggle(!O.navImage)
+        refreshNavImage()
     })
     const $switch_epColor = $(TPL.OPTIONS_BUTTON.format({title: '设置护眼色,点击按钮切换'})).appendTo($option).find('button')
     $switch_epColor.find('span').text(EPCOLOR[O.epColor][0])

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手-公式
 // @namespace    jacktsui
-// @version      0.1.003
+// @version      0.2.071
 // @description  有道搜题,录题员助手(公式加强)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -12,14 +12,19 @@
 // @match        http://searchq-editsys.youdao.com/static/Ueditor/kityformula-plugin/*
 // @grant        none
 // @run-at       document-end
-// @note         2018-09-23 初版,化学方程式
+// @note         2018-09-23 初版,化学方程式,数学简单公式
 // ==/UserScript==
 
 (function() {
     'use strict';
 
+//const ver = 'Ver 0.2.071'
+
 const xusqapi = window.top.xusqapi
 if (!xusqapi.passport){
+    return
+}
+if ('化学,数学'.indexOf(xusqapi.subject) < 0){
     return
 }
 let ue, kfe
@@ -47,6 +52,14 @@ function txt2LaTex(str){
         for (let i of arrow){
             str = str.replace(i[0], i[1])
         }
+
+        return str
+    } else if(xusqapi.subject === '数学'){
+        str = str.replace(/\/\/({[^}]+})/g, '\\sqrt $1')
+        str = str.replace(/({[^}]+}|.)\/({[^}]+}|.)/g, '\\frac {$1} {$2}')
+
+        str = str.replace(/(\([^\)]+\)|[a-z])^(\d+)/g, '{$1}^{$2}')
+        str = str.replace(/(\([^\)]+\)|[a-z])_(\d+)/g, '{$1}_{$2}')
 
         return str
     }
