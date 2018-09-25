@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.1.072
+// @version      1.1.073
 // @description  有道搜题,录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -32,7 +32,7 @@
 (function() {
     'use strict';
 
-    const ver = 'Ver 1.1.072'
+    const ver = 'Ver 1.1.073'
 
 /**
  * 放前面方便统一更换
@@ -1111,6 +1111,18 @@ const O = {/* jshint +W003 */
     },
     set clearFlag(clearFlag){
         this.setOptions('clearFlag', clearFlag)
+    },
+
+    get showQInputProgress(){
+        return this.opts.hasOwnProperty('showQInputProgress') && this.opts.showQInputProgress
+    },
+
+    set showQInputProgress(b){
+        if (typeof(b) === 'boolean'){
+            this.setOptions('showQInputProgress', b)
+        } else {
+            C.error('设置是否显示录题进度, true 或者 false')
+        }
     },
 }
 
@@ -3260,6 +3272,16 @@ function registerQuestionSnap(){
     if (O.showHint){
         registerHint()
     }
+
+    function showQInputProgress(){
+        queryQInputProgress(function(total, cur){
+            const $title = $('#app > div > div.main-content > div > div > div.position > div')
+            $title.text($title.text() + ' - 进度' + cur + '/' + total)
+        })
+    }
+    if (O.showQInputProgress){
+        showQInputProgress()
+    }
 }
 
 /**
@@ -3950,6 +3972,17 @@ function question(id){
     })
 }
 
+function queryQInputProgress(f){
+    $.get(URL.GET_MY_TASK.format({pageno:1}), function(data){
+        if (data.code === 200){
+            const t = data.data.task[0]
+            if (f && typeof(f) === 'function'){
+                f(t.totalcount, t.finishedcount+1)
+            }
+        }
+    })
+}
+
 function registerOption(){
     const $option = $(TPL.OPTIONS.format({ver: stage.profile.isValidSN ? '(专业版)' : ''})).insertAfter($(DOM.POSITION))
     const $number_glassMinZoom = $(TPL.OPTIONS_NUMBER.format({title: '放大镜最小放大倍数 [1,5]',hint: '助手提示: 建议设为 1.5-3 倍', min:1, max:5, step:0.1})).appendTo($option).find('input')
@@ -3968,6 +4001,10 @@ function registerOption(){
     const $switch_showJudgeHint = $(TPL.OPTIONS_SWITCH.format({title: '判题时显示判题规则提示'})).appendTo($option).find('input')
     $switch_showJudgeHint.prop('checked', O.showJudgeHint).on('change', function(){
         O.showJudgeHint = $switch_showJudgeHint.prop('checked')
+    })
+    const $switch_showQInputProgress = $(TPL.OPTIONS_SWITCH.format({title: '录题时显示当前进度'})).appendTo($option).find('input')
+    $switch_showQInputProgress.prop('checked', O.showQInputProgress).on('change', function(){
+        O.showQInputProgress = $switch_showQInputProgress.prop('checked')
     })
 
     $(TPL.OPTIONS_SEPARATE).appendTo($option)
@@ -4006,6 +4043,17 @@ function registerOption(){
     $(TPL.OPTIONS_COPYRIGHT).appendTo($option)
 }
 
+function showSalary(){
+    const $salaryItem = $('#app > div > div.main-content > div > div > div:nth-child(3)')
+    $.get(URL.GET_MY_TASK.format({pageno:1}), function(data){
+        if (data.code === 200){
+            const d = data.data
+            $salaryItem.find('> div:nth-child(4) > div > div.item-cell-value').text(d.totalSalary)
+            $salaryItem.find('> div:nth-child(3) > div > div.item-cell-value').text(d.lastMonthSalary)
+        }
+    })
+}
+
 function registerDbsn(){
     clearTimeout(stage.timer.registerDbsn)
     const $sn = $(DOM.DBSN)
@@ -4020,6 +4068,7 @@ function registerDbsn(){
                 })
         })
 
+        showSalary()
         registerOption()
 
         if (window.xusqadmin){
@@ -4404,6 +4453,14 @@ const xusqapi = {
         O.epNavBg = url ? '#606266 url(' + url + ')' : ''
     },
 
+    get subject(){
+        return helper.getInputSubject()
+    },
+
+    get passport(){
+        return O.passport
+    },
+
     get clearFlag(){
         return O.clearFlag
     },
@@ -4463,13 +4520,11 @@ const xusqapi = {
         extrakfe(str)
     },
 
-    get subject(){
-        return helper.getInputSubject()
-    },
-
-    get passport(){
-        return O.passport
-    },
+    queryQInputProgress: function(){
+        queryQInputProgress(function(totalcount, current){
+            C.log('进度' + current + '/' + totalcount)
+        })
+    }
 }
 window.xusqapi = xusqapi
 
