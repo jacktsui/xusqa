@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.1.071
+// @version      1.1.072
 // @description  有道搜题,录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -32,7 +32,7 @@
 (function() {
     'use strict';
 
-    const ver = 'Ver 1.1.071'
+    const ver = 'Ver 1.1.072'
 
 /**
  * 放前面方便统一更换
@@ -725,26 +725,45 @@ const STR = {
             '2. 可以自动排版,修复部分OCR识别错误,添加分隔符,换行,上下角标等等\r' +
             '3. 整理前最好先把一些关键字符的识别错误进行修正,主要包括括号,数字和ABCD后面的.等\r' +
             '注: 测试有限,如有bug,或出现诡异行为,请保留样本(点最左边的html,ctrl+a全选,复制到记事本)及时反馈,帮助优化脚本',
-        SEARCH_LOSE: '属于差题的情况：\r' +
-            '不管“搜到”还是“没搜到”，检索结果中的题目都有可能是差题，只要是差题就不符合标准，也就是说这样的题目是不能用的，我们丢掉这样的题目，并且把给出的题目录到系统中。\r' +
+        SEARCH_LOSE: '题目差，去录题\r' +
+            '不管“搜到”还是“没搜到”，检索结果中的题目都有可能是差题，只要是差题就不符合标准，也就是说这样的题目是不能用的，我们丢掉这样的题目，并且把给出的题目录到系统中。以下情况判为“题目差，去录题”\r' +
             '1.检索结果的内容中出现其它网站名称、链接、水印。\r' +
-            '2.检索结果的答案有明显错误，没有回答、答非所问等。\r' +
+            '2.检索结果的答案有明显错误、答非所问等。\r' +
             '3.检索结果的内容杂乱，不是一道题，而是一整篇试卷或其他（注意此类情况要区别于阅读题等内容较长的大题、关联题）。\r' +
             '4.检索结果中的公式大量使用非标准公式或符号。\r' +
             '5.检索结果内容缺失：出现图片、表格或其他题目内容缺失或损坏。\r' +
-            '6.排版杂乱导致无法阅读。',
-        SEARCH_FAIL: '本质上不是同一道题。\r' +
-            '容易误判的情况（以下判断结果应为“没搜到”）：\r' +
-            '①题型不同、选项不同、所挖的空不同：这些方面只要有所不同，即便看起来搜到的结果能解决问题，也都归为“没搜到”\r' +
-            '②解题相关的条件变化：尤其要注意如数字等一些细节方面与解题相关的条件的不同（可能题目大体看上去没有不同），这些不同对解题及答案有影响，此类归为“没搜到”\r' +
-            '③搜到的题目“小于”给出的题目：即搜到的题目与给出的题目不完全匹配，或是部分相交，这种情况都算做“没搜到”\r',
-        SEARCH_STANDARD: '搜到：\r' +
-            '检索结果要与给出题目的题型、题目条件、问题都一致。\r' +
-            '容易误判的情况（以下判断结果应为“搜到”）：\r' +
+            '6.排版杂乱导致无法阅读。' +
+            '7.检索结果的答案出现截图且截图有些内容是可以手动录入的。' +
+            '特殊情况\r' +
+            '1、有些题有解析，没写答案属于好题还是差题？——如果答案在解析里且答案处写了“见解析”等字眼，判为“有好题，不用录”，否则判为差题\r' +
+            '2、题目一样，图不一样，那这种属于没搜到还是好题？——看图会不会影响到整个题目，影响到的话为差题，否则为好题\r' +
+            '3、一道题检索到的只有不相关的信息，例如只有第6章公式题目标题，其他的没有，这种情况属于好题还是怎么处理？——属于切题失误，判为“有好题不用录”\r' +
+            '4、像排版比较乱的，不仔细看分不清楚哪行，但是仔细看又能接着做题属于好题还是差题。——不影响做题都可以判为好题，出现大量公式错误则判为差题\r' +
+            '5、有些题目检索出来的配图很大——只要不影响到做题，判为好题，影响到做题的，判为差题\r' +
+            '6、选项重复一遍，但不影响做题属于好题吗？——好题\r' +
+            '7、检索结果有的出现带框框的数字或公式，这种属于差题吗？——排版杂乱无法阅读属于差题',
+        SEARCH_FAIL: '没搜到，去录题\r' +
+            '1、判断依据：本质上不是同一道题。\r' +
+            '2、容易误判的情况（以下判断结果应为“没搜到，去录题”）：' +
+            '①题型不同、选项不同、所挖的空不同：这些方面只要有所不同，即便看起来搜到的结果能解决问题，也都归为“没搜到，去录题”\r' +
+            '②解题相关的条件变化：尤其要注意如数字等一些细节方面与解题相关的条件的不同（可能题目大体看上去没有不同），这些不同对解题及答案有影响，此类归为“没搜到，去录题” \r' +
+            '③检索到的题目“小于”给出的题目：即检索到的题目与给出的题目不完全匹配，或是部分相交，这种情况都算做“没搜到，去录题”\r' +
+            '例：一道选择题，题干内容一样，截图是四个选项，检索到的题是三个选项，则判为“没搜到，去录题”',
+        SEARCH_STANDARD: '有好题，不用录\r' +
+            '1、判断依据：检索结果要与给出题目的题型、题目条件、问题都一致。\r' +
+            '2、容易误判的情况（以下判断结果应为“没搜到，去录题”）：\r' +
             '①与解题无关的内容不一样：但本质上是同一道题；如：人、物名称，无关描述等，这些内容虽然不同，但本质上仍是同一道题，归为”搜到“。\r' +
             '②搜到的题目“大于”给出的题目：即搜到的题目包含了给出的题目，归为“搜到”\r' +
             '③选项都相同但位置不同：题目问题选项都一样，就选项位置不一样，归为“搜到”\r' +
-            '④问法不同，但问题本质，即意思一样：只要是同样的问题，本质上仍是同一道题，归为“搜到”\r',
+            '④问法不同，但问题本质，即意思一样：只要是同样的问题，本质上仍是同一道题，归为“搜到”\r' +
+            '特殊情况\r' +
+            '1、有些题有解析，没写答案属于好题还是差题？——如果答案在解析里且答案处写了“见解析”等字眼，判为“有好题，不用录”，否则判为差题\r' +
+            '2、题目一样，图不一样，那这种属于没搜到还是好题？——看图会不会影响到整个题目，影响到的话为差题，否则为好题\r' +
+            '3、一道题检索到的只有不相关的信息，例如只有第6章公式题目标题，其他的没有，这种情况属于好题还是怎么处理？——属于切题失误，判为“有好题不用录”\r' +
+            '4、像排版比较乱的，不仔细看分不清楚哪行，但是仔细看又能接着做题属于好题还是差题。——不影响做题都可以判为好题，出现大量公式错误则判为差题\r' +
+            '5、有些题目检索出来的配图很大——只要不影响到做题，判为好题，影响到做题的，判为差题\r' +
+            '6、选项重复一遍，但不影响做题属于好题吗？——好题\r' +
+            '7、检索结果有的出现带框框的数字或公式，这种属于差题吗？——排版杂乱无法阅读属于差题',
     },
     ERROR: {
         STOP: '异常，需要手动刷新',
@@ -856,6 +875,7 @@ const TPL = {
     OPTIONS_SEPARATE: '<div data-v-322b822a="" class="item-cell-con"><div data-v-322b822a="" class="item-cell"><hr class="options-hr"></div></div>',
     OPTIONS_MANUAL: '<div data-v-322b822a="" class="item-cell-con"><div data-v-322b822a="" class="item-cell"><div data-v-322b822a="" class="item-cell-title">使用手册</div><div data-v-322b822a="" class="item-cell-value"><a target="_blank" href="https://github.com/jacktsui/xusqa/blob/master/manual/README.md" style="text-decoration: underline;color: #00a2d4;">查看使用手册</a></div></div></div>',
     OPTIONS_COPYRIGHT: '<div data-v-322b822a="" class="item-cell-con"><div data-v-322b822a="" class="item-cell"><div data-v-322b822a="" class="item-cell-title">脚本作者</div><div data-v-322b822a="" class="item-cell-value">© 2018, 徐。355088586@qq.com</div></div></div>',
+    JUDGE_RULE_A: '<a href="https://note.youdao.com/share/?id=d98298a63e8656ab277278f5c51efe70&amp;type=note#/" target="_blank" style="text-decoration: underline;color: #00a2d4;display: block;">查看判题规则</a>',
 }
 
 const EPCOLOR = [
@@ -927,6 +947,17 @@ const O = {/* jshint +W003 */
             this.setOptions('showHint', b)
         } else {
             C.error('设置是否显示助手提示, true 或者 false')
+        }
+    },
+
+    get showJudgeHint(){
+        return this.opts.hasOwnProperty('showJudgeHint') && this.opts.showJudgeHint
+    },
+    set showJudgeHint(b){
+        if (typeof(b) === 'boolean'){
+            this.setOptions('showJudgeHint', b)
+        } else {
+            C.error('设置是否在判题界面显示判题规则提示, true 或者 false')
         }
     },
 
@@ -3824,10 +3855,14 @@ function registerQjudgeHint(){
         clearTimeout(timer)
         
         if ($(DOM.QJUDGE_BTN).length === 3){
-            const $btnQJudge = $(DOM.QJUDGE_BTN).addClass('xusqa-btn')
-            $btnQJudge.filter(':nth-child(1)').attr('title', STR.HINT.SEARCH_STANDARD)
-            $btnQJudge.filter(':nth-child(2)').attr('title', STR.HINT.SEARCH_FAIL)
-            $btnQJudge.filter(':nth-child(3)').attr('title', STR.HINT.SEARCH_LOSE)
+            const $btnQJudge = $(DOM.QJUDGE_BTN)
+            if (O.showJudgeHint){
+                $btnQJudge.addClass('xusqa-btn')
+                $btnQJudge.filter(':nth-child(1)').attr('title', STR.HINT.SEARCH_STANDARD)
+                $btnQJudge.filter(':nth-child(2)').attr('title', STR.HINT.SEARCH_FAIL)
+                $btnQJudge.filter(':nth-child(3)').attr('title', STR.HINT.SEARCH_LOSE)
+            }
+            $(TPL.JUDGE_RULE_A).insertAfter($btnQJudge.last())
             execCommand('registerQjudgeEncircle')
         } else {
             timer = setTimeout(tryRegisterQjudgeHint, 500);
@@ -3930,17 +3965,17 @@ function registerOption(){
         O.autoSliceAnalysis = $switch_autoSliceAnalysis.prop('checked')
     })
 
+    const $switch_showJudgeHint = $(TPL.OPTIONS_SWITCH.format({title: '判题时显示判题规则提示'})).appendTo($option).find('input')
+    $switch_showJudgeHint.prop('checked', O.showJudgeHint).on('change', function(){
+        O.showJudgeHint = $switch_showJudgeHint.prop('checked')
+    })
+
+    $(TPL.OPTIONS_SEPARATE).appendTo($option)
+
     const $switch_showHint = $(TPL.OPTIONS_SWITCH.format({title: '显示助手提示'})).appendTo($option).find('input')
     $switch_showHint.prop('checked', O.showHint).on('change', function(){
         O.showHint = $switch_showHint.prop('checked')
     })
-
-    $(TPL.OPTIONS_SEPARATE).appendTo($option)
-    //const $switch_navImage = $(TPL.OPTIONS_SWITCH.format({title: '左侧导航栏随机背景图片'})).appendTo($option).find('input')
-    //$switch_navImage.prop('checked', O.navImage).on('change', function(){
-    //    O.navImage = $switch_navImage.prop('checked')
-    //    refreshNavImage()
-    //})
 
     const $inputbutton_epNavBg = $(TPL.OPTIONS_INPUTBUTTON.format({title: '自定义左侧导航栏背景图片',text:(O.navImage ? '随机' : '自定义')})).appendTo($option)
     const $button_epNavBg = $inputbutton_epNavBg.find('input').val(helper.getUrlFromepNavBg())
