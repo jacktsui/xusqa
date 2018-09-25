@@ -853,7 +853,7 @@ const TPL = {
     OPTIONS_NUMBER: '<div data-v-322b822a class="item-cell-con"><div data-v-322b822a class="item-cell"><div data-v-322b822a class="item-cell-title">{title}</div><div data-v-322b822a class="item-cell-value"><input class="options-number" type="number" min="{min}" max="{max}" step="{step}" title="{hint}" /></div></div></div>',
     OPTIONS_BUTTON: '<div data-v-322b822a class="item-cell-con"><div data-v-322b822a class="item-cell"><div data-v-322b822a class="item-cell-title">{title}</div><div data-v-322b822a class="item-cell-value"><button data-v-322b822a="" type="button" class="el-button el-button--info el-button--small options-button"><span>{text}</span></button></div></div></div>',
     OPTIONS_INPUTBUTTON: '<div data-v-322b822a class="item-cell-con"><div data-v-322b822a class="item-cell"><div data-v-322b822a class="item-cell-title">{title}</div><div data-v-322b822a class="item-cell-value"><input readonly="readonly" style="width: 232px;margin-right: 10px;"><button data-v-322b822a="" type="button" class="el-button el-button--info el-button--small options-button"><span>{text}</span></button></div></div></div>',
-    OPTIONS_SEPARATE: '<div data-v-322b822a="" class="item-cell-con"><div data-v-322b822a="" class="item-cell"><hr></div></div>',
+    OPTIONS_SEPARATE: '<div data-v-322b822a="" class="item-cell-con"><div data-v-322b822a="" class="item-cell"><hr class="options-hr"></div></div>',
     OPTIONS_MANUAL: '<div data-v-322b822a="" class="item-cell-con"><div data-v-322b822a="" class="item-cell"><div data-v-322b822a="" class="item-cell-title">使用手册</div><div data-v-322b822a="" class="item-cell-value"><a target="_blank" href="https://github.com/jacktsui/xusqa/blob/master/manual/README.md" style="text-decoration: underline;color: #00a2d4;">查看使用手册</a></div></div></div>',
     OPTIONS_COPYRIGHT: '<div data-v-322b822a="" class="item-cell-con"><div data-v-322b822a="" class="item-cell"><div data-v-322b822a="" class="item-cell-title">脚本作者</div><div data-v-322b822a="" class="item-cell-value">© 2018, 徐。355088586@qq.com</div></div></div>',
 }
@@ -1062,7 +1062,7 @@ const O = {/* jshint +W003 */
     },
 
     get epNavBg(){
-        return this.opts.hasOwnProperty('epNavBg') && this.opts.epNavBg ? this.opts.epNavBg : '#606266 url(http://pde64pw8u.bkt.clouddn.com/c.jpg) no-repeat bottom'
+        return this.opts.hasOwnProperty('epNavBg') && this.opts.epNavBg ? this.opts.epNavBg : '#606266 url(http://pde64pw8u.bkt.clouddn.com/j.jpg) no-repeat bottom'
     },
     set epNavBg(bg){
         this.setOptions('epNavBg', bg)
@@ -1950,6 +1950,13 @@ util.addStyle(util.cmt(function(){/*!CSS
 .options-button {
     padding: 7px 9px;
     margin: 3px 4px 3px 4px;
+}
+.options-hr {
+    margin: 0 auto;
+    border: 0;
+    height: 0;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
 }
 .xusqa-a-button {
     margin-left: 50px;
