@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.1.068
+// @version      1.1.070
 // @description  有道搜题,录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -18,7 +18,7 @@
 // @note         编写原则: 助手尽量保持系统原有行为和样貌,修改过的地方都打了标记
 // @note         未来计划: 重点维护录题功能,提高录题效率是脚本的终极目标
 // @note         最近更新：2018.09.24 文本快速进公式编辑器编辑,该功能需要单独安装
-// @note         最近更新：2018.09.13 添加个人中心脚本配置(护眼色等)),本月报告及上月结算优化、缓存和bug修复
+// @note         最近更新：2018.09.13 添加个人中心脚本配置(护眼色等),本月报告及上月结算优化、缓存和bug修复
 // @note         最近更新：2018.08.11 框的准自动切割答案和解析
 // @note         最近更新：2018.08.05 添加题目保存和恢复功能及其他小功能
 // @note         最近更新：2018.07.23 添加万能点(`)功能
@@ -32,7 +32,7 @@
 (function() {
     'use strict';
 
-    const ver = 'Ver 1.1.068'
+    const ver = 'Ver 1.1.070'
 
 /**
  * 放前面方便统一更换
@@ -830,9 +830,9 @@ const TPL = {
         'border-style: solid;border-color: transparent transparent var(--navbgcolor) transparent;"></div>' +
         '<span style="color: white;">调整一键领取任务顺序，用逗号分隔</span>' +
         '<textarea rows="5" cols="1000" style=" font-size: 16px; width: 92%; overflow:hidden; resize:none;"></textarea>' +
-        '<div style="text-align: left;padding-left: 8px;font-size: 14px;"><input type="checkbox" id="xusqa_showHint" checked="checked"' +
-        ' name="showHint" title="显示助手提示" style="width: 16px;height: 16px;vertical-align: middle;display: inline-block;margin-bottom: 6px;">' +
-        '<label for="xusqa_showHint">显示助手提示</label>' +
+        '<div style="text-align: left;padding-left: 8px;font-size: 14px;">' +
+        //'<input type="checkbox" id="xusqa_showHint" checked="checked" name="showHint" title="显示助手提示" style="width: 16px;height: 16px;vertical-align: middle;display: inline-block;margin-bottom: 6px;">' +
+        //'<label for="xusqa_showHint">显示助手提示</label>' +
         '<a data-v-7b90ba54 href="javascript:void(0);" class="exit header-btn" style="float: right; margin: 0px 12px 10px 20px; padding: 6px 20px 6px 20px;" title="全部清空后点确定,将重新加载所有有价格的科目.">确定</a></div>',
     CONFIG_BUTTON: '<a data-v-7b90ba54 id="xusqa_div_config_button" href="javascript:void(0);" class="exit header-btn" style="margin-left: 1px; padding: 6px 3px;">┇</a>',
     SNAP_QUESTION_HINT: '<span style="margin-left: 266px;display:inline-block;color: #f56c6c;border-right: 1px solid #f56c6c;padding: 5px;border-top: 1px solid #f56c6c;">助手提示: 在下面题目图片上可以直接框选截图哦</span>',
@@ -3928,10 +3928,11 @@ function registerOption(){
     $switch_autoSliceAnalysis.prop('checked', O.autoSliceAnalysis).on('change', function(){
         O.autoSliceAnalysis = $switch_autoSliceAnalysis.prop('checked')
     })
-    //const $switch_fixSysBug = $(TPL.OPTIONS_SWITCH.format({title: '修复判题查看题目所在页空白'})).appendTo($option).find('input')
-    //$switch_fixSysBug.prop('checked', O.fixSysBug).on('change', function(){
-    //    O.fixSysBug = $switch_fixSysBug.prop('checked')
-    //})
+
+    const $switch_showHint = $(TPL.OPTIONS_SWITCH.format({title: '查看助手提示'})).appendTo($option).find('input')
+    $switch_showHint.prop('checked', O.showHint).on('change', function(){
+        O.showHint = $switch_showHint.prop('checked')
+    })
 
     $(TPL.OPTIONS_SEPARATE).appendTo($option)
     const $switch_navImage = $(TPL.OPTIONS_SWITCH.format({title: '左侧导航栏随机背景图片'})).appendTo($option).find('input')
@@ -4012,7 +4013,7 @@ function registerUI() {
             $config.hide()
         } else {
             $config.children('textarea').val(O.onekeyGetTaskSEs)
-            $config.find('input:checkbox').attr('checked', O.showHint)
+            //$config.find('input:checkbox').attr('checked', O.showHint)
             $config.css('left', '{0}px'.format($btnOneKeyGetTask[0].offsetLeft)).show()
 
             $(document).on('click.xusqa_event', function(e) {
@@ -4054,7 +4055,7 @@ function registerUI() {
             const s = r.join(',')
             if (s){
                 O.onekeyGetTaskSEs = s
-                O.showHint = $config.find('input:checkbox').prop('checked')
+                //O.showHint = $config.find('input:checkbox').prop('checked')
                 $config.hide()
                 helper.msg.success(STR.CONFIG.SUCCESS + (msg ? msg + '在排除列表,已被自动屏蔽.' : ''))
             } else { // 清空的话自动全部加载
