@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.1.065
+// @version      1.1.066
 // @description  有道搜题,录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -32,7 +32,7 @@
 (function() {
     'use strict';
 
-    const ver = 'Ver 1.1.065'
+    const ver = 'Ver 1.1.066'
 
 /**
  * 放前面方便统一更换
@@ -851,9 +851,9 @@ const TPL = {
     EDIT_PAGE_PICKUP: '<a href="javascript:;" style="color: #337ab7;font-size: 16px;margin-left: 16px;" title="助手提示：从解析中快速提取答案、点评和知识点">⇵</a>',
     OPTIONS:'<div data-v-322b822a class="list-item"><div data-v-322b822a class="item-title">助手配置{ver}'+ver+'</div></div>',
     OPTIONS_SWITCH: '<div data-v-322b822a class="item-cell-con"><div data-v-322b822a class="item-cell"><div data-v-322b822a class="item-cell-title">{title}</div><div data-v-322b822a class="item-cell-value"><input class="switch switch-anim" type="checkbox" checked /></div></div></div>',
-    OPTIONS_NUMBER: '<div data-v-322b822a class="item-cell-con"><div data-v-322b822a class="item-cell"><div data-v-322b822a class="item-cell-title">{title}</div><div data-v-322b822a class="item-cell-value"><input type="number" min="{min}" max="{max}" step="{step}" title="{hint}" /></div></div></div>',
-    OPTIONS_BUTTON: '<div data-v-322b822a class="item-cell-con"><div data-v-322b822a class="item-cell"><div data-v-322b822a class="item-cell-title">{title}</div><div data-v-322b822a class="item-cell-value"><button data-v-322b822a="" type="button" class="el-button el-button--info el-button--small"><span>{text}</span></button></div></div></div>',
-    OPTIONS_INPUTBUTTON: '<div data-v-322b822a class="item-cell-con"><div data-v-322b822a class="item-cell"><div data-v-322b822a class="item-cell-title">{title}</div><div data-v-322b822a class="item-cell-value"><input readonly="readonly" style="width: 220px;margin-right: 10px;"><button data-v-322b822a="" type="button" class="el-button el-button--info el-button--small"><span>{text}</span></button></div></div></div>',
+    OPTIONS_NUMBER: '<div data-v-322b822a class="item-cell-con"><div data-v-322b822a class="item-cell"><div data-v-322b822a class="item-cell-title">{title}</div><div data-v-322b822a class="item-cell-value"><input class="options-number" type="number" min="{min}" max="{max}" step="{step}" title="{hint}" /></div></div></div>',
+    OPTIONS_BUTTON: '<div data-v-322b822a class="item-cell-con"><div data-v-322b822a class="item-cell"><div data-v-322b822a class="item-cell-title">{title}</div><div data-v-322b822a class="item-cell-value"><button data-v-322b822a="" type="button" class="el-button el-button--info el-button--small options-button"><span>{text}</span></button></div></div></div>',
+    OPTIONS_INPUTBUTTON: '<div data-v-322b822a class="item-cell-con"><div data-v-322b822a class="item-cell"><div data-v-322b822a class="item-cell-title">{title}</div><div data-v-322b822a class="item-cell-value"><input readonly="readonly" style="width: 232px;margin-right: 10px;"><button data-v-322b822a="" type="button" class="el-button el-button--info el-button--small options-button"><span>{text}</span></button></div></div></div>',
     OPTIONS_SEPARATE: '<div data-v-322b822a="" class="item-cell-con"><div data-v-322b822a="" class="item-cell"><hr></div></div>',
 }
 
@@ -1938,6 +1938,17 @@ util.addStyle(util.cmt(function(){/*!CSS
 }
 .switch.switch-anim:checked:before {
     transition: left 0.3s;
+}
+.options-number {
+    width: 49px;
+    margin: 3px 3px 3px 4px;
+    border-radius: 3px;
+    padding: 3px;
+    border: 1px solid #cdcdcd;
+}
+.options-button {
+    padding: 7px 9px;
+    margin: 3px 4px 3px 4px;
 }
 .xusqa-a-button {
     margin-left: 50px;
