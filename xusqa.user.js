@@ -1,12 +1,12 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.1.066
+// @version      1.1.067
 // @description  有道搜题,录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
 // @license      MIT https://mit-license.org/
-// @homepageURL  https://github.com/jacktsui/xusqa
+// @homepageURL  https://github.com/jacktsui/xusqa/manual/README.md
 // @supportURL   https://github.com/jacktsui/xusqa/issues
 // @UpdateURL    https://github.com/jacktsui/xusqa/raw/master/xusqa.user.js
 // @require      https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js
@@ -32,7 +32,7 @@
 (function() {
     'use strict';
 
-    const ver = 'Ver 1.1.066'
+    const ver = 'Ver 1.1.067'
 
 /**
  * 放前面方便统一更换
@@ -47,7 +47,6 @@
 const CDN = 'https://cdn.bootcss.com/'
 
 /**
- * 使用手册: https://github.com/jacktsui/jscore/blob/master/README.md
  * chrome 插件伴侣下载地址: http://crxhelp.bj.bcebos.com/crxhelp.zip
  * chrome 插件离线下载网站: https://www.crx4chrome.com/
  * 油猴4.7稳定版下载地址: https://www.crx4chrome.com/down/755/crx/
@@ -855,6 +854,8 @@ const TPL = {
     OPTIONS_BUTTON: '<div data-v-322b822a class="item-cell-con"><div data-v-322b822a class="item-cell"><div data-v-322b822a class="item-cell-title">{title}</div><div data-v-322b822a class="item-cell-value"><button data-v-322b822a="" type="button" class="el-button el-button--info el-button--small options-button"><span>{text}</span></button></div></div></div>',
     OPTIONS_INPUTBUTTON: '<div data-v-322b822a class="item-cell-con"><div data-v-322b822a class="item-cell"><div data-v-322b822a class="item-cell-title">{title}</div><div data-v-322b822a class="item-cell-value"><input readonly="readonly" style="width: 232px;margin-right: 10px;"><button data-v-322b822a="" type="button" class="el-button el-button--info el-button--small options-button"><span>{text}</span></button></div></div></div>',
     OPTIONS_SEPARATE: '<div data-v-322b822a="" class="item-cell-con"><div data-v-322b822a="" class="item-cell"><hr></div></div>',
+    OPTIONS_MANUAL: '<div data-v-322b822a="" class="item-cell-con"><div data-v-322b822a="" class="item-cell"><div data-v-322b822a="" class="item-cell-title">使用手册</div><div data-v-322b822a="" class="item-cell-value"><a target="_blank" href="https://github.com/jacktsui/xusqa/manual/README.md" style="text-decoration: underline;color: #00a2d4;">查看使用手册</a></div></div></div>',
+    OPTIONS_COPYRIGHT: '<div data-v-322b822a="" class="item-cell-con"><div data-v-322b822a="" class="item-cell"><div data-v-322b822a="" class="item-cell-title">脚本作者</div><div data-v-322b822a="" class="item-cell-value">© 2018, 徐。355088586@qq.com</div></div></div>',
 }
 
 const EPCOLOR = [
@@ -3948,6 +3949,9 @@ function registerOption(){
         refreshNavImage()
         $switch_epColor.find('span').text(EPCOLOR[O.epColor][0])
     })
+    $(TPL.OPTIONS_SEPARATE).appendTo($option)
+    $(TPL.OPTIONS_MANUAL).appendTo($option)
+    $(TPL.OPTIONS_COPYRIGHT).appendTo($option)
 }
 
 function registerDbsn(){
