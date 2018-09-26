@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.1.073
+// @version      1.1.077
 // @description  有道搜题,录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -32,7 +32,7 @@
 (function() {
     'use strict';
 
-    const ver = 'Ver 1.1.073'
+    const ver = 'Ver 1.1.077'
 
 /**
  * 放前面方便统一更换
@@ -875,6 +875,8 @@ const TPL = {
     OPTIONS_SEPARATE: '<div data-v-322b822a="" class="item-cell-con"><div data-v-322b822a="" class="item-cell"><hr class="options-hr"></div></div>',
     OPTIONS_MANUAL: '<div data-v-322b822a="" class="item-cell-con"><div data-v-322b822a="" class="item-cell"><div data-v-322b822a="" class="item-cell-title">使用手册</div><div data-v-322b822a="" class="item-cell-value"><a target="_blank" href="https://github.com/jacktsui/xusqa/blob/master/manual/README.md" style="text-decoration: underline;color: #00a2d4;">查看使用手册</a></div></div></div>',
     OPTIONS_COPYRIGHT: '<div data-v-322b822a="" class="item-cell-con"><div data-v-322b822a="" class="item-cell"><div data-v-322b822a="" class="item-cell-title">脚本作者</div><div data-v-322b822a="" class="item-cell-value">© 2018, 徐。355088586@qq.com</div></div></div>',
+    OPTIONS_XUSQA: '<div data-v-322b822a="" class="item-cell-con"><div data-v-322b822a="" class="item-cell"><div data-v-322b822a="" class="item-cell-title">脚本更新</div><div data-v-322b822a="" class="item-cell-value"><a target="_blank" href="https://github.com/jacktsui/xusqa/raw/master/xusqa.user.js" style="text-decoration: underline;color: #00a2d4;">更新脚本</a></div></div></div>',
+    OPTIONS_XUSQA_KFE: '<div data-v-322b822a="" class="item-cell-con"><div data-v-322b822a="" class="item-cell"><div data-v-322b822a="" class="item-cell-title">脚本更新(公式)</div><div data-v-322b822a="" class="item-cell-value"><a target="_blank" href="https://github.com/jacktsui/xusqa/raw/master/xusqa.kfe.user.js" style="text-decoration: underline;color: #00a2d4;">更新公式脚本</a></div></div></div>',
     JUDGE_RULE_A: '<a href="https://note.youdao.com/share/?id=d98298a63e8656ab277278f5c51efe70&amp;type=note#/" target="_blank" style="text-decoration: underline;color: #00a2d4;display: block;">查看判题规则</a>',
 }
 
@@ -4039,6 +4041,8 @@ function registerOption(){
         $switch_epColor.find('span').text(EPCOLOR[O.epColor][0])
     })
     $(TPL.OPTIONS_SEPARATE).appendTo($option)
+    $(TPL.OPTIONS_XUSQA).appendTo($option)
+    $(TPL.OPTIONS_XUSQA_KFE).appendTo($option)
     $(TPL.OPTIONS_MANUAL).appendTo($option)
     $(TPL.OPTIONS_COPYRIGHT).appendTo($option)
 }
