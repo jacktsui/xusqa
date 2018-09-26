@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手-公式
 // @namespace    jacktsui
-// @version      0.2.071
+// @version      0.2.074
 // @description  有道搜题,录题员助手(公式加强)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -18,7 +18,7 @@
 (function() {
     'use strict';
 
-//const ver = 'Ver 0.2.071'
+//const ver = 'Ver 0.2.074'
 
 const xusqapi = window.top.xusqapi
 if (!xusqapi.passport){
@@ -55,11 +55,15 @@ function txt2LaTex(str){
 
         return str
     } else if(xusqapi.subject === '数学'){
-        str = str.replace(/\/\/({[^}]+})/g, '\\sqrt $1')
+        str = str.replace(/\/\/({[^}]+}|.)/g, '\\sqrt $1')
         str = str.replace(/({[^}]+}|.)\/({[^}]+}|.)/g, '\\frac {$1} {$2}')
 
         str = str.replace(/(\([^\)]+\)|[a-z])^(\d+)/g, '{$1}^{$2}')
         str = str.replace(/(\([^\)]+\)|[a-z])_(\d+)/g, '{$1}_{$2}')
+
+        // 向量
+        str = str.replace(/([|=+-]|^)([A-Z]{2})([|=+-]|$)/g,'$1\\overrightarrow{$2}$3')
+        str = str.replace(/([=+-])([A-Z]{2})([=+-]|$)/g,'$1\\overrightarrow{$2}$3') // 第一遍有被跳过去的
 
         return str
     }
