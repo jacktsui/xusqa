@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手-公式
 // @namespace    jacktsui
-// @version      0.2.074
+// @version      0.2.075
 // @description  有道搜题,录题员助手(公式加强)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -18,7 +18,7 @@
 (function() {
     'use strict';
 
-//const ver = 'Ver 0.2.074'
+//const ver = 'Ver 0.2.075'
 
 const xusqapi = window.top.xusqapi
 if (!xusqapi.passport){
@@ -62,8 +62,8 @@ function txt2LaTex(str){
         str = str.replace(/(\([^\)]+\)|[a-z])_(\d+)/g, '{$1}_{$2}')
 
         // 向量
-        str = str.replace(/([|=+-]|^)([A-Z]{2})([|=+-]|$)/g,'$1\\overrightarrow{$2}$3')
-        str = str.replace(/([=+-])([A-Z]{2})([=+-]|$)/g,'$1\\overrightarrow{$2}$3') // 第一遍有被跳过去的
+        str = str.replace(/([|·=+-]|^)([A-Z]{2})([|·=+-]|$)/g,'$1\\overrightarrow{$2}$3')
+        str = str.replace(/([·=+-])([A-Z]{2})([·=+-]|$)/g,'$1\\overrightarrow{$2}$3') // 第一遍有被跳过去的
 
         return str
     }
