@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.1.079
+// @version      1.1.081
 // @description  有道搜题,录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -32,7 +32,7 @@
 (function() {
     'use strict';
 
-    const ver = 'Ver 1.1.079'
+    const ver = 'Ver 1.1.081'
 
 /**
  * 放前面方便统一更换
@@ -1670,13 +1670,10 @@ table {
 td {
     background-color: var(--bgcolor);
 }
-.fixed-box_content[data-v-47869f87] {
-    background: var(--bgcolor);
-}
-.fixed-box_content[data-v-47869f87] {
-    background: var(--bgcolor);
-}
 .fixed-box_content[data-v-2a6f5d4d] {
+    background: var(--bgcolor);
+}
+.fixed-box_content[data-v-47869f87] {
     background: var(--bgcolor);
 }
 .el-table th, .el-table tr {
@@ -1707,20 +1704,20 @@ util.addStyle(util.cmt(function(){/*!CSS
     top: 182px;
 }
 
-.box_min .region-con[data-v-2a6f5d4d] {
+.box_min .region-con[data-v-47869f87] {
     display: block;
-}
-
-.latex[data-v-2a6f5d4d] {
-    margin-right: 16px;
 }
 
 .latex[data-v-47869f87] {
     margin-right: 16px;
 }
 
-.submit-region[data-v-2a6f5d4d] {
+.submit-region[data-v-47869f87] {
     overflow: hidden;
+}
+
+.latex[data-v-2a6f5d4d] {
+    margin-right: 16px;
 }
 
 .item-cell-title[data-v-3e827132], .item-cell-value[data-v-3e827132] {
