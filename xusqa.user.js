@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.1.084
+// @version      1.1.085
 // @description  有道搜题,录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -32,7 +32,8 @@
 (function() {
     'use strict';
 
-    const ver = 'Ver 1.1.084'
+    const ver = '1.1.085'
+    const ver_kfe = '0.2.084'
 
 /**
  * 放前面方便统一更换
@@ -395,7 +396,7 @@ const RULE = [
     // 分段
     [/\s*([AB]\:)/g, DIC.P + '$1', '英语', '0'], // A和B对话
     [/\s*([MW]\:)/g, DIC.P + '$1', '英语', '2'], // 听力解析W和M对话
-    [/(\([A-G]\))/g, DIC.P + '$1', '英语,物理,化学', '0'], // ex: A.goodB.better (A)good(B)better(1)
+    //[/(\([A-G]\))/g, DIC.P + '$1', '英语,物理,化学', '0'], // ex: A.goodB.better (A)good(B)better(1)
     [/([^A-Z])\s*([A-G]\.)/g, '$1' + DIC.P + '$2', '^英语', '0'], // ex: A.goodB.better 排除:ABC.
 
     // 统一格式
@@ -888,6 +889,7 @@ const URL = {
         const n = Math.floor(Math.random()*(123-1+1)+1)
         return 'http://pde64pw8u.bkt.clouddn.com/image/random/png/{n}.png'.format({n:n})
     },
+    VER: 'https://github.com/jacktsui/xusqa/raw/master/ver.json',
 }
 //<------ strings end.
 
@@ -910,13 +912,15 @@ const TPL = {
     SQUARE_UPDATE: '<div id="xusqa-square-update" class="process-task-con">最后刷新时间：<a  style="padding: 0px 10px;color: #f93e53;" >　刚刚　</a><a href="javascript:;" class="xusqa-a-button xusqa-btn">　刷新　</a><a href="javascript:;" class="xusqa-a-button xusqa-btn">分享到QQ</a></div>',
     ACC_INFO: '<div style=" font-size: 12px; font-style: italic; margin-bottom: 16px;">以上数据仅供参考.</div>',
     THIS_ACC_INFO: '<div style=" font-size: 12px; font-style: italic; margin-bottom: 16px;">{remark}数据仅供参考.</div>',
-    EDIT_PAGE_SAVE: '<a href="javascript:;" class="xusqa-btn" style="display: inline-block;float: right;background-color: #337ab7;color: white;font-size: 16px;padding: 2px 16px;margin-left: 16px;" title="助手提示: 录题过程中可以临时保存当前录入内容，防止丢失">暂存题目</a>',
-    EDIT_PAGE_RESTORE: '<a href="javascript:;" class="xusqa-btn" style="display: inline-block;float: right;background-color: gray;color: white;font-size: 16px;padding: 2px 16px;margin-left: 16px;" title="助手提示: 恢复为最后一次保存时的状态">恢复题目</a>',
+    JUDGE_RULE_A: '<a href="https://note.youdao.com/share/?id=d98298a63e8656ab277278f5c51efe70&amp;type=note#/" target="_blank" style="text-decoration: underline;color: #00a2d4;display: block;">查看判题规则</a>',
+    JUGGE_REFRESH: '<a href="javascript:;" class="xu-img-under-btn xusqa-btn" title="助手提示: 检索空白或者乱码刷新">快速刷新</a>',
+    EDIT_PAGE_SAVE: '<a href="javascript:;" class="xu-img-under-btn xusqa-btn" title="助手提示: 录题过程中可以临时保存当前录入内容，防止丢失">暂存题目</a>',
+    EDIT_PAGE_RESTORE: '<a href="javascript:;" class="xu-img-under-btn xusqa-btn" style="background-color: gray;" title="助手提示: 恢复为最后一次保存时的状态">恢复题目</a>',
     EDIT_PAGE_SAVE_SAMPLE: '<a href="javascript:;" style="color: #337ab7;font-size: 16px;margin-left: 16px;float: right" title="助手提示: 收集样本,帮助作者优化一键整理,一定要在整理前收集">收集样本</a>',
     EDIT_PAGE_CLEAR_KNOWLEDGE: '<a href="javascript:;" style="color: #337ab7;font-size: 16px;margin-left: 16px;float: right;" title="助手提示：清除无关知识点,下次同一任务的将会自动清除">清除</a>',
     EDIT_PAGE_MOVETO_ANALYSIS: '<a href="javascript:;" style="color: #337ab7;font-size: 16px;margin-left: 16px;float: right;" title="助手提示：将答案内容快速移动到解析">⇩</a>',
     EDIT_PAGE_PICKUP: '<a href="javascript:;" style="color: #337ab7;font-size: 16px;margin-left: 16px;" title="助手提示：从解析中快速提取答案、点评和知识点">⇵</a>',
-    OPTIONS:'<div data-v-'+UI.css_scope.UserCenter+' class="list-item"><div data-v-'+UI.css_scope.UserCenter+' class="item-title">助手配置{ver}'+ver+'</div></div>',
+    OPTIONS:'<div data-v-'+UI.css_scope.UserCenter+' class="list-item"><div data-v-'+UI.css_scope.UserCenter+' class="item-title">助手配置({ver})</div></div>',
     OPTIONS_SWITCH: '<div data-v-'+UI.css_scope.UserCenter+' class="item-cell-con"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell-title">{title}</div><div data-v-'+UI.css_scope.UserCenter+' class="item-cell-value"><input class="switch switch-anim" type="checkbox" checked /></div></div></div>',
     OPTIONS_NUMBER: '<div data-v-'+UI.css_scope.UserCenter+' class="item-cell-con"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell-title">{title}</div><div data-v-'+UI.css_scope.UserCenter+' class="item-cell-value"><input class="options-number" type="number" min="{min}" max="{max}" step="{step}" title="{hint}" /></div></div></div>',
     OPTIONS_BUTTON: '<div data-v-'+UI.css_scope.UserCenter+' class="item-cell-con"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell-title">{title}</div><div data-v-'+UI.css_scope.UserCenter+' class="item-cell-value"><button data-v-'+UI.css_scope.UserCenter+' type="button" class="el-button el-button--info el-button--small options-button"><span>{text}</span></button></div></div></div>',
@@ -924,9 +928,8 @@ const TPL = {
     OPTIONS_SEPARATE: '<div data-v-'+UI.css_scope.UserCenter+' class="item-cell-con"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell"><hr class="options-hr"></div></div>',
     OPTIONS_MANUAL: '<div data-v-'+UI.css_scope.UserCenter+' class="item-cell-con"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell-title">使用手册</div><div data-v-'+UI.css_scope.UserCenter+' class="item-cell-value"><a target="_blank" href="https://github.com/jacktsui/xusqa/blob/master/manual/README.md" style="text-decoration: underline;color: #00a2d4;">查看使用手册</a></div></div></div>',
     OPTIONS_COPYRIGHT: '<div data-v-'+UI.css_scope.UserCenter+' class="item-cell-con"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell-title">脚本作者</div><div data-v-'+UI.css_scope.UserCenter+' class="item-cell-value">© 2018, 徐。355088586@qq.com</div></div></div>',
-    OPTIONS_XUSQA: '<div data-v-'+UI.css_scope.UserCenter+' class="item-cell-con"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell-title">脚本更新</div><div data-v-'+UI.css_scope.UserCenter+' class="item-cell-value"><a target="_blank" href="https://github.com/jacktsui/xusqa/raw/master/xusqa.user.js" style="text-decoration: underline;color: #00a2d4;">更新本脚本</a></div></div></div>',
-    OPTIONS_XUSQA_KFE: '<div data-v-'+UI.css_scope.UserCenter+' class="item-cell-con"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell-title">脚本更新(公式)</div><div data-v-'+UI.css_scope.UserCenter+' class="item-cell-value"><a target="_blank" href="https://github.com/jacktsui/xusqa/raw/master/xusqa.kfe.user.js" style="text-decoration: underline;color: #00a2d4;">更新公式脚本</a></div></div></div>',
-    JUDGE_RULE_A: '<a href="https://note.youdao.com/share/?id=d98298a63e8656ab277278f5c51efe70&amp;type=note#/" target="_blank" style="text-decoration: underline;color: #00a2d4;display: block;">查看判题规则</a>',
+    OPTIONS_XUSQA: '<div data-v-'+UI.css_scope.UserCenter+' class="item-cell-con"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell-title">主脚本 版本 {ver}</div><div data-v-'+UI.css_scope.UserCenter+' class="item-cell-value"><a target="_blank" href="https://github.com/jacktsui/xusqa/raw/master/xusqa.user.js" style="text-decoration: underline;color: #00a2d4;">已是最新版本</a></div></div></div>',
+    OPTIONS_XUSQA_KFE: '<div data-v-'+UI.css_scope.UserCenter+' class="item-cell-con"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell-title">公式脚本 版本 {ver_kfe}</div><div data-v-'+UI.css_scope.UserCenter+' class="item-cell-value"><a target="_blank" href="https://github.com/jacktsui/xusqa/raw/master/xusqa.kfe.user.js" style="text-decoration: underline;color: #00a2d4;">已是最新版本</a></div></div></div>',
 }
 
 const EPCOLOR = [
@@ -2075,6 +2078,16 @@ util.addStyle(util.cmt(function(){/*!CSS
     background-color: #147bcd;
     background: linear-gradient(#51a9ee, #147bcd);
     border-color: #1482d0;
+}
+
+.xu-img-under-btn {
+    display: inline-block;
+    float: right;
+    background-color: #337ab7;
+    color: white;
+    font-size: 16px;
+    padding: 2px 16px;
+    margin-left: 16px;
 }
 */
 }))
@@ -3886,6 +3899,9 @@ function registerQjudgeEncircle(){
                 return
             }
             const $qimg = $('#app > div > div.main-content > div > div > div.edit-con > div.search-con > div > img')
+            $(TPL.JUGGE_REFRESH).insertAfter($qimg).on('click', function(){
+                location.reload()
+            })
             const src = $qimg[0].src
             const scale = /*$img[0].width*/ 960 / $img[0].naturalWidth
             //http://nos.netease.com/yd-searchq/968c7132-c967-41a4-9803-d59e98713649.jpg?imageView&crop=41_978_1594_217
@@ -3947,7 +3963,7 @@ function queryQInputProgress(f){
 }
 
 function registerOption(){
-    const $option = $(TPL.OPTIONS.format({ver: stage.profile.isValidSN ? '(专业版)' : ''})).insertAfter($(DOM.POSITION))
+    const $option = $(TPL.OPTIONS.format({ver: stage.profile.isValidSN ? '专业版' : '基础版'})).insertAfter($(DOM.POSITION))
     const $number_glassMinZoom = $(TPL.OPTIONS_NUMBER.format({title: '放大镜最小放大倍数 [1,5]',hint: '助手提示: 建议设为 1.5-3 倍', min:1, max:5, step:0.1})).appendTo($option).find('input')
     $number_glassMinZoom.val(O.glassMinzoom).on('change', function(){
         O.glassMinzoom = $number_glassMinZoom.val()
@@ -4002,10 +4018,21 @@ function registerOption(){
         $switch_epColor.find('span').text(EPCOLOR[O.epColor][0])
     })
     $(TPL.OPTIONS_SEPARATE).appendTo($option)
-    $(TPL.OPTIONS_XUSQA).appendTo($option)
-    $(TPL.OPTIONS_XUSQA_KFE).appendTo($option)
+    const $xusqa = $(TPL.OPTIONS_XUSQA.format({ver: ver})).appendTo($option)
+    const $xusqa_kfe = $(TPL.OPTIONS_XUSQA_KFE.format({ver_kfe: ver_kfe})).appendTo($option)
     $(TPL.OPTIONS_MANUAL).appendTo($option)
     $(TPL.OPTIONS_COPYRIGHT).appendTo($option)
+    $.get(URL.VER, function(data, status){
+        if (status === 'success'){
+            const v= JSON.parse(data)
+            if (v.ver > ver){
+                $xusqa.find('a').text('有新版本 ' + v.ver)
+            }
+            if (v.ver_kfe > ver_kfe){
+                $xusqa_kfe.find('a').text('有新版本 ' + v.ver_kfe)
+            }
+        }
+    })
 }
 
 function showSalary(){
