@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手-公式
 // @namespace    jacktsui
-// @version      0.2.080
+// @version      0.2.084
 // @description  有道搜题,录题员助手(公式加强)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -18,13 +18,13 @@
 (function() {
     'use strict';
 
-//const ver = 'Ver 0.2.080'
+//const ver = 'Ver 0.2.084'
 
 const xusqapi = window.top.xusqapi
 if (!xusqapi.passport){
     return
 }
-if ('化学,数学'.indexOf(xusqapi.subject) < 0){
+if ('化学,数学,物理'.indexOf(xusqapi.subject) < 0){
     return
 }
 let ue, kfe
@@ -149,7 +149,7 @@ function txt2LaTex(str){
         }
 
         return str
-    } else if(xusqapi.subject === '数学'){
+    } else if(~['数学','物理'].indexOf(xusqapi.subject)){
         /*
         str = str.replace(/\/\/({[^}]+}|[a-z0-9]+|.)/g, '\\sqrt $1')
         str = str.replace(/({[^}]+}|.)\/({[^}]+}|[a-z0-9]+|.)/g, '\\frac {$1} {$2}')

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.1.082
+// @version      1.1.084
 // @description  有道搜题,录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -32,7 +32,7 @@
 (function() {
     'use strict';
 
-    const ver = 'Ver 1.1.082'
+    const ver = 'Ver 1.1.084'
 
 /**
  * 放前面方便统一更换
