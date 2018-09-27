@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.1.078
+// @version      1.1.079
 // @description  有道搜题,录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -32,7 +32,7 @@
 (function() {
     'use strict';
 
-    const ver = 'Ver 1.1.078'
+    const ver = 'Ver 1.1.079'
 
 /**
  * 放前面方便统一更换
@@ -853,8 +853,8 @@ const TPL = {
         '<div style="text-align: left;padding-left: 8px;font-size: 14px;">' +
         //'<input type="checkbox" id="xusqa_showHint" checked="checked" name="showHint" title="显示助手提示" style="width: 16px;height: 16px;vertical-align: middle;display: inline-block;margin-bottom: 6px;">' +
         //'<label for="xusqa_showHint">显示助手提示</label>' +
-        '<a data-v-7b90ba54 href="javascript:void(0);" class="exit header-btn" style="float: right; margin: 0px 12px 10px 20px; padding: 6px 20px 6px 20px;" title="全部清空后点确定,将重新加载所有有价格的科目.">确定</a></div>',
-    CONFIG_BUTTON: '<a data-v-7b90ba54 id="xusqa_div_config_button" href="javascript:void(0);" class="exit header-btn" style="margin-left: 1px; padding: 6px 3px;">┇</a>',
+        '<a data-v-c239ad58 href="javascript:void(0);" class="exit header-btn" style="float: right; margin: 0px 12px 10px 20px; padding: 6px 20px 6px 20px;" title="全部清空后点确定,将重新加载所有有价格的科目.">确定</a></div>',
+    CONFIG_BUTTON: '<a data-v-c239ad58 id="xusqa_div_config_button" href="javascript:void(0);" class="exit header-btn" style="margin-left: 1px; padding: 6px 3px;">┇</a>',
     SNAP_QUESTION_HINT: '<span style="margin-left: 266px;display:inline-block;color: #f56c6c;border-right: 1px solid #f56c6c;padding: 5px;border-top: 1px solid #f56c6c;">助手提示: 在下面题目图片上可以直接框选截图哦</span>',
     SNAP_QUESTION_BUTTON: '<a href="javascript:;" class="xusqa-btn" title="助手提示: 框选以后可以点我直接截图" style="display: inline-block;float: right;background-color: #f78989;color: white;font-size: 16px;width: 60px;text-align: center;position: absolute;left: 561px;top: 324px;">截图</a>',
     GLASS: '<canvas " width="100px" height="100px" style="position: absolute;top: 0px;left: 0px;z-index: 9527;border: 1px solid #67c23a;border-radius: 10px; box-shadow: 0 3px 15px #67c23a;"></canvas>',
@@ -868,16 +868,16 @@ const TPL = {
     EDIT_PAGE_CLEAR_KNOWLEDGE: '<a href="javascript:;" style="color: #337ab7;font-size: 16px;margin-left: 16px;float: right;" title="助手提示：清除无关知识点,下次同一任务的将会自动清除">清除</a>',
     EDIT_PAGE_MOVETO_ANALYSIS: '<a href="javascript:;" style="color: #337ab7;font-size: 16px;margin-left: 16px;float: right;" title="助手提示：将答案内容快速移动到解析">⇩</a>',
     EDIT_PAGE_PICKUP: '<a href="javascript:;" style="color: #337ab7;font-size: 16px;margin-left: 16px;" title="助手提示：从解析中快速提取答案、点评和知识点">⇵</a>',
-    OPTIONS:'<div data-v-322b822a class="list-item"><div data-v-322b822a class="item-title">助手配置{ver}'+ver+'</div></div>',
-    OPTIONS_SWITCH: '<div data-v-322b822a class="item-cell-con"><div data-v-322b822a class="item-cell"><div data-v-322b822a class="item-cell-title">{title}</div><div data-v-322b822a class="item-cell-value"><input class="switch switch-anim" type="checkbox" checked /></div></div></div>',
-    OPTIONS_NUMBER: '<div data-v-322b822a class="item-cell-con"><div data-v-322b822a class="item-cell"><div data-v-322b822a class="item-cell-title">{title}</div><div data-v-322b822a class="item-cell-value"><input class="options-number" type="number" min="{min}" max="{max}" step="{step}" title="{hint}" /></div></div></div>',
-    OPTIONS_BUTTON: '<div data-v-322b822a class="item-cell-con"><div data-v-322b822a class="item-cell"><div data-v-322b822a class="item-cell-title">{title}</div><div data-v-322b822a class="item-cell-value"><button data-v-322b822a="" type="button" class="el-button el-button--info el-button--small options-button"><span>{text}</span></button></div></div></div>',
-    OPTIONS_INPUTBUTTON: '<div data-v-322b822a class="item-cell-con"><div data-v-322b822a class="item-cell"><div data-v-322b822a class="item-cell-title">{title}</div><div data-v-322b822a class="item-cell-value"><input readonly="readonly" style="width: 232px;margin-right: 10px;"><button data-v-322b822a="" type="button" class="el-button el-button--info el-button--small options-button"><span>{text}</span></button></div></div></div>',
-    OPTIONS_SEPARATE: '<div data-v-322b822a="" class="item-cell-con"><div data-v-322b822a="" class="item-cell"><hr class="options-hr"></div></div>',
-    OPTIONS_MANUAL: '<div data-v-322b822a="" class="item-cell-con"><div data-v-322b822a="" class="item-cell"><div data-v-322b822a="" class="item-cell-title">使用手册</div><div data-v-322b822a="" class="item-cell-value"><a target="_blank" href="https://github.com/jacktsui/xusqa/blob/master/manual/README.md" style="text-decoration: underline;color: #00a2d4;">查看使用手册</a></div></div></div>',
-    OPTIONS_COPYRIGHT: '<div data-v-322b822a="" class="item-cell-con"><div data-v-322b822a="" class="item-cell"><div data-v-322b822a="" class="item-cell-title">脚本作者</div><div data-v-322b822a="" class="item-cell-value">© 2018, 徐。355088586@qq.com</div></div></div>',
-    OPTIONS_XUSQA: '<div data-v-322b822a="" class="item-cell-con"><div data-v-322b822a="" class="item-cell"><div data-v-322b822a="" class="item-cell-title">脚本更新</div><div data-v-322b822a="" class="item-cell-value"><a target="_blank" href="https://github.com/jacktsui/xusqa/raw/master/xusqa.user.js" style="text-decoration: underline;color: #00a2d4;">更新本脚本</a></div></div></div>',
-    OPTIONS_XUSQA_KFE: '<div data-v-322b822a="" class="item-cell-con"><div data-v-322b822a="" class="item-cell"><div data-v-322b822a="" class="item-cell-title">脚本更新(公式)</div><div data-v-322b822a="" class="item-cell-value"><a target="_blank" href="https://github.com/jacktsui/xusqa/raw/master/xusqa.kfe.user.js" style="text-decoration: underline;color: #00a2d4;">更新公式脚本</a></div></div></div>',
+    OPTIONS:'<div data-v-3e827132 class="list-item"><div data-v-3e827132 class="item-title">助手配置{ver}'+ver+'</div></div>',
+    OPTIONS_SWITCH: '<div data-v-3e827132 class="item-cell-con"><div data-v-3e827132 class="item-cell"><div data-v-3e827132 class="item-cell-title">{title}</div><div data-v-3e827132 class="item-cell-value"><input class="switch switch-anim" type="checkbox" checked /></div></div></div>',
+    OPTIONS_NUMBER: '<div data-v-3e827132 class="item-cell-con"><div data-v-3e827132 class="item-cell"><div data-v-3e827132 class="item-cell-title">{title}</div><div data-v-3e827132 class="item-cell-value"><input class="options-number" type="number" min="{min}" max="{max}" step="{step}" title="{hint}" /></div></div></div>',
+    OPTIONS_BUTTON: '<div data-v-3e827132 class="item-cell-con"><div data-v-3e827132 class="item-cell"><div data-v-3e827132 class="item-cell-title">{title}</div><div data-v-3e827132 class="item-cell-value"><button data-v-3e827132="" type="button" class="el-button el-button--info el-button--small options-button"><span>{text}</span></button></div></div></div>',
+    OPTIONS_INPUTBUTTON: '<div data-v-3e827132 class="item-cell-con"><div data-v-3e827132 class="item-cell"><div data-v-3e827132 class="item-cell-title">{title}</div><div data-v-3e827132 class="item-cell-value"><input readonly="readonly" style="width: 232px;margin-right: 10px;"><button data-v-3e827132="" type="button" class="el-button el-button--info el-button--small options-button"><span>{text}</span></button></div></div></div>',
+    OPTIONS_SEPARATE: '<div data-v-3e827132="" class="item-cell-con"><div data-v-3e827132="" class="item-cell"><hr class="options-hr"></div></div>',
+    OPTIONS_MANUAL: '<div data-v-3e827132="" class="item-cell-con"><div data-v-3e827132="" class="item-cell"><div data-v-3e827132="" class="item-cell-title">使用手册</div><div data-v-3e827132="" class="item-cell-value"><a target="_blank" href="https://github.com/jacktsui/xusqa/blob/master/manual/README.md" style="text-decoration: underline;color: #00a2d4;">查看使用手册</a></div></div></div>',
+    OPTIONS_COPYRIGHT: '<div data-v-3e827132="" class="item-cell-con"><div data-v-3e827132="" class="item-cell"><div data-v-3e827132="" class="item-cell-title">脚本作者</div><div data-v-3e827132="" class="item-cell-value">© 2018, 徐。355088586@qq.com</div></div></div>',
+    OPTIONS_XUSQA: '<div data-v-3e827132="" class="item-cell-con"><div data-v-3e827132="" class="item-cell"><div data-v-3e827132="" class="item-cell-title">脚本更新</div><div data-v-3e827132="" class="item-cell-value"><a target="_blank" href="https://github.com/jacktsui/xusqa/raw/master/xusqa.user.js" style="text-decoration: underline;color: #00a2d4;">更新本脚本</a></div></div></div>',
+    OPTIONS_XUSQA_KFE: '<div data-v-3e827132="" class="item-cell-con"><div data-v-3e827132="" class="item-cell"><div data-v-3e827132="" class="item-cell-title">脚本更新(公式)</div><div data-v-3e827132="" class="item-cell-value"><a target="_blank" href="https://github.com/jacktsui/xusqa/raw/master/xusqa.kfe.user.js" style="text-decoration: underline;color: #00a2d4;">更新公式脚本</a></div></div></div>',
     JUDGE_RULE_A: '<a href="https://note.youdao.com/share/?id=d98298a63e8656ab277278f5c51efe70&amp;type=note#/" target="_blank" style="text-decoration: underline;color: #00a2d4;display: block;">查看判题规则</a>',
 }
 
@@ -1618,18 +1618,18 @@ function refreshNavImage(){
                 return
             }
             util.addStyle(util.cmt(function(){/*!CSS
-                .list li a[data-v-3f6ca4fa] {
+                .list li a[data-v-61a96e4c] {
                     background: linear-gradient(30deg, #333, #fff);
                     -webkit-background-clip: text;
                     color: transparent;
                 }
-                .list li .router-link-active[data-v-3f6ca4fa] {
+                .list li .router-link-active[data-v-61a96e4c] {
                     background: linear-gradient(30deg, #67c23a, #f56c6c);
                     -webkit-background-clip: text;
                     color: transparent;
                     text-shadow: 6px 6px 18px #ffffffdd;
                 }
-                .show-btn[data-v-3f6ca4fa] {
+                .show-btn[data-v-61a96e4c] {
                     filter: invert(100%);
                 }
                 */
@@ -1670,24 +1670,24 @@ table {
 td {
     background-color: var(--bgcolor);
 }
-.fixed-box_content[data-v-69bf5445] {
+.fixed-box_content[data-v-47869f87] {
     background: var(--bgcolor);
 }
-.fixed-box_content[data-v-69bf5445] {
+.fixed-box_content[data-v-47869f87] {
     background: var(--bgcolor);
 }
-.fixed-box_content[data-v-ce69c62c] {
+.fixed-box_content[data-v-2a6f5d4d] {
     background: var(--bgcolor);
 }
 .el-table th, .el-table tr {
     background-color: var(--bgcolor);
 }
-.nav[data-v-3f6ca4fa] {
+.nav[data-v-61a96e4c] {
     background-color: var(--navbgcolor);
     box-shadow: 3px 0 15px var(--navbgcolor);
     background: var(--navbg);
 }
-header[data-v-7b90ba54] {
+header[data-v-c239ad58] {
     background: var(--navbgcolor);
     box-shadow: 0 3px 15px var(--navbgcolor);
 }
@@ -1707,23 +1707,23 @@ util.addStyle(util.cmt(function(){/*!CSS
     top: 182px;
 }
 
-.box_min .region-con[data-v-ce69c62c] {
+.box_min .region-con[data-v-2a6f5d4d] {
     display: block;
 }
 
-.latex[data-v-ce69c62c] {
+.latex[data-v-2a6f5d4d] {
     margin-right: 16px;
 }
 
-.latex[data-v-69bf5445] {
+.latex[data-v-47869f87] {
     margin-right: 16px;
 }
 
-.submit-region[data-v-ce69c62c] {
+.submit-region[data-v-2a6f5d4d] {
     overflow: hidden;
 }
 
-.item-cell-title[data-v-322b822a], .item-cell-value[data-v-322b822a] {
+.item-cell-title[data-v-3e827132], .item-cell-value[data-v-3e827132] {
     vertical-align: middle;
 }
 */

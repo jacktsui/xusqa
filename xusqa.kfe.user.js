@@ -6,7 +6,7 @@
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
 // @license      MIT https://mit-license.org/
-// @homepageURL  https://github.com/jacktsui/xusqa
+// @homepageURL  https://github.com/jacktsui/xusqa/blob/master/manual/README.md
 // @supportURL   https://github.com/jacktsui/xusqa/issues
 // @UpdateURL    https://github.com/jacktsui/xusqa/raw/master/xusqa.kfe.user.js
 // @match        http://searchq-editsys.youdao.com/static/Ueditor/kityformula-plugin/*
@@ -45,7 +45,8 @@ function mathLatexParse(str){
         return ''
     }
 
-    function parse(str){ // 切割并解析
+    // 简单文法解析器
+    function parse(str){
         let cake = '', l = '', r = '', o = '', result = ''
         let flag = 0
         for(let i in str){
@@ -186,3 +187,10 @@ xusqapi.mathLatexParse = mathLatexParse
 xusqapi.laTex = laTex
 
 })()
+/*!
+ * 本脚本使用 MIT 协议
+ *
+ * MIT许可证（MIT）
+ * 版权所有 © 2018 徐。355088586@qq
+ * 
+ */
