@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.1.081
+// @version      1.1.082
 // @description  有道搜题,录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -32,7 +32,7 @@
 (function() {
     'use strict';
 
-    const ver = 'Ver 1.1.081'
+    const ver = 'Ver 1.1.082'
 
 /**
  * 放前面方便统一更换
@@ -83,6 +83,17 @@ const SE = {
     '历史-小学': NaN,
     '政治-小学': NaN,
     '地理-小学': NaN,
+}
+
+const UI = {
+    css_scope: {
+        nav: '61a96e4c',
+        header: 'c239ad58',
+        answerInPage: '47869f87',
+        questionInPage: '2a6f5d4d',
+        //Home: '',
+        UserCenter: '3e827132',
+    }
 }
 
 const DIC = {
@@ -138,6 +149,43 @@ function setRuleFlag(html){
         RULEFLAG = 1001
     }
 }
+
+function replByMatch(str, arr){
+    for(let i = arr.length - 1; i >= 0; i--){
+        str = str.slice(0, arr[i][1]) + arr[i][2] + str.slice(arr[i][1] + arr[i][0].length)
+    }
+    return str
+}
+
+function getStartFromMatch(arr){
+    function count(k, a){ // 返回与第k个元素能构成序列的个数
+        let n = 0
+        for(let i = k + 1; i < a.length; i++){
+            if (a[i]-a[k] === 1 + n){
+                n++
+            }
+        }
+        return n
+    }
+
+    const numArr = []
+    for(let i of arr){
+        numArr.push(parseInt(i.match(/\d+/)[0]))
+    }
+
+    let n = count(0, numArr)
+    let start = numArr[0]
+    for(let i = 1, m; i < numArr.length; i++){
+        m = count(i, numArr)
+        if (m > n){
+            n = m
+            start = numArr[i]
+        }
+    }
+
+    return start
+}
+
 const USRRULE = []
 const RULE = [
     /*\
@@ -421,10 +469,10 @@ const PRERULE = [ // 处理的是html全文,主要处理需要上下文关系的
         const r = /\d+/g
         let m = str.match(r)
         if (m && m.length > 1){
-            let start = util.getStartFromMatch(m), cur = -1
+            let start = getStartFromMatch(m), cur = -1
             let e = r.exec(str)
             while(e){
-                cur = parseInt(e[1])
+                cur = parseInt(e[0])
                 if (cur - start === num - 1){
                     num++
                 }
@@ -454,7 +502,7 @@ const PRERULE = [ // 处理的是html全文,主要处理需要上下文关系的
         const r = /([^0-9\()])(\d{1,2})([\.,·]*)([^0-9\)])/g
         const m = str.match(r)
         if (m && m.length > 2){
-            let start = util.getStartFromMatch(m), cur = -1, num = 1
+            let start = getStartFromMatch(m), cur = -1, num = 1
             let e = r.exec(str)
             while(e){
                 cur = parseInt(e[2])
@@ -465,7 +513,7 @@ const PRERULE = [ // 处理的是html全文,主要处理需要上下文关系的
                 e = r.exec(str)
             }
             if (num > 3){
-                return util.replByMatch(str, ra)
+                return replByMatch(str, ra)
             }
         }
     }, '语文'],
@@ -497,7 +545,7 @@ const PRERULE = [ // 处理的是html全文,主要处理需要上下文关系的
                 e = r.exec(str)
             }
             if (num > 3){
-                str = util.replByMatch(str, ra)
+                str = replByMatch(str, ra)
                 type = 0
             }
         }
@@ -518,7 +566,7 @@ const PRERULE = [ // 处理的是html全文,主要处理需要上下文关系的
         if (is){ // (考虑根据题目要求“根据对话内容,从方框内选出能填入空白处的最佳选项。其中有两项为多余选项。”判断是不是补全对话)
             //r = /([A-Za-z]+:\s)(\d{1,2})\.*(\s)/g
             r = /(\s)\(*(\d{1,2})\)*\.*([,?\s<\.])/g
-            let start = util.getStartFromMatch(str.match(r)), cur = -1
+            let start = getStartFromMatch(str.match(r)), cur = -1
             let num = 1
             let e = r.exec(str)
             while(e){
@@ -533,7 +581,7 @@ const PRERULE = [ // 处理的是html全文,主要处理需要上下文关系的
                 e = r.exec(str)
             }
             if (num > 3){
-                str = util.replByMatch(str, ra)
+                str = replByMatch(str, ra)
                 type = 1
             }
         }
@@ -546,7 +594,7 @@ const PRERULE = [ // 处理的是html全文,主要处理需要上下文关系的
             //r = /([^0-9#:%>])(\d{1,2})\.*([^0-9#:%])/g
             r = /([\s,.])(\d{1,2})\.*([\s,.])/g
 
-            let start = util.getStartFromMatch(str.match(r)), cur = -1, num = 1
+            let start = getStartFromMatch(str.match(r)), cur = -1, num = 1
             let e = r.exec(str)
             while(e){
                 cur = parseInt(e[2])
@@ -560,7 +608,7 @@ const PRERULE = [ // 处理的是html全文,主要处理需要上下文关系的
                 e = r.exec(str)
             }
             if (num > 3){
-                str = util.replByMatch(str, ra)
+                str = replByMatch(str, ra)
                 str = str.replace(/___\s\(/g, '___(')
                 type = 2
             }
@@ -576,7 +624,7 @@ const PRERULE = [ // 处理的是html全文,主要处理需要上下文关系的
         r = /([^_#:0-9])(\(*\)*)\s*(\d{1,3})([\.,]*)([^_:])/g
         m = str.match(r)
         if (m && m.length > 2){ // 匹配超过3个以上
-            let start = util.getStartFromMatch(str.match(r)), cur = -1, num = 1
+            let start = getStartFromMatch(str.match(r)), cur = -1, num = 1
             let e = r.exec(str)
             while(e){
                 cur = parseInt(e[3])
@@ -588,7 +636,7 @@ const PRERULE = [ // 处理的是html全文,主要处理需要上下文关系的
             }
 
             if (num > 3){
-                str = util.replByMatch(str, ra)
+                str = replByMatch(str, ra)
             }
         }
 
@@ -618,7 +666,7 @@ const PRERULE = [ // 处理的是html全文,主要处理需要上下文关系的
         const ra = []
         const m = str.match(r)
         if (m && m.length > 2){
-            let start = util.getStartFromMatch(m), cur = -1, num = 1
+            let start = getStartFromMatch(m), cur = -1, num = 1
             let e = r.exec(str)
             while(e){
                 cur = parseInt(e[2])
@@ -628,7 +676,7 @@ const PRERULE = [ // 处理的是html全文,主要处理需要上下文关系的
                 }
                 e = r.exec(str)
             }
-            return util.replByMatch(str, ra)
+            return replByMatch(str, ra)
         }
     }, '英语', '^0'],
 
@@ -644,7 +692,7 @@ const PRERULE = [ // 处理的是html全文,主要处理需要上下文关系的
                 e = r.exec(str)
             }
 
-            return util.replByMatch(str, ra)
+            return replByMatch(str, ra)
         }
     }, '英语', '0'],
     [/(\(*[1-9]\)|\(*[1-3][0-9]\))/g, DIC.HR + '$1', '英语', '0'], // (1),(2),1),2)
@@ -853,13 +901,13 @@ const TPL = {
         '<div style="text-align: left;padding-left: 8px;font-size: 14px;">' +
         //'<input type="checkbox" id="xusqa_showHint" checked="checked" name="showHint" title="显示助手提示" style="width: 16px;height: 16px;vertical-align: middle;display: inline-block;margin-bottom: 6px;">' +
         //'<label for="xusqa_showHint">显示助手提示</label>' +
-        '<a data-v-c239ad58 href="javascript:void(0);" class="exit header-btn" style="float: right; margin: 0px 12px 10px 20px; padding: 6px 20px 6px 20px;" title="全部清空后点确定,将重新加载所有有价格的科目.">确定</a></div>',
-    CONFIG_BUTTON: '<a data-v-c239ad58 id="xusqa_div_config_button" href="javascript:void(0);" class="exit header-btn" style="margin-left: 1px; padding: 6px 3px;">┇</a>',
+        '<a data-v-'+UI.css_scope.header+' href="javascript:void(0);" class="exit header-btn" style="float: right; margin: 0px 12px 10px 20px; padding: 6px 20px 6px 20px;" title="全部清空后点确定,将重新加载所有有价格的科目.">确定</a></div>',
+    CONFIG_BUTTON: '<a data-v-'+UI.css_scope.header+' id="xusqa_div_config_button" href="javascript:void(0);" class="exit header-btn" style="margin-left: 1px; padding: 6px 3px;">┇</a>',
     SNAP_QUESTION_HINT: '<span style="margin-left: 266px;display:inline-block;color: #f56c6c;border-right: 1px solid #f56c6c;padding: 5px;border-top: 1px solid #f56c6c;">助手提示: 在下面题目图片上可以直接框选截图哦</span>',
     SNAP_QUESTION_BUTTON: '<a href="javascript:;" class="xusqa-btn" title="助手提示: 框选以后可以点我直接截图" style="display: inline-block;float: right;background-color: #f78989;color: white;font-size: 16px;width: 60px;text-align: center;position: absolute;left: 561px;top: 324px;">截图</a>',
     GLASS: '<canvas " width="100px" height="100px" style="position: absolute;top: 0px;left: 0px;z-index: 9527;border: 1px solid #67c23a;border-radius: 10px; box-shadow: 0 3px 15px #67c23a;"></canvas>',
     LOCATE_ANSWER: '<a href="javascript:;" class="xusqa-btn" style="margin-left: 30px;display: inline-block;padding: 3px 10px;border: 1px solid #c0c4cc;border-radius: 3px;color: #606266;font-size: 13px;background-color: white;" title="{title}">{text}<a/>',
-    SQUARE_UPDATE: '<div data-v-403910d4 id="xusqa-square-update" class="process-task-con">最后刷新时间：<a  style="padding: 0px 10px;color: #f93e53;" >　刚刚　</a><a href="javascript:;" class="xusqa-a-button xusqa-btn">　刷新　</a><a href="javascript:;" class="xusqa-a-button xusqa-btn">分享到QQ</a></div>',
+    SQUARE_UPDATE: '<div id="xusqa-square-update" class="process-task-con">最后刷新时间：<a  style="padding: 0px 10px;color: #f93e53;" >　刚刚　</a><a href="javascript:;" class="xusqa-a-button xusqa-btn">　刷新　</a><a href="javascript:;" class="xusqa-a-button xusqa-btn">分享到QQ</a></div>',
     ACC_INFO: '<div style=" font-size: 12px; font-style: italic; margin-bottom: 16px;">以上数据仅供参考.</div>',
     THIS_ACC_INFO: '<div style=" font-size: 12px; font-style: italic; margin-bottom: 16px;">{remark}数据仅供参考.</div>',
     EDIT_PAGE_SAVE: '<a href="javascript:;" class="xusqa-btn" style="display: inline-block;float: right;background-color: #337ab7;color: white;font-size: 16px;padding: 2px 16px;margin-left: 16px;" title="助手提示: 录题过程中可以临时保存当前录入内容，防止丢失">暂存题目</a>',
@@ -868,16 +916,16 @@ const TPL = {
     EDIT_PAGE_CLEAR_KNOWLEDGE: '<a href="javascript:;" style="color: #337ab7;font-size: 16px;margin-left: 16px;float: right;" title="助手提示：清除无关知识点,下次同一任务的将会自动清除">清除</a>',
     EDIT_PAGE_MOVETO_ANALYSIS: '<a href="javascript:;" style="color: #337ab7;font-size: 16px;margin-left: 16px;float: right;" title="助手提示：将答案内容快速移动到解析">⇩</a>',
     EDIT_PAGE_PICKUP: '<a href="javascript:;" style="color: #337ab7;font-size: 16px;margin-left: 16px;" title="助手提示：从解析中快速提取答案、点评和知识点">⇵</a>',
-    OPTIONS:'<div data-v-3e827132 class="list-item"><div data-v-3e827132 class="item-title">助手配置{ver}'+ver+'</div></div>',
-    OPTIONS_SWITCH: '<div data-v-3e827132 class="item-cell-con"><div data-v-3e827132 class="item-cell"><div data-v-3e827132 class="item-cell-title">{title}</div><div data-v-3e827132 class="item-cell-value"><input class="switch switch-anim" type="checkbox" checked /></div></div></div>',
-    OPTIONS_NUMBER: '<div data-v-3e827132 class="item-cell-con"><div data-v-3e827132 class="item-cell"><div data-v-3e827132 class="item-cell-title">{title}</div><div data-v-3e827132 class="item-cell-value"><input class="options-number" type="number" min="{min}" max="{max}" step="{step}" title="{hint}" /></div></div></div>',
-    OPTIONS_BUTTON: '<div data-v-3e827132 class="item-cell-con"><div data-v-3e827132 class="item-cell"><div data-v-3e827132 class="item-cell-title">{title}</div><div data-v-3e827132 class="item-cell-value"><button data-v-3e827132="" type="button" class="el-button el-button--info el-button--small options-button"><span>{text}</span></button></div></div></div>',
-    OPTIONS_INPUTBUTTON: '<div data-v-3e827132 class="item-cell-con"><div data-v-3e827132 class="item-cell"><div data-v-3e827132 class="item-cell-title">{title}</div><div data-v-3e827132 class="item-cell-value"><input readonly="readonly" style="width: 232px;margin-right: 10px;"><button data-v-3e827132="" type="button" class="el-button el-button--info el-button--small options-button"><span>{text}</span></button></div></div></div>',
-    OPTIONS_SEPARATE: '<div data-v-3e827132="" class="item-cell-con"><div data-v-3e827132="" class="item-cell"><hr class="options-hr"></div></div>',
-    OPTIONS_MANUAL: '<div data-v-3e827132="" class="item-cell-con"><div data-v-3e827132="" class="item-cell"><div data-v-3e827132="" class="item-cell-title">使用手册</div><div data-v-3e827132="" class="item-cell-value"><a target="_blank" href="https://github.com/jacktsui/xusqa/blob/master/manual/README.md" style="text-decoration: underline;color: #00a2d4;">查看使用手册</a></div></div></div>',
-    OPTIONS_COPYRIGHT: '<div data-v-3e827132="" class="item-cell-con"><div data-v-3e827132="" class="item-cell"><div data-v-3e827132="" class="item-cell-title">脚本作者</div><div data-v-3e827132="" class="item-cell-value">© 2018, 徐。355088586@qq.com</div></div></div>',
-    OPTIONS_XUSQA: '<div data-v-3e827132="" class="item-cell-con"><div data-v-3e827132="" class="item-cell"><div data-v-3e827132="" class="item-cell-title">脚本更新</div><div data-v-3e827132="" class="item-cell-value"><a target="_blank" href="https://github.com/jacktsui/xusqa/raw/master/xusqa.user.js" style="text-decoration: underline;color: #00a2d4;">更新本脚本</a></div></div></div>',
-    OPTIONS_XUSQA_KFE: '<div data-v-3e827132="" class="item-cell-con"><div data-v-3e827132="" class="item-cell"><div data-v-3e827132="" class="item-cell-title">脚本更新(公式)</div><div data-v-3e827132="" class="item-cell-value"><a target="_blank" href="https://github.com/jacktsui/xusqa/raw/master/xusqa.kfe.user.js" style="text-decoration: underline;color: #00a2d4;">更新公式脚本</a></div></div></div>',
+    OPTIONS:'<div data-v-'+UI.css_scope.UserCenter+' class="list-item"><div data-v-'+UI.css_scope.UserCenter+' class="item-title">助手配置{ver}'+ver+'</div></div>',
+    OPTIONS_SWITCH: '<div data-v-'+UI.css_scope.UserCenter+' class="item-cell-con"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell-title">{title}</div><div data-v-'+UI.css_scope.UserCenter+' class="item-cell-value"><input class="switch switch-anim" type="checkbox" checked /></div></div></div>',
+    OPTIONS_NUMBER: '<div data-v-'+UI.css_scope.UserCenter+' class="item-cell-con"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell-title">{title}</div><div data-v-'+UI.css_scope.UserCenter+' class="item-cell-value"><input class="options-number" type="number" min="{min}" max="{max}" step="{step}" title="{hint}" /></div></div></div>',
+    OPTIONS_BUTTON: '<div data-v-'+UI.css_scope.UserCenter+' class="item-cell-con"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell-title">{title}</div><div data-v-'+UI.css_scope.UserCenter+' class="item-cell-value"><button data-v-'+UI.css_scope.UserCenter+' type="button" class="el-button el-button--info el-button--small options-button"><span>{text}</span></button></div></div></div>',
+    OPTIONS_INPUTBUTTON: '<div data-v-'+UI.css_scope.UserCenter+' class="item-cell-con"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell-title">{title}</div><div data-v-'+UI.css_scope.UserCenter+' class="item-cell-value"><input readonly="readonly" style="width: 232px;margin-right: 10px;"><button data-v-'+UI.css_scope.UserCenter+' type="button" class="el-button el-button--info el-button--small options-button"><span>{text}</span></button></div></div></div>',
+    OPTIONS_SEPARATE: '<div data-v-'+UI.css_scope.UserCenter+' class="item-cell-con"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell"><hr class="options-hr"></div></div>',
+    OPTIONS_MANUAL: '<div data-v-'+UI.css_scope.UserCenter+' class="item-cell-con"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell-title">使用手册</div><div data-v-'+UI.css_scope.UserCenter+' class="item-cell-value"><a target="_blank" href="https://github.com/jacktsui/xusqa/blob/master/manual/README.md" style="text-decoration: underline;color: #00a2d4;">查看使用手册</a></div></div></div>',
+    OPTIONS_COPYRIGHT: '<div data-v-'+UI.css_scope.UserCenter+' class="item-cell-con"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell-title">脚本作者</div><div data-v-'+UI.css_scope.UserCenter+' class="item-cell-value">© 2018, 徐。355088586@qq.com</div></div></div>',
+    OPTIONS_XUSQA: '<div data-v-'+UI.css_scope.UserCenter+' class="item-cell-con"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell-title">脚本更新</div><div data-v-'+UI.css_scope.UserCenter+' class="item-cell-value"><a target="_blank" href="https://github.com/jacktsui/xusqa/raw/master/xusqa.user.js" style="text-decoration: underline;color: #00a2d4;">更新本脚本</a></div></div></div>',
+    OPTIONS_XUSQA_KFE: '<div data-v-'+UI.css_scope.UserCenter+' class="item-cell-con"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell-title">脚本更新(公式)</div><div data-v-'+UI.css_scope.UserCenter+' class="item-cell-value"><a target="_blank" href="https://github.com/jacktsui/xusqa/raw/master/xusqa.kfe.user.js" style="text-decoration: underline;color: #00a2d4;">更新公式脚本</a></div></div></div>',
     JUDGE_RULE_A: '<a href="https://note.youdao.com/share/?id=d98298a63e8656ab277278f5c51efe70&amp;type=note#/" target="_blank" style="text-decoration: underline;color: #00a2d4;display: block;">查看判题规则</a>',
 }
 
@@ -1151,13 +1199,65 @@ const stage = {
     simpleSubject: undefined, // 记录提取的样本的subject
 }
 
+// (new Date()).Format("yyyy-MM-dd hh:mm:ss.S") ==> 2018-07-02 08:09:04.423
+// (new Date()).Format("yyyy-M-d h:m:s.S")      ==> 2018-7-2 8:9:4.18
+Date.prototype.format = function(format) {
+    const args = {
+        'M+': this.getMonth() + 1,
+        'd+': this.getDate(),
+        'h+': this.getHours(),
+        'm+': this.getMinutes(),
+        's+': this.getSeconds(),
+        'q+': Math.floor((this.getMonth() + 3) / 3),
+        //quarter
+        'S': this.getMilliseconds()
+    }
+
+    if (/(y+)/.test(format)) {
+        format = format.replace(RegExp.$1, (this.getFullYear() + '').substr(4 - RegExp.$1.length))
+    }
+
+    for (let i in args) {
+        const n = args[i]
+        if (new RegExp('(' + i + ')').test(format)) {
+            format = format.replace(RegExp.$1, RegExp.$1.length === 1 ? n : ('00' + n).substr(('' + n).length))
+        }
+    }
+
+    return format
+}
+
+// "I'm {0}, {1} years old.".format('xu', 25)
+// "I'm {name}, {age} years old.".format({name: 'xu', age: 25})
+String.prototype.format = function(args) {
+    let result = this
+    if (arguments.length) {
+        if (arguments.length === 1 && typeof (args) === 'object') {
+            for (let key in args) {
+                if (args[key] !== undefined) {
+                    let reg = new RegExp('({' + key + '})','g')
+                    result = result.replace(reg, args[key])
+                }
+            }
+        } else {
+            for (let i = 0, l = arguments.length; i < l; i++) {
+                if (arguments[i] !== undefined) {
+                    let reg = new RegExp('({)' + i + '(})','g')
+                    result = result.replace(reg, arguments[i])
+                }
+            }
+        }
+    }
+    return result
+}
+//<------extend end.
+
 /**
  * util 与项目无关的公共函数
  */
-/* jshint -W003 */
-const util = {/* jshint +W003 */
+const util = {
     cmt: function(f) {
-        return f.toString().replace(/^[\s\S]*\/\*.*/, '').replace(/.*\*\/[\s\S]*$/, '').replace(/\r\n|\r|\n/g, '\n')
+        return f.toString().replace(/^[\s\S]*\/\*.*/, '').replace(/.*\*\/[\s\S]*$/, '').replace(/\r\n|\r|\n/g, '\n').format({nav: UI.css_scope.nav, header: UI.css_scope.header, answerInPage: UI.css_scope.answerInPage, questionInPage: UI.css_scope.questionInPage})
     },
 
     addStyle: function(str, id){
@@ -1185,42 +1285,6 @@ const util = {/* jshint +W003 */
         } else {
             importcf(src)
         }
-    },
-
-    replByMatch: function(str, arr){
-        for(let i = arr.length - 1; i >= 0; i--){
-            str = str.slice(0, arr[i][1]) + arr[i][2] + str.slice(arr[i][1] + arr[i][0].length)
-        }
-        return str
-    },
-
-    getStartFromMatch: function(arr){
-        function count(k, a){ // 返回与第k个元素能构成序列的个数
-            let n = 0
-            for(let i = k + 1; i < a.length; i++){
-                if (a[i]-a[k] === 1 + n){
-                    n++
-                }
-            }
-            return n
-        }
-
-        const numArr = []
-        for(let i of arr){
-            numArr.push(parseInt(i.match(/\d+/)[0]))
-        }
-
-        let n = count(0, numArr)
-        let start = numArr[0]
-        for(let i = 1, m; i < numArr.length; i++){
-            m = count(i, numArr)
-            if (m > n){
-                n = m
-                start = numArr[i]
-            }
-        }
-
-        return start
     },
 
     timeAgo: function(milliseconds){
@@ -1618,18 +1682,18 @@ function refreshNavImage(){
                 return
             }
             util.addStyle(util.cmt(function(){/*!CSS
-                .list li a[data-v-61a96e4c] {
+                .list li a[data-v-{nav}] {
                     background: linear-gradient(30deg, #333, #fff);
                     -webkit-background-clip: text;
                     color: transparent;
                 }
-                .list li .router-link-active[data-v-61a96e4c] {
+                .list li .router-link-active[data-v-{nav}] {
                     background: linear-gradient(30deg, #67c23a, #f56c6c);
                     -webkit-background-clip: text;
                     color: transparent;
                     text-shadow: 6px 6px 18px #ffffffdd;
                 }
-                .show-btn[data-v-61a96e4c] {
+                .show-btn[data-v-{nav}] {
                     filter: invert(100%);
                 }
                 */
@@ -1670,21 +1734,21 @@ table {
 td {
     background-color: var(--bgcolor);
 }
-.fixed-box_content[data-v-2a6f5d4d] {
+.fixed-box_content[data-v-{answerInPage}] {
     background: var(--bgcolor);
 }
-.fixed-box_content[data-v-47869f87] {
+.fixed-box_content[data-v-{questionInPage}] {
     background: var(--bgcolor);
 }
 .el-table th, .el-table tr {
     background-color: var(--bgcolor);
 }
-.nav[data-v-61a96e4c] {
+.nav[data-v-{nav}] {
     background-color: var(--navbgcolor);
     box-shadow: 3px 0 15px var(--navbgcolor);
     background: var(--navbg);
 }
-header[data-v-c239ad58] {
+header[data-v-{header}] {
     background: var(--navbgcolor);
     box-shadow: 0 3px 15px var(--navbgcolor);
 }
@@ -1693,34 +1757,27 @@ header[data-v-c239ad58] {
 
 // css 替换
 util.addStyle(util.cmt(function(){/*!CSS
-.process-title[data-v-403910d4] {
-    margin-right: 20px;
-}
-.process-task-con[data-v-403910d4] {
-    min-width: 0px;
-}
-
 #answerCutBox {
     top: 182px;
 }
 
-.box_min .region-con[data-v-47869f87] {
+.box_min .region-con[data-v-{answerInPage}] {
     display: block;
 }
 
-.latex[data-v-47869f87] {
+.latex[data-v-{answerInPage}] {
     margin-right: 16px;
 }
 
-.submit-region[data-v-47869f87] {
+.submit-region[data-v-{answerInPage}] {
     overflow: hidden;
 }
 
-.latex[data-v-2a6f5d4d] {
+.latex[data-v-{questionInPage}] {
     margin-right: 16px;
 }
 
-.item-cell-title[data-v-3e827132], .item-cell-value[data-v-3e827132] {
+.item-cell-title[data-v-{UserCenter}], .item-cell-value[data-v-{UserCenter}] {
     vertical-align: middle;
 }
 */
@@ -2088,59 +2145,6 @@ $.extend({
         }
     }
 })
-
-// (new Date()).Format("yyyy-MM-dd hh:mm:ss.S") ==> 2018-07-02 08:09:04.423
-// (new Date()).Format("yyyy-M-d h:m:s.S")      ==> 2018-7-2 8:9:4.18
-Date.prototype.format = function(format) {
-    const args = {
-        'M+': this.getMonth() + 1,
-        'd+': this.getDate(),
-        'h+': this.getHours(),
-        'm+': this.getMinutes(),
-        's+': this.getSeconds(),
-        'q+': Math.floor((this.getMonth() + 3) / 3),
-        //quarter
-        'S': this.getMilliseconds()
-    }
-
-    if (/(y+)/.test(format)) {
-        format = format.replace(RegExp.$1, (this.getFullYear() + '').substr(4 - RegExp.$1.length))
-    }
-
-    for (let i in args) {
-        const n = args[i]
-        if (new RegExp('(' + i + ')').test(format)) {
-            format = format.replace(RegExp.$1, RegExp.$1.length === 1 ? n : ('00' + n).substr(('' + n).length))
-        }
-    }
-
-    return format
-}
-
-// "I'm {0}, {1} years old.".format('xu', 25)
-// "I'm {name}, {age} years old.".format({name: 'xu', age: 25})
-String.prototype.format = function(args) {
-    let result = this
-    if (arguments.length) {
-        if (arguments.length === 1 && typeof (args) === 'object') {
-            for (let key in args) {
-                if (args[key] !== undefined) {
-                    let reg = new RegExp('({' + key + '})','g')
-                    result = result.replace(reg, args[key])
-                }
-            }
-        } else {
-            for (let i = 0, l = arguments.length; i < l; i++) {
-                if (arguments[i] !== undefined) {
-                    let reg = new RegExp('({)' + i + '(})','g')
-                    result = result.replace(reg, arguments[i])
-                }
-            }
-        }
-    }
-    return result
-}
-//<------extend end.
 
 /**
  * 功能: 今日战绩
