@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手-公式
 // @namespace    jacktsui
-// @version      0.2.078
+// @version      0.2.080
 // @description  有道搜题,录题员助手(公式加强)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -18,7 +18,7 @@
 (function() {
     'use strict';
 
-//const ver = 'Ver 0.2.078'
+//const ver = 'Ver 0.2.080'
 
 const xusqapi = window.top.xusqapi
 if (!xusqapi.passport){
@@ -86,6 +86,10 @@ function mathLatexParse(str){
     function priorityProc(str){
         let flag = 0
         let pos = str.indexOf('\\')
+        if (pos === -1) {
+            return str
+        }
+
         let i = pos + 1
         for(; i < str.length; i++){
             if (str[i] === '{'){
