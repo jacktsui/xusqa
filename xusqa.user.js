@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.1.077
+// @version      1.1.078
 // @description  有道搜题,录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -32,7 +32,7 @@
 (function() {
     'use strict';
 
-    const ver = 'Ver 1.1.077'
+    const ver = 'Ver 1.1.078'
 
 /**
  * 放前面方便统一更换
@@ -276,6 +276,7 @@ const RULE = [
     [/H20/g, 'H2O', '化学'], // H20->H2O
     [/0H/g, 'OH', '化学'],
     [/CI/g, 'Cl', '化学'], // CI->Cl
+    [/AH/g, 'ΔH', '化学'], //AH->ΔH(by 已注册-有两道)
     [/([a-zA-Z])0/g, '$1O', '化学'], // 修正O被识别为0
     [/AH([=<>])/, 'ΔH$1', '化学'],
     //[/[A-Z][2-9]*4/g, ] // TODO:修正↑被识别成4，需要更多样本，占个坑
@@ -875,7 +876,7 @@ const TPL = {
     OPTIONS_SEPARATE: '<div data-v-322b822a="" class="item-cell-con"><div data-v-322b822a="" class="item-cell"><hr class="options-hr"></div></div>',
     OPTIONS_MANUAL: '<div data-v-322b822a="" class="item-cell-con"><div data-v-322b822a="" class="item-cell"><div data-v-322b822a="" class="item-cell-title">使用手册</div><div data-v-322b822a="" class="item-cell-value"><a target="_blank" href="https://github.com/jacktsui/xusqa/blob/master/manual/README.md" style="text-decoration: underline;color: #00a2d4;">查看使用手册</a></div></div></div>',
     OPTIONS_COPYRIGHT: '<div data-v-322b822a="" class="item-cell-con"><div data-v-322b822a="" class="item-cell"><div data-v-322b822a="" class="item-cell-title">脚本作者</div><div data-v-322b822a="" class="item-cell-value">© 2018, 徐。355088586@qq.com</div></div></div>',
-    OPTIONS_XUSQA: '<div data-v-322b822a="" class="item-cell-con"><div data-v-322b822a="" class="item-cell"><div data-v-322b822a="" class="item-cell-title">脚本更新</div><div data-v-322b822a="" class="item-cell-value"><a target="_blank" href="https://github.com/jacktsui/xusqa/raw/master/xusqa.user.js" style="text-decoration: underline;color: #00a2d4;">更新脚本</a></div></div></div>',
+    OPTIONS_XUSQA: '<div data-v-322b822a="" class="item-cell-con"><div data-v-322b822a="" class="item-cell"><div data-v-322b822a="" class="item-cell-title">脚本更新</div><div data-v-322b822a="" class="item-cell-value"><a target="_blank" href="https://github.com/jacktsui/xusqa/raw/master/xusqa.user.js" style="text-decoration: underline;color: #00a2d4;">更新本脚本</a></div></div></div>',
     OPTIONS_XUSQA_KFE: '<div data-v-322b822a="" class="item-cell-con"><div data-v-322b822a="" class="item-cell"><div data-v-322b822a="" class="item-cell-title">脚本更新(公式)</div><div data-v-322b822a="" class="item-cell-value"><a target="_blank" href="https://github.com/jacktsui/xusqa/raw/master/xusqa.kfe.user.js" style="text-decoration: underline;color: #00a2d4;">更新公式脚本</a></div></div></div>',
     JUDGE_RULE_A: '<a href="https://note.youdao.com/share/?id=d98298a63e8656ab277278f5c51efe70&amp;type=note#/" target="_blank" style="text-decoration: underline;color: #00a2d4;display: block;">查看判题规则</a>',
 }
@@ -3091,47 +3092,6 @@ function doExtendUE(){
     })
 }
 
-function extrakfe(str){
-    function strToLaTex(str){
-        const subject = helper.getInputSubject()
-        const arrow = [
-            ['=', '\\xlongequal {\\placeholder } {\\placeholder }'],
-            ['→', '\\xlongequal {\\placeholder } {\\placeholder }'],
-            ['⇌', '\\xrightleftharpoons {\\placeholder } {\\placeholder }'],
-        ]
-        if (subject === '化学'){
-            str = str.replace(/(\([a-zA-Z0-9]+\))(\d+)/g, '{$1}_{$2}')
-
-            str = str.replace(/\((\w*)([A-Z][a-z]*)(\d)(\d*[+-])\)/g, '($1{$2}^{$4}_{$3})')
-            str = str.replace(/([A-Z][a-z]*)(\d)(\d*[+-])([+=-])/g, '{$1}^{$3}_{$2}$4')
-            str = str.replace(/([A-Z][a-z]*)(\d)(\d*[+-])$/g, '{$1}^{$3}_{$2}')
-
-            str = str.replace(/\((\w*)([A-Z][a-z]*)([+-])\)/g, '($1{$2}^{$3})')
-            str = str.replace(/([A-Z][a-z]*)([+-])([+=-])/g, '{$1}^{$2}$3')
-            str = str.replace(/([A-Z][a-z]*)([+-])$/g, '{$1}^{$2}')
-
-            //str = str.replace(/([A-Z]|[A-Z][a-z])<sub>(\d+[+-]*)<\/sub>/g, '{$1}_{$2}')
-            str = str.replace(/([A-Z][a-z]*)(\d+)/g, '{$1}_{$2}')
-
-            for (let i of arrow){
-                str = str.replace(i[0], i[1])
-            }
-            return str
-        }
-    }
-    const $kfe = $('iframe:last')
-    const kfe = $kfe[0].contentWindow.kfe
-    if (kfe){
-        const ue = $kfe[0].contentWindow.editor
-        ue.focus()
-        const txt = ue.selection.getText()
-        if (txt){
-            kfe.execCommand('render', str || strToLaTex(txt))
-        }
-        kfe.execCommand('focus')
-    }
-}
-
 /**
  * 功能: 定位答案添加定位到上次位置
  */
@@ -3174,6 +3134,16 @@ function registerLocateButton(pot){
     // set add_cut hint
     $(DOM.QUESTION_BOX_ADD_CUT).attr('title', STR.HINT.QUESTION_BOX_ADD_CUT).addClass('xusqa-btn')
     $(DOM.ANSWER_BOX_ADD_CUT).attr('title', STR.HINT.ANSWER_BOX_ADD_CUT).addClass('xusqa-btn')
+
+    function showQInputProgress(){
+        queryQInputProgress(function(total, cur, input){
+            const $title = $('#app > div > div.main-content > div > div > div.position > div')
+            $title.text($title.text() + ' - 进度' + cur + '/' + total + '(已录入' + input + '题)')
+        })
+    }
+    if (O.showQInputProgress){
+        showQInputProgress()
+    }
 }
 
 /**
@@ -3273,16 +3243,6 @@ function registerQuestionSnap(){
     }
     if (O.showHint){
         registerHint()
-    }
-
-    function showQInputProgress(){
-        queryQInputProgress(function(total, cur){
-            const $title = $('#app > div > div.main-content > div > div > div.position > div')
-            $title.text($title.text() + ' - 进度' + cur + '/' + total)
-        })
-    }
-    if (O.showQInputProgress){
-        showQInputProgress()
     }
 }
 
@@ -3979,7 +3939,7 @@ function queryQInputProgress(f){
         if (data.code === 200){
             const t = data.data.task[0]
             if (f && typeof(f) === 'function'){
-                f(t.totalcount, t.finishedcount+1)
+                f(t.totalcount, t.finishedcount+1, parseInt(t.remark.match(/\d+/)))
             }
         }
     })
@@ -4520,13 +4480,9 @@ const xusqapi = {
         }
     },
 
-    kfe: function(str){
-        extrakfe(str)
-    },
-
     queryQInputProgress: function(){
-        queryQInputProgress(function(totalcount, current){
-            C.log('进度' + current + '/' + totalcount)
+        queryQInputProgress(function(totalcount, current, inputcount){
+            C.log('进度' + current + '/' + totalcount + '(已录入' + inputcount + '题)')
         })
     }
 }
