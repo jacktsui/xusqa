@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.2.086
+// @version      1.2.087
 // @description  有道搜题,录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -32,8 +32,10 @@
 (function() {
     'use strict';
 
-    const ver = '1.2.086'
-    let ver_kfe = '0.0.000'
+const ver = '1.2.087'
+
+// 扩展版本号代理
+let ver_kfe = '0.0.000'
 
 /**
  * 放前面方便统一更换
@@ -928,8 +930,8 @@ const TPL = {
     OPTIONS_SEPARATE: '<div data-v-'+UI.css_scope.UserCenter+' class="item-cell-con"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell"><hr class="options-hr"></div></div>',
     OPTIONS_MANUAL: '<div data-v-'+UI.css_scope.UserCenter+' class="item-cell-con"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell-title">使用手册</div><div data-v-'+UI.css_scope.UserCenter+' class="item-cell-value"><a target="_blank" href="https://github.com/jacktsui/xusqa/blob/master/manual/README.md" style="text-decoration: underline;color: #00a2d4;">查看使用手册</a></div></div></div>',
     OPTIONS_COPYRIGHT: '<div data-v-'+UI.css_scope.UserCenter+' class="item-cell-con"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell-title">脚本作者</div><div data-v-'+UI.css_scope.UserCenter+' class="item-cell-value">© 2018, 徐。355088586@qq.com</div></div></div>',
-    OPTIONS_XUSQA: '<div data-v-'+UI.css_scope.UserCenter+' class="item-cell-con"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell-title">主脚本 版本 {ver}</div><div data-v-'+UI.css_scope.UserCenter+' class="item-cell-value"><a target="_blank" href="https://github.com/jacktsui/xusqa/raw/master/xusqa.user.js" style="text-decoration: underline;color: #00a2d4;">已是最新版本</a></div></div></div>',
-    OPTIONS_XUSQA_KFE: '<div data-v-'+UI.css_scope.UserCenter+' class="item-cell-con"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell-title">公式脚本 版本 {ver_kfe}</div><div data-v-'+UI.css_scope.UserCenter+' class="item-cell-value"><a target="_blank" href="https://github.com/jacktsui/xusqa/raw/master/xusqa.kfe.user.js" style="text-decoration: underline;color: #00a2d4;">已是最新版本</a></div></div></div>',
+    OPTIONS_XUSQA: '<div data-v-'+UI.css_scope.UserCenter+' class="item-cell-con"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell-title">主脚本 版本 {ver}</div><div data-v-'+UI.css_scope.UserCenter+' class="item-cell-value"><a target="_blank" href="https://github.com/jacktsui/xusqa/raw/master/xusqa.user.js" style="text-decoration: underline;color: #00a2d4;">正在检查更新</a></div></div></div>',
+    OPTIONS_XUSQA_KFE: '<div data-v-'+UI.css_scope.UserCenter+' class="item-cell-con"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell-title">公式脚本 版本 {ver_kfe}</div><div data-v-'+UI.css_scope.UserCenter+' class="item-cell-value"><a target="_blank" href="https://github.com/jacktsui/xusqa/raw/master/xusqa.kfe.user.js" style="text-decoration: underline;color: #00a2d4;">正在检查更新</a></div></div></div>',
 }
 
 const EPCOLOR = [
@@ -4027,9 +4029,13 @@ function registerOption(){
             const v= JSON.parse(data)
             if (v.ver > ver){
                 $xusqa.find('a').text('有新版本 ' + v.ver)
+            } else {
+                $xusqa.find('a').text('已是最新版本')
             }
             if (v.ver_kfe > ver_kfe){
                 $xusqa_kfe.find('a').text('有新版本 ' + v.ver_kfe)
+            } else {
+                $xusqa_kfe.find('a').text('已是最新版本')
             }
         }
     })
