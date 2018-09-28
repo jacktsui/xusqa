@@ -33,7 +33,7 @@
     'use strict';
 
     const ver = '1.1.086'
-    const ver_kfe = '0.2.084'
+    let ver_kfe = '0.0.000'
 
 /**
  * 放前面方便统一更换
@@ -4458,6 +4458,17 @@ const xusqapi = {
     },
     set clearFlag(clearFlag){
         O.clearFlag = clearFlag
+    },
+
+    get ver(){
+        return ver
+    },
+
+    get ver_kfe(){
+        return ver_kfe
+    },
+    set ver_kfe(ver){
+        ver_kfe = ver
     },
     /*\
      * method:

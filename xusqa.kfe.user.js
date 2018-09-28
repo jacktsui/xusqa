@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手-公式
 // @namespace    jacktsui
-// @version      0.2.084
+// @version      0.2.086
 // @description  有道搜题,录题员助手(公式加强)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -9,7 +9,8 @@
 // @homepageURL  https://github.com/jacktsui/xusqa/blob/master/manual/README.md
 // @supportURL   https://github.com/jacktsui/xusqa/issues
 // @UpdateURL    https://github.com/jacktsui/xusqa/raw/master/xusqa.kfe.user.js
-// @match        http://searchq-editsys.youdao.com/static/Ueditor/kityformula-plugin/*
+// @match        http://searchq-editsys.youdao.com/
+// @match        http://searchq-editsys.youdao.com/static/Ueditor/kityformula-plugin/kityFormulaDialog.html
 // @grant        none
 // @run-at       document-end
 // @note         2018-09-23 初版,化学方程式,数学简单公式
@@ -18,9 +19,18 @@
 (function() {
     'use strict';
 
-//const ver = 'Ver 0.2.084'
+const ver = '0.2.084'
 
 const xusqapi = window.top.xusqapi
+if (!xusqapi){
+    return
+} else {
+    xusqapi.ver_kfe = ver
+}
+if (window.self === window.top){
+    return
+}
+
 if (!xusqapi.passport){
     return
 }
@@ -35,9 +45,9 @@ function mathLatexParse(str){
         if (~['^', '_',].indexOf(o)){
             return '{' + l + '}' + o + '{' + r + '}'
         } else if(~['/',].indexOf(o)){
-            return '{' + oparr[o] + ' {' + l + '} {' + r + '}' + '}'
+            return '{' + oparr[o] + ' {' + l + '} {' + r + '}}'
         } else if(~['\\',].indexOf(o)){
-            return '{' + oparr[o] + ' {' + r + '}' + '}'
+            return '{' + oparr[o] + ' {' + r + '}}'
         } else if (o === '&') {
             return '{' + l + '}{' + r + '}'
         }
