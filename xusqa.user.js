@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.2.087
+// @version      1.2.094
 // @description  有道搜题,录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -32,7 +32,7 @@
 (function() {
     'use strict';
 
-const ver = '1.2.087'
+const ver = '1.2.094'
 
 // 扩展版本号代理
 let ver_kfe = '0.0.000'
@@ -57,6 +57,11 @@ const CDN = 'https://cdn.bootcss.com/'
  */
 
 /*->->->->->-> 配置区 ->->->->->->*/
+
+//const ROLE = '题目录入'
+//const ROLE = '题目审核'
+//const ROLE = '图片裁切'
+
 const SE = {
     '数学-高中': 1.5,
     '理数-高中': 1.5,
@@ -839,7 +844,7 @@ const DOM = {
     QJUDGE_BTN: '#app > div > div.main-content > div > div > div.search-btns >a',
     DBSN: '#app > div > div.main-content > div > div > div:nth-child(4) > div:nth-child(8) > div > div.item-cell-value',
 
-    EDIT_PAGE: '#app div.main-content div.main-wrap div.edit-page',
+    EDIT_PAGE: '#app > div > div.main-content > div > div',
     EDIT_PAGE_QUESTION_CON: '#app > div > div.main-content > div > div > div.update-con',
 
     QUESTION_IMG : '#app div.main-content div.question-img-con img',
@@ -862,6 +867,15 @@ const DOM = {
     ANSWER_BOX_IMG_CTN: '#answerCutBox',
     ANSWER_BOX_IMG: '#answerCutBox > img',
     ANSWER_BOX_IMG_SEL: '#answerCutBox > div > div',
+    CHECK:  {
+        QUESTION_CON: '#app > div > div.main-content > div > div > div.edit-con > div.update-con',
+        QUESTION_BOX: '#app > div > div.main-content > div > div > div:nth-child(5)',
+        ANSWER_BOX: '#app > div > div.main-content > div > div > div:nth-child(6)',
+    },
+    FINALCHECK: {
+        QUESTION_BOX: '#app > div > div.main-content > div > div > div:nth-child(5)',
+        ANSWER_BOX: '#app > div > div.main-content > div > div > div:nth-child(6)',
+    },
 }
 
 /**
@@ -878,7 +892,7 @@ const DOM = {
  */
 const BASEURL = 'http://searchq-editsys.youdao.com'
 const URL = {
-    GET_TASK: BASEURL + '/editsys/task/receive?tasktype=题目录入&subject={subject}&education={education}',
+    GET_TASK: BASEURL + '/editsys/task/receive?tasktype={tasktype}&subject={subject}&education={education}',
     GET_TASK_REMAIN: BASEURL + '/editsys/task/remain?subject={subject}&education={education}',
     GET_MY_TASK: BASEURL + '/editsys/task/mine?pageno={pageno}',
     GET_TASK_SQUARE: BASEURL + '/editsys/task/square',
@@ -1202,6 +1216,7 @@ const stage = {
     squareUpdateTime: new Date(), // 任务广场最后更新时间
     startLoginTime: new Date(), // 记录等待登录开始时间
     simpleSubject: undefined, // 记录提取的样本的subject
+    manage: false,
 }
 
 // (new Date()).Format("yyyy-MM-dd hh:mm:ss.S") ==> 2018-07-02 08:09:04.423
@@ -1459,11 +1474,13 @@ const helper = {/* jshint +W003 */
             C.log('%c%s','color: red; background: yellow; font-size: 14px;','--- 样本测试模式 ---');
             return assort(stage.simpleSubject)
         }
-        return assort(stage.editPage.v.data.subject)
+        const v = stage.editPage.v
+        return assort((v.data && v.data.subject) || v.subject)
     },
 
     getInputQuestionId: function(){
-        return stage.editPage.v.data.id
+        const v = stage.editPage.v
+        return v.data.id
     },
 
     saveQuestion: function(simple){
@@ -1672,6 +1689,17 @@ const helper = {/* jshint +W003 */
         }
 
         return ''
+    },
+
+    getRole(){
+        if (stage.manage){
+            return '管理账号'
+        }
+        for (let i of V.$store.getters.getAccountPermissions){
+            if (~['题目录入', '题目审核'].indexOf(i.name)){
+                return i.name
+            }
+        }
     }
 }
 
@@ -2805,14 +2833,29 @@ function doExtraTaskList() {
         })
     }
 
+    /*
+    function getRemain(rms){
+        for (let i of rms){
+            if (i.taskname === ROLE){
+                return i
+            }
+        }
+    }*/
+
     function setLiCorner(li) {
         const [s,e] = li.lastChild.innerText.split('-')
         /*\
          > {"code":200,"data":[{"count":0,"taskname":"题目录入","permission":1,"remark":""}],"message":"SUCCESS"}
          > {"code":200,"data":[{"count":90,"taskname":"题目录入","permission":-2,"remark":""}],"message":"SUCCESS"}
+         > {"code":200,"data":[{"count":4,"taskname":"图片裁切"},{"count":3054,"taskname":"题目录入","permission":-2,"remark":""},{"count":52,"taskname":"题目审核"}],"message":"SUCCESS"}
         \*/
         $.get(encodeURI(URL.GET_TASK_REMAIN.format({subject: s, education: e})), function(data/*, status*/) {
+            //const rm = getRemain(data.data)
             const rm = data.data[0]
+            const taskname = rm.taskname
+            //if (!rm.hasOwnProperty('permission')){
+            //    rm.permission = 1
+            //}
             const se = s + '-' + e
             const b = helper.isExcludedSE(se)
 
@@ -2830,7 +2873,7 @@ function doExtraTaskList() {
 
                 if (rm.permission === 1 && !b) { // 角标点击事件
                     $corner.click(function() {
-                        $.get(encodeURI(URL.GET_TASK.format({subject: s, education: e})), function(data/*, status*/) {
+                        $.get(encodeURI(URL.GET_TASK.format({tasktype: taskname, subject: s, education: e})), function(data/*, status*/) {
                             if (data.code === 200) {
                                 helper.msg.success(STR.ONEKEY_GET_TASK.SUCCESS.format({se: se}))
                                 $(DOM.NAV_MY_TASK)[0].click()
@@ -3265,22 +3308,32 @@ function registerQuestionSnap(){
 /**
  * 题目保存恢复功能
  */
-function registerQuestionSave(){
-    const $con = $(DOM.EDIT_PAGE_QUESTION_CON)
+function registerQuestionSave(pot){
+    let $con
+    if (pot.role === '题目录入'){
+        $con = $(DOM.EDIT_PAGE_QUESTION_CON)
+    } else {
+        $con = $(DOM.CHECK.QUESTION_CON)
+    }
     const $titleQ = $con.find('> div:nth-child(1)')
     const $titleY = $con.find('> div:nth-child(5)') // 解析标题
     const $titleK = $con.find('> div:nth-child(9)') // 知识点标题
     const $imgQ = $(DOM.QUESTION_IMG)
     const taskId = helper.getTaskId()
 
-    $(TPL.EDIT_PAGE_SAVE).insertAfter($imgQ).click(function(){
+    const $save = $(TPL.EDIT_PAGE_SAVE).insertAfter($imgQ)
+    $save.click(function(){
         helper.saveQuestion()
     })
-
-    $(TPL.EDIT_PAGE_RESTORE).insertAfter($imgQ).click(function(){
+    const $restore = $(TPL.EDIT_PAGE_RESTORE).insertAfter($imgQ)
+    $restore.click(function(){
         helper.restoreQuestion()
     })
 
+    if (pot.role === '题目审核'){
+        $save.css({'float': 'left'})
+        $restore.css({'float': 'left'})
+    }
     $(TPL.EDIT_PAGE_SAVE_SAMPLE).insertBefore($titleQ).click(function(){
         helper.saveQuestion(true)
     })
@@ -3820,7 +3873,191 @@ function doExtendEditPage(){
         // register question snap
         // delay load, if not, event added will be clear, why? test editpage.__vue__._isMounted
         setTimeout(registerQuestionSnap, 1000)
-        setTimeout(registerQuestionSave, 1000)
+        setTimeout(registerQuestionSave, 1000, {role: '题目录入'})
+    }
+    doRegister()
+}
+
+function doExtendCheckPage(){
+    let timer
+    function doRegister(){
+        clearTimeout(timer)
+        if (!document.isReady){
+            timer = setTimeout(doRegister, 200)
+            return
+        }
+        const $boxA = $(DOM.CHECK.ANSWER_BOX)
+        const $boxQ = $(DOM.CHECK.QUESTION_BOX)
+        const $btnALatex = $boxA.find(DOM.ANSWER_BOX_LATEX_BTN)
+        const $btnQLatex = $boxQ.find(DOM.QUESTION_BOX_LATEX_BUTTON)
+        if(!($btnALatex.length && $btnQLatex.length)){
+            timer = setTimeout(doRegister, 200)
+            return
+        }
+
+        stage.editPage.v = $(DOM.EDIT_PAGE)[0].__vue__
+
+        /*
+        registerLocateButton({
+            $box: $boxA,
+            //$jmp: $boxA.find(DOM.ANSWER_BOX_JUMP_BTN),
+            $ipt: $boxA.find(DOM.ANSWER_BOX_JUMP_INPUT),
+            ctn: DOM.ANSWER_BOX_IMG_CTN,
+            cls: DOM.ANSWER_BOX_CLOSE
+        }) // register locate pre answer position
+        */
+
+        registerGlass({
+            $btnLatex: $btnALatex,
+            $box: $boxA,
+            sel: DOM.ANSWER_BOX_IMG_SEL,
+            img: DOM.ANSWER_BOX_IMG,
+        })
+        registerGlass({
+            $btnLatex: $btnQLatex,
+            $box: $boxQ,
+            sel: DOM.QUESTION_BOX_IMG_SEL,
+            img: DOM.QUESTION_BOX_IMG,
+        })
+
+        registerSnap({ // register answer page snap
+            $btnLatex: $btnALatex,
+            $box: $boxA,
+            sel: DOM.ANSWER_BOX_IMG_SEL,
+            img: DOM.ANSWER_BOX_IMG,
+            uid: 2, // 解析
+        })
+        registerSnap({ // register question page snap
+            $btnLatex: $btnQLatex,
+            $box: $boxQ,
+            sel: DOM.QUESTION_BOX_IMG_SEL,
+            img: DOM.QUESTION_BOX_IMG,
+            uid: 0, // 题目
+        })
+
+        registerExtraOCR({ // register answer page OCR
+            $btnLatex: $btnALatex,
+            $box: $boxA,
+            sel: DOM.ANSWER_BOX_IMG_SEL,
+            img: DOM.ANSWER_BOX_IMG,
+            uid: 1, // 还是追加到答案吧
+        })
+        registerExtraOCR({ // register question page OCR
+            $btnLatex: $btnQLatex,
+            $box: $boxQ,
+            sel: DOM.QUESTION_BOX_IMG_SEL,
+            img: DOM.QUESTION_BOX_IMG,
+            uid: 0, // 题目
+        })
+
+        extraMin({
+            $box: $boxA,
+            $min: $boxA.find(DOM.ANSWER_BOX_MIN),
+            $ctn: $(DOM.ANSWER_BOX_IMG_CTN),
+            sel: DOM.ANSWER_BOX_IMG_SEL,
+            uid: 1, // 答案
+        })
+        extraMin({
+            $box: $boxQ,
+            $min: $boxQ.find(DOM.QUESTION_BOX_MIN),
+            $ctn: $boxQ.find(DOM.QUESTION_BOX_IMG_CTN),
+            sel: DOM.QUESTION_BOX_IMG_SEL,
+            uid: 0, // 题目
+        })
+
+        // 修复新增框选因滚动条被遮挡的问题
+        //fixAnswerAddCut()
+        //fixQuestionAddCut()
+
+        // register question snap
+        // delay load, if not, event added will be clear, why? test editpage.__vue__._isMounted
+        setTimeout(registerQuestionSnap, 1000)
+        setTimeout(registerQuestionSave, 1000, {role: '题目审核'})
+    }
+    doRegister()
+}
+
+function doExtendFinalCheckPage(){
+    let timer
+    function doRegister(){
+        clearTimeout(timer)
+        if (!document.isReady){
+            timer = setTimeout(doRegister, 200)
+            return
+        }
+        const $boxA = $(DOM.FINALCHECK.ANSWER_BOX)
+        const $boxQ = $(DOM.FINALCHECK.QUESTION_BOX)
+        const $btnALatex = $boxA.find(DOM.ANSWER_BOX_LATEX_BTN)
+        const $btnQLatex = $boxQ.find(DOM.QUESTION_BOX_LATEX_BUTTON)
+        if(!($btnALatex.length && $btnQLatex.length)){
+            timer = setTimeout(doRegister, 200)
+            return
+        }
+
+        stage.editPage.v = $(DOM.EDIT_PAGE)[0].__vue__
+
+        registerGlass({
+            $btnLatex: $btnALatex,
+            $box: $boxA,
+            sel: DOM.ANSWER_BOX_IMG_SEL,
+            img: DOM.ANSWER_BOX_IMG,
+        })
+        registerGlass({
+            $btnLatex: $btnQLatex,
+            $box: $boxQ,
+            sel: DOM.QUESTION_BOX_IMG_SEL,
+            img: DOM.QUESTION_BOX_IMG,
+        })
+
+        registerSnap({ // register answer page snap
+            $btnLatex: $btnALatex,
+            $box: $boxA,
+            sel: DOM.ANSWER_BOX_IMG_SEL,
+            img: DOM.ANSWER_BOX_IMG,
+            uid: 2, // 解析
+        })
+        registerSnap({ // register question page snap
+            $btnLatex: $btnQLatex,
+            $box: $boxQ,
+            sel: DOM.QUESTION_BOX_IMG_SEL,
+            img: DOM.QUESTION_BOX_IMG,
+            uid: 0, // 题目
+        })
+
+        registerExtraOCR({ // register answer page OCR
+            $btnLatex: $btnALatex,
+            $box: $boxA,
+            sel: DOM.ANSWER_BOX_IMG_SEL,
+            img: DOM.ANSWER_BOX_IMG,
+            uid: 1, // 还是追加到答案吧
+        })
+        registerExtraOCR({ // register question page OCR
+            $btnLatex: $btnQLatex,
+            $box: $boxQ,
+            sel: DOM.QUESTION_BOX_IMG_SEL,
+            img: DOM.QUESTION_BOX_IMG,
+            uid: 0, // 题目
+        })
+
+        extraMin({
+            $box: $boxA,
+            $min: $boxA.find(DOM.ANSWER_BOX_MIN),
+            $ctn: $(DOM.ANSWER_BOX_IMG_CTN),
+            sel: DOM.ANSWER_BOX_IMG_SEL,
+            uid: 1, // 答案
+        })
+        extraMin({
+            $box: $boxQ,
+            $min: $boxQ.find(DOM.QUESTION_BOX_MIN),
+            $ctn: $boxQ.find(DOM.QUESTION_BOX_IMG_CTN),
+            sel: DOM.QUESTION_BOX_IMG_SEL,
+            uid: 0, // 题目
+        })
+
+        // register question snap
+        // delay load, if not, event added will be clear, why? test editpage.__vue__._isMounted
+        //setTimeout(registerQuestionSnap, 1000)
+        //setTimeout(registerQuestionSave, 1000)
     }
     doRegister()
 }
@@ -3979,14 +4216,17 @@ function registerOption(){
         O.autoSliceAnalysis = $switch_autoSliceAnalysis.prop('checked')
     })
 
-    const $switch_showJudgeHint = $(TPL.OPTIONS_SWITCH.format({title: '判题时显示判题规则提示'})).appendTo($option).find('input')
-    $switch_showJudgeHint.prop('checked', O.showJudgeHint).on('change', function(){
-        O.showJudgeHint = $switch_showJudgeHint.prop('checked')
-    })
-    const $switch_showQInputProgress = $(TPL.OPTIONS_SWITCH.format({title: '录题时显示当前进度'})).appendTo($option).find('input')
-    $switch_showQInputProgress.prop('checked', O.showQInputProgress).on('change', function(){
-        O.showQInputProgress = $switch_showQInputProgress.prop('checked')
-    })
+    const role = helper.getRole()
+    if (role === '题目录入'){
+        const $switch_showJudgeHint = $(TPL.OPTIONS_SWITCH.format({title: '判题时显示判题规则提示'})).appendTo($option).find('input')
+        $switch_showJudgeHint.prop('checked', O.showJudgeHint).on('change', function(){
+            O.showJudgeHint = $switch_showJudgeHint.prop('checked')
+        })
+        const $switch_showQInputProgress = $(TPL.OPTIONS_SWITCH.format({title: '录题时显示当前进度'})).appendTo($option).find('input')
+        $switch_showQInputProgress.prop('checked', O.showQInputProgress).on('change', function(){
+            O.showQInputProgress = $switch_showQInputProgress.prop('checked')
+        })
+    }
 
     $(TPL.OPTIONS_SEPARATE).appendTo($option)
 
@@ -4160,7 +4400,11 @@ function initUE(){
     clearTimeout(stage.timer.initUETimer)
     if (window.UE){
         U = window.UE
-        execCommand('doExtendUE')
+        if (stage.manage){
+            doExtendUE()
+        } else {
+            execCommand('doExtendUE')
+        }
     } else{
         stage.timer.initUETimer = setTimeout(initUE, 0)
     }
@@ -4171,6 +4415,8 @@ function initVue(){
 
     if (window.app && window.app.__vue__){
         V = window.app.__vue__
+
+        stage.manage = V.$store.getters.getPermissionsConfig.manage
 
         V.$router.afterEach((to, from) => {
             if (O.debug){
@@ -4185,6 +4431,16 @@ function initVue(){
                         initUE()
                     }
                     execCommand('doExtendEditPage')
+                } else if (to.name == 'Check'){
+                    if (!U){
+                        initUE()
+                    }
+                    doExtendCheckPage()
+                } else if (to.name === 'questionsearch'){
+                    if (!U){
+                        initUE()
+                    }
+                    doExtendFinalCheckPage()
                 } else if (to.name === 'QuestionJudge') {
                     registerQjudgeHint()
                 } else if (to.name === 'TaskChoose'){
@@ -4310,6 +4566,7 @@ const exportFun = {
     'doExtraTaskList': doExtraTaskList,
     'doOneKeyGetTask': doOneKeyGetTask,
     'doExtendEditPage': doExtendEditPage,
+    'doExtendCheckPage': doExtendCheckPage,
     'doExtendUE': doExtendUE,
     'registerQjudgeEncircle': registerQjudgeEncircle,
 }
