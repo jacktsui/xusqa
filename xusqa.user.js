@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.2.094
+// @version      1.2.095
 // @description  有道搜题,录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -32,7 +32,7 @@
 (function() {
     'use strict';
 
-const ver = '1.2.094'
+const ver = '1.2.095'
 
 // 扩展版本号代理
 let ver_kfe = '0.0.000'
@@ -100,6 +100,7 @@ const UI = {
         answerInPage: '47869f87',
         questionInPage: '2a6f5d4d',
         //Home: '',
+        check: 'e3319cc6',
         UserCenter: '3e827132',
     }
 }
@@ -899,7 +900,7 @@ const URL = {
     GET_PROFILE: BASEURL + '/editsys/user/profile',
     UPLOAD_IMAGE: BASEURL + '/editsys/ueditor/config?action=uploadimage',
     OCR: BASEURL + '/editsys/ocr',
-    QUESTION: 'http://searchq-editsys.youdao.com/editsys/question?id={id}',
+    QUESTION: BASEURL + '/editsys/question?id={id}',
     SHAREQQ: 'http://connect.qq.com/widget/shareqq/index.html?{params}',
     getRandomImg: function(){
         const n = Math.floor(Math.random()*(123-1+1)+1)
@@ -1217,6 +1218,7 @@ const stage = {
     startLoginTime: new Date(), // 记录等待登录开始时间
     simpleSubject: undefined, // 记录提取的样本的subject
     manage: false,
+    role: undefined,
 }
 
 // (new Date()).Format("yyyy-MM-dd hh:mm:ss.S") ==> 2018-07-02 08:09:04.423
@@ -1277,7 +1279,12 @@ String.prototype.format = function(args) {
  */
 const util = {
     cmt: function(f) {
-        return f.toString().replace(/^[\s\S]*\/\*.*/, '').replace(/.*\*\/[\s\S]*$/, '').replace(/\r\n|\r|\n/g, '\n').format({nav: UI.css_scope.nav, header: UI.css_scope.header, answerInPage: UI.css_scope.answerInPage, questionInPage: UI.css_scope.questionInPage})
+        return f.toString().replace(/^[\s\S]*\/\*.*/, '').replace(/.*\*\/[\s\S]*$/, '').replace(/\r\n|\r|\n/g, '\n').format({
+            nav: UI.css_scope.nav,
+            header: UI.css_scope.header,
+            answerInPage: UI.css_scope.answerInPage,
+            questionInPage: UI.css_scope.questionInPage,
+            check: UI.css_scope.check})
     },
 
     addStyle: function(str, id){
@@ -1690,17 +1697,6 @@ const helper = {/* jshint +W003 */
 
         return ''
     },
-
-    getRole(){
-        if (stage.manage){
-            return '管理账号'
-        }
-        for (let i of V.$store.getters.getAccountPermissions){
-            if (~['题目录入', '题目审核'].indexOf(i.name)){
-                return i.name
-            }
-        }
-    }
 }
 
 // css------>
@@ -1812,6 +1808,10 @@ util.addStyle(util.cmt(function(){/*!CSS
 
 .item-cell-title[data-v-{UserCenter}], .item-cell-value[data-v-{UserCenter}] {
     vertical-align: middle;
+}
+.update-con[data-v-{check}]{
+    float: left;
+    max-width: 649px;
 }
 */
 }))
@@ -2960,7 +2960,7 @@ function doOneKeyGetTask() {
          > {"code":20001,"data":"","message":"当前有任务尚未完成，无法领取新任务"}
          > {code: 600, data: "", message: "没有权限"}
         \*/
-        $.get(encodeURI(URL.GET_TASK.format({subject: s, education: e})), (function(se){
+        $.get(encodeURI(URL.GET_TASK.format({tasktype: stage.role, subject: s, education: e})), (function(se){
             return function(data/*, status*/){
                 if (data.code === 200){
                     _status = 200
@@ -4216,8 +4216,7 @@ function registerOption(){
         O.autoSliceAnalysis = $switch_autoSliceAnalysis.prop('checked')
     })
 
-    const role = helper.getRole()
-    if (role === '题目录入'){
+    if (stage.role === '题目录入'){
         const $switch_showJudgeHint = $(TPL.OPTIONS_SWITCH.format({title: '判题时显示判题规则提示'})).appendTo($option).find('input')
         $switch_showJudgeHint.prop('checked', O.showJudgeHint).on('change', function(){
             O.showJudgeHint = $switch_showJudgeHint.prop('checked')
@@ -4334,6 +4333,9 @@ function registerUI() {
 
     addHeaderButton(STR.MODULE.TASK_REPORT).click(myTaskReport)
     addHeaderButton(STR.MODULE.TASK_TODAY).click(todayTaskReport)
+    if (stage.manage){
+        return
+    }
     const $btnOneKeyGetTask = addHeaderButton(STR.MODULE.ONEKEY_GET_TASK).click(function(){
         return execCommand('doOneKeyGetTask')
     })
@@ -4417,6 +4419,13 @@ function initVue(){
         V = window.app.__vue__
 
         stage.manage = V.$store.getters.getPermissionsConfig.manage
+        if (!stage.manage){
+            for (let i of V.$store.getters.getAccountPermissions){
+                if (~['图片裁切', '题目录入', '题目审核'].indexOf(i.name)){
+                    stage.role = i.name
+                }
+            }
+        }
 
         V.$router.afterEach((to, from) => {
             if (O.debug){
@@ -4444,7 +4453,9 @@ function initVue(){
                 } else if (to.name === 'QuestionJudge') {
                     registerQjudgeHint()
                 } else if (to.name === 'TaskChoose'){
-                    extraTaskList()
+                    if (!stage.manage){
+                        extraTaskList()
+                    }
                 } else if (to.name === 'Mytasks'){
                     registerPreMonthReport()
                 } else if (to.name === 'UserCenter'){
