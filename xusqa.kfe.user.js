@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手-公式
 // @namespace    jacktsui
-// @version      0.2.086
+// @version      0.3.086
 // @description  有道搜题,录题员助手(公式加强)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -19,7 +19,7 @@
 (function() {
     'use strict';
 
-const ver = '0.2.084'
+const ver = '0.3.086'
 
 const xusqapi = window.top.xusqapi
 if (!xusqapi){
