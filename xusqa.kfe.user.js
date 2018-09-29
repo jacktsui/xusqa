@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手-公式
 // @namespace    jacktsui
-// @version      0.3.086
+// @version      0.3.099
 // @description  有道搜题,录题员助手(公式加强)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -19,7 +19,7 @@
 (function() {
     'use strict';
 
-const ver = '0.3.086'
+const ver = '0.3.099'
 
 const xusqapi = window.top.xusqapi
 if (!xusqapi){
@@ -109,7 +109,7 @@ function mathLatexParse(str){
             }
 
             if (flag === 0){
-                return str.slice(0, pos) + '{{NIL}\\' + str.slice(pos+1, i+1) + '}'
+                return str.slice(0, pos) + '{{NIL}\\' + str.slice(pos+1, i+1) + '}' + str.slice(i+1)
             }
         }
         return ''
@@ -118,11 +118,11 @@ function mathLatexParse(str){
     str = str.replace(/\s+/g, '')
     str = str.replace(/(\/\/)/g, '\\') // //转化成单字符\
     let re
-    re = /(\d+|\(.+\)|[a-z])([\^_/\\])/g
+    re = /(\d+|\(.+\)|[^\=+-×}])([\^_/\\])/g
     while(str.match(re)){
         str = str.replace(re, '{$1}$2')
     }
-    re = /([\^_/\\])(\d+|\(.+\)|[a-z])/g
+    re = /([\^_/\\])(\d+|\(.+\)|[^\{=+-×])/g
     while(str.match(re)){
         str = str.replace(re, '$1{$2}')
     }
