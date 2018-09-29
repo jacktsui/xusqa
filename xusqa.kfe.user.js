@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手-公式
 // @namespace    jacktsui
-// @version      0.4.100
+// @version      0.4.101
 // @description  有道搜题,录题员助手(公式加强)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -19,7 +19,7 @@
 (function() {
     'use strict';
 
-const ver = '0.4.100'
+const ver = '0.4.101'
 
 const xusqapi = window.top.xusqapi
 if (!xusqapi){
@@ -40,96 +40,88 @@ if ('化学,数学,物理'.indexOf(xusqapi.subject) < 0){
 let ue, kfe
 
 function mathLatexParse(str){
-    const oparr = {'/': '\\frac', '\\': '\\sqrt'}
+    const oparr = {'/': '\\frac', '√': '\\sqrt', '²': '^', '₂': '_'}
     function exp(l, o, r){
-        if (~['^', '_',].indexOf(o)){
-            return '{' + l + '}' + o + '{' + r + '}'
+        if (~['²', '₂',].indexOf(o)){
+            return '{' + l + '}' + oparr[o] + '{' + r + '}'
         } else if(~['/',].indexOf(o)){
             return '{' + oparr[o] + ' {' + l + '} {' + r + '}}'
-        } else if(~['\\',].indexOf(o)){
+        } else if(~['√',].indexOf(o)){
             return '{' + oparr[o] + ' {' + r + '}}'
-        } else if (o === '&') {
-            return '{' + l + '}{' + r + '}'
         }
-
-        return ''
+        throw new Error('kfe faild!')
     }
 
-    // 简单文法解析器
     function parse(str){
-        let cake = '', l = '', r = '', o = '', result = ''
-        let flag = 0
-        for(let i in str){
-            if(str[i] === '{'){
-                flag ++
-            } else if (str[i] === '}') {
-                flag --
+        const ops = ['√', '/', '²', '₂']
+        function left(str, pos){
+            let i = pos - 1
+            let flag = 0
+            for(; i >= 0; i--){
+                if (str[i] === '}'){
+                    flag++
+                } else if (str[i] === '{'){
+                    flag--
+                }
+                if (flag === 0){
+                    return i
+                }
             }
+            throw new Error('kfe failed!')
+        }
+        function right(str, pos){
+            let i = pos + 1
+            let flag = 0
+            for(; i < str.length; i++){
+                if (str[i] === '{'){
+                    flag ++
+                } else if (str[i] === '}'){
+                    flag --
+                }
+                if (flag === 0){
+                    return i
+                }
+            }
+            throw new Error('kfe failed!')
+        }
 
-            if (flag === 0){
-                if (cake){
-                    cake = cake.slice(1)
-                    if (o){
-                        r = parse(cake)
+        for (let op of ops){
+            let c = 0
+            let pos = str.indexOf(op)
+            while (~pos){
+                let l = '', r = ''
+                if (~pos){
+                    if (op === '√'){
+                        r = right(str, pos)
+                        str = str.slice(0, pos) + exp('', op, str.slice(pos+1, r+1)) + str.slice(r+1)
                     } else {
-                        l = parse(cake)
+                        l = left(str, pos)
+                        r = right(str, pos)
+                        str = str.slice(0, l) + exp(str.slice(l, pos), op, str.slice(pos+1, r+1)) + str.slice(r+1)
                     }
-                    if (l && o && r){
-                        result += exp(l, o, r)
-                        l = ''; o = ''; r = ''
-                    }
-                    cake = ''
                 }
-                if (~['^', '_', '/','\\', '&',].indexOf(str[i])){
-                    o = str[i]
-                } else if(str[i] !== '}') {
-                    result += str[i]
+                pos = str.indexOf(op)
+                if (++c > 9){ // 最多十次防止死循环
+                    break
                 }
-            } else {
-                cake += str[i]
             }
         }
-
-        return result || l
-    }
-
-    function priorityProc(str){
-        let flag = 0
-        let pos = str.indexOf('\\')
-        if (pos === -1) {
-            return str
-        }
-
-        let i = pos + 1
-        for(; i < str.length; i++){
-            if (str[i] === '{'){
-                flag++
-            } else if (str[i] === '}'){
-                flag--
-            }
-
-            if (flag === 0){
-                return str.slice(0, pos) + '{{NIL}\\' + str.slice(pos+1, i+1) + '}' + str.slice(i+1)
-            }
-        }
-        return ''
+        return str
     }
 
     str = str.replace(/\s+/g, '')
-    str = str.replace(/(\/\/)/g, '\\') // //转化成单字符\
+    str = str.replace(/(\/\/|\\)/g, '√')
+    str = str.replace(/\^/g, '²')
+    str = str.replace(/\_/g, '₂')
     let re
-    re = /(\d+|[a-z]+|\(.+\)|[^\=+-×}])([\^_/\\])/g
+    re = /(\d+|[a-z]+|\(.+\))([/²₂])/g
     while(str.match(re)){
         str = str.replace(re, '{$1}$2')
     }
-    re = /([\^_/\\])(\d+|[a-z]+|\(.+\)|[^\{=+-×])/g
+    re = /([√/²₂])(\d+|[a-z]+|\(.+\))/g
     while(str.match(re)){
         str = str.replace(re, '$1{$2}')
     }
-
-    // 优先级
-    str = priorityProc(str)
-    str = str.replace('}{', '}&{')
 
     return parse(str)
 }
@@ -151,7 +143,6 @@ function txt2LaTex(str){
         str = str.replace(/([A-Z][a-z]*)([+-])([+=-])/g, '{$1}^{$2}$3')
         str = str.replace(/([A-Z][a-z]*)([+-])$/g, '{$1}^{$2}')
 
-        //str = str.replace(/([A-Z]|[A-Z][a-z])<sub>(\d+[+-]*)<\/sub>/g, '{$1}_{$2}')
         str = str.replace(/([A-Z][a-z]*)(\d+)/g, '{$1}_{$2}')
 
         for (let i of arrow){
@@ -160,18 +151,10 @@ function txt2LaTex(str){
 
         return str
     } else if(~['数学','物理'].indexOf(xusqapi.subject)){
-        /*
-        str = str.replace(/\/\/({[^}]+}|[a-z0-9]+|.)/g, '\\sqrt $1')
-        str = str.replace(/({[^}]+}|.)\/({[^}]+}|[a-z0-9]+|.)/g, '\\frac {$1} {$2}')
-
-        str = str.replace(/(\([^\)]+\)|[a-z])^(\d+)/g, '{$1}^{$2}')
-        str = str.replace(/(\([^\)]+\)|[a-z])_(\d+)/g, '{$1}_{$2}')
-
-        // 向量
+        str = mathLatexParse(str)
         str = str.replace(/([|·=+-]|^)([A-Z]{2})([|·=+-]|$)/g,'$1\\overrightarrow{$2}$3')
         str = str.replace(/([·=+-])([A-Z]{2})([·=+-]|$)/g,'$1\\overrightarrow{$2}$3') // 第一遍有被跳过去的
-        */
-        return mathLatexParse(str)
+        return str
     }
 }
 
