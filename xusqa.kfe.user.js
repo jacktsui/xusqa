@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手-公式
 // @namespace    jacktsui
-// @version      0.4.102
+// @version      0.4.103
 // @description  有道搜题,录题员助手(公式加强)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -19,7 +19,7 @@
 (function() {
     'use strict';
 
-const ver = '0.4.102'
+const ver = '0.4.103'
 
 const xusqapi = window.top.xusqapi
 if (!xusqapi){
@@ -153,12 +153,15 @@ function txt2LaTex(str){
         if (str === _str){
             str = mathLatexParse(str)
         }
-
         return str
     } else if(~['数学','物理'].indexOf(xusqapi.subject)){
-        str = mathLatexParse(str)
+        const _str = str
         str = str.replace(/([|·=+-]|^)([A-Z]{2})([|·=+-]|$)/g,'$1\\overrightarrow{$2}$3')
         str = str.replace(/([·=+-])([A-Z]{2})([·=+-]|$)/g,'$1\\overrightarrow{$2}$3') // 第一遍有被跳过去的
+
+        if (str === _str){
+            str = mathLatexParse(str)
+        }
         return str
     }
 }
