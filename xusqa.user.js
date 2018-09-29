@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.2.097
+// @version      1.2.098
 // @description  有道搜题,录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -39,7 +39,7 @@
 (function() {
     'use strict';
 
-const ver = '1.2.097'
+const ver = '1.2.098'
 
 // 扩展版本号代理
 let ver_kfe = '0.0.000'
@@ -903,15 +903,20 @@ const URL = {
 //<------ strings end.
 
 const UI = {
-    css_scope: {
-        nav: '3f6ca4fa',
-        header: '7b90ba54',
-        questionInPage: 'f43d9f94',
-        answerInPage: 'ce69c62c',
-        //Home: '',
-        check: 'e3319cc6',
-        UserCenter: '322b822a',
-    }
+    scope_dom: {
+        nav: '#app > div > div.nav-wrap',
+        header: '#app > div > div.main-content > div > header',
+        UserCenter: '#app > div > div.main-content > div > div',
+    },
+    css_scope: S.hasOwnProperty('xusqa_ui') ? JSON.parse(S.xusqa_ui) : {},
+    setScope(name, el){
+        el = el || $(this.scope_dom[name])[0]
+        const value = el.attributes[0].name.match(/[0-9a-z]{8}/)[0]
+        if (this.css_scope[name] !== value){
+            this.css_scope[name] = value
+            S.xusqa_ui = JSON.stringify(this.css_scope)
+        }
+    },
 }
 
 const TPL = {
@@ -3797,6 +3802,9 @@ function doExtendEditPage(){
             return
         }
 
+        UI.setScope('answerInPage', $boxA[0])
+        UI.setScope('questionInPage', $boxQ[0])
+
         stage.editPage.v = $(DOM.EDIT_PAGE)[0].__vue__
 
         registerLocateButton({
@@ -4312,6 +4320,8 @@ function registerDbsn(){
                 })
         })
 
+        UI.setScope('UserCenter')
+
         showSalary()
         registerOption()
 
@@ -4337,6 +4347,9 @@ function registerUI() {
     function addHeaderButton(text) {
         return helper.cloneButton(DOM.EXIT, text).insertAfter(DOM.USER)
     }
+
+    UI.setScope('nav')
+    UI.setScope('header')
 
     addHeaderButton(STR.MODULE.TASK_REPORT).click(myTaskReport)
     addHeaderButton(STR.MODULE.TASK_TODAY).click(todayTaskReport)
@@ -4804,7 +4817,11 @@ const xusqapi = {
         queryQInputProgress(function(totalcount, current, inputcount){
             C.log('进度' + current + '/' + totalcount + '(已录入' + inputcount + '题)')
         })
-    }
+    },
+
+    getScope: function(name){
+        return UI.css_scope[name]
+    },
 }
 window.xusqapi = xusqapi
 
