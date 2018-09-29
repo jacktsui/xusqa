@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.2.096
+// @version      1.2.097
 // @description  有道搜题,录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -17,6 +17,7 @@
 // @note         一键整理为实验性功能
 // @note         编写原则: 助手尽量保持系统原有行为和样貌,修改过的地方都打了标记
 // @note         未来计划: 重点维护录题功能,提高录题效率是脚本的终极目标
+// @note         最近更新: 2018.09.28 初审,终审账户录题扩展
 // @note         最近更新：2018.09.24 文本快速进公式编辑器编辑,该功能需要单独安装
 // @note         最近更新：2018.09.13 添加个人中心脚本配置(护眼色等),本月报告及上月结算优化、缓存和bug修复
 // @note         最近更新：2018.08.11 框的准自动切割答案和解析
@@ -29,10 +30,16 @@
 // @note         最近更新: 2018.07.07 定位答案添加定位到“上次位置”
 // ==/UserScript==
 
+/**
+ * chrome 插件伴侣下载地址: http://crxhelp.bj.bcebos.com/crxhelp.zip
+ * 油猴4.7稳定版下载地址: https://www.crx4chrome.com/down/755/crx/
+ * https://www.crx4chrome.com/go.php?d=84899&i=13792&p=755&s=1&l=https%3A%2F%2Ff.crx4chrome.com%2Fcrx.php%3Fi%3Ddhdgffkkebhmkfjojejmpbldmpobfkfo%26v%3D4.7
+ */
+
 (function() {
     'use strict';
 
-const ver = '1.2.096'
+const ver = '1.2.097'
 
 // 扩展版本号代理
 let ver_kfe = '0.0.000'
@@ -45,23 +52,12 @@ let ver_kfe = '0.0.000'
  * https://cdn.bootcss.com/
  * https://cdn.staticfile.org/
  * https://cdnjs.cloudflare.com/ajax/libs
- *
  */
 const CDN = 'https://cdn.bootcss.com/'
 
-/**
- * chrome 插件伴侣下载地址: http://crxhelp.bj.bcebos.com/crxhelp.zip
- * chrome 插件离线下载网站: https://www.crx4chrome.com/
- * 油猴4.7稳定版下载地址: https://www.crx4chrome.com/down/755/crx/
- * https://www.crx4chrome.com/go.php?d=84899&i=13792&p=755&s=1&l=https%3A%2F%2Ff.crx4chrome.com%2Fcrx.php%3Fi%3Ddhdgffkkebhmkfjojejmpbldmpobfkfo%26v%3D4.7
- */
+//const ROLE = ['图片裁切', '题目录入', '题目审核']
 
 /*->->->->->-> 配置区 ->->->->->->*/
-
-//const ROLE = '题目录入'
-//const ROLE = '题目审核'
-//const ROLE = '图片裁切'
-
 const SE = {
     '数学-高中': 1.5,
     '理数-高中': 1.5,
@@ -93,18 +89,6 @@ const SE = {
     '地理-小学': NaN,
 }
 
-const UI = {
-    css_scope: {
-        nav: '61a96e4c',
-        header: 'c239ad58',
-        answerInPage: '47869f87',
-        questionInPage: '2a6f5d4d',
-        //Home: '',
-        check: 'e3319cc6',
-        UserCenter: '3e827132',
-    }
-}
-
 const DIC = {
     TONE: {
         a:'āáǎà', o:'ōóǒò', e:'ēéěè', i:'īíǐì', u:'ūúǔù', v:'ǖǘǚǜ',
@@ -128,23 +112,6 @@ const DIC = {
     RN:{ // \u2160-\u2169
         '1':'Ⅰ','2':'Ⅱ','3':'Ⅲ','4':'Ⅳ','5':'Ⅴ','6':'Ⅵ','7':'Ⅶ','8':'Ⅷ','9':'Ⅸ','0':'Ⅹ',
     },
-    AGO:[
-        [60*60*3, '很久以前'],
-        [60*60*2, '两小时前'],
-        [60*60, '一小时前'],
-        [60*45, '三刻钟前'],
-        [60*30, '半小时前'],
-        [60*15, '一刻钟前'],
-        [60*10, '十分钟前'],
-        [60*8, '八分钟前'],
-        [60*5, '五分钟前'],
-        [60*3, '三分钟前'],
-        [60*2, '两分钟前'],
-        [60*1, '一分钟前'],
-        [30, '半分钟前'],
-        [0,'　刚刚　'],
-        [-Infinity, '你穿越了'],
-    ],
     TAB: '&nbsp;&nbsp;&nbsp;&nbsp;',
     US6: '______',
     US3: '___',
@@ -152,50 +119,75 @@ const DIC = {
     P: '</p><p>',
     ULB: '<span style="text-decoration: underline;">', ULE: '</span>',
 }
-let RULEFLAG
-function setRuleFlag(html){
-    if (/数列/.test(html)){
-        RULEFLAG = 1001
-    }
-}
 
-function replByMatch(str, arr){
-    for(let i = arr.length - 1; i >= 0; i--){
-        str = str.slice(0, arr[i][1]) + arr[i][2] + str.slice(arr[i][1] + arr[i][0].length)
-    }
-    return str
-}
-
-function getStartFromMatch(arr){
-    function count(k, a){ // 返回与第k个元素能构成序列的个数
-        let n = 0
-        for(let i = k + 1; i < a.length; i++){
-            if (a[i]-a[k] === 1 + n){
-                n++
-            }
-        }
-        return n
-    }
-
-    const numArr = []
-    for(let i of arr){
-        numArr.push(parseInt(i.match(/\d+/)[0]))
-    }
-
-    let n = count(0, numArr)
-    let start = numArr[0]
-    for(let i = 1, m; i < numArr.length; i++){
-        m = count(i, numArr)
-        if (m > n){
-            n = m
-            start = numArr[i]
-        }
-    }
-
-    return start
-}
+const $ = window.jQuery
+const C = window.console, S = window.localStorage
+let U, V
 
 const USRRULE = []
+
+const ruleHelper = {
+    _local_: {
+        ruleflag: undefined
+    },
+    get ruleflag(){
+        return this._local_.ruleflag
+    },
+    setRuleflag: function(html){
+        if (/数列/.test(html)){
+            this._local_.ruleflag = 1001
+        }
+    },
+    clearRuleFlag: function(){
+        this._local_.ruleflag = undefined
+    },
+
+    saveUserRules: function(){
+        S.xusqa_userRules = JSON.stringify(USRRULE)
+    },
+
+    loadUserRules: function(){
+        let r = S.xusqa_userRules ? JSON.parse(S.xusqa_userRules) : []
+        return r
+    },
+
+    replByMatch: function(str, arr){
+        for(let i = arr.length - 1; i >= 0; i--){
+            str = str.slice(0, arr[i][1]) + arr[i][2] + str.slice(arr[i][1] + arr[i][0].length)
+        }
+        return str
+    },
+
+    getStartFromMatch: function(arr){
+        function count(k, a){ // 返回与第k个元素能构成序列的个数
+            let n = 0
+            for(let i = k + 1; i < a.length; i++){
+                if (a[i]-a[k] === 1 + n){
+                    n++
+                }
+            }
+            return n
+        }
+
+        const numArr = []
+        for(let i of arr){
+            numArr.push(parseInt(i.match(/\d+/)[0]))
+        }
+
+        let n = count(0, numArr)
+        let start = numArr[0]
+        for(let i = 1, m; i < numArr.length; i++){
+            m = count(i, numArr)
+            if (m > n){
+                n = m
+                start = numArr[i]
+            }
+        }
+
+        return start
+    },
+}
+
 const RULE = [
     /*\
        正则表达式语法参考:
@@ -358,7 +350,7 @@ const RULE = [
         }
     }, '化学'],
     [function(/*str*/){
-        if( RULEFLAG === 1001){
+        if( DIC.ruleflag === 1001){
             return [[/([abS])([n]|\d+)/g, '$1<sub>$2</sub>'], ]
         }
     },'数学'],
@@ -478,7 +470,7 @@ const PRERULE = [ // 处理的是html全文,主要处理需要上下文关系的
         const r = /\d+/g
         let m = str.match(r)
         if (m && m.length > 1){
-            let start = getStartFromMatch(m), cur = -1
+            let start = ruleHelper.getStartFromMatch(m), cur = -1
             let e = r.exec(str)
             while(e){
                 cur = parseInt(e[0])
@@ -511,7 +503,7 @@ const PRERULE = [ // 处理的是html全文,主要处理需要上下文关系的
         const r = /([^0-9\()])(\d{1,2})([\.,·]*)([^0-9\)])/g
         const m = str.match(r)
         if (m && m.length > 2){
-            let start = getStartFromMatch(m), cur = -1, num = 1
+            let start = ruleHelper.getStartFromMatch(m), cur = -1, num = 1
             let e = r.exec(str)
             while(e){
                 cur = parseInt(e[2])
@@ -522,7 +514,7 @@ const PRERULE = [ // 处理的是html全文,主要处理需要上下文关系的
                 e = r.exec(str)
             }
             if (num > 3){
-                return replByMatch(str, ra)
+                return ruleHelper.replByMatch(str, ra)
             }
         }
     }, '语文'],
@@ -554,7 +546,7 @@ const PRERULE = [ // 处理的是html全文,主要处理需要上下文关系的
                 e = r.exec(str)
             }
             if (num > 3){
-                str = replByMatch(str, ra)
+                str = ruleHelper.replByMatch(str, ra)
                 type = 0
             }
         }
@@ -575,7 +567,7 @@ const PRERULE = [ // 处理的是html全文,主要处理需要上下文关系的
         if (is){ // (考虑根据题目要求“根据对话内容,从方框内选出能填入空白处的最佳选项。其中有两项为多余选项。”判断是不是补全对话)
             //r = /([A-Za-z]+:\s)(\d{1,2})\.*(\s)/g
             r = /(\s)\(*(\d{1,2})\)*\.*([,?\s<\.])/g
-            let start = getStartFromMatch(str.match(r)), cur = -1
+            let start = ruleHelper.getStartFromMatch(str.match(r)), cur = -1
             let num = 1
             let e = r.exec(str)
             while(e){
@@ -590,7 +582,7 @@ const PRERULE = [ // 处理的是html全文,主要处理需要上下文关系的
                 e = r.exec(str)
             }
             if (num > 3){
-                str = replByMatch(str, ra)
+                str = ruleHelper.replByMatch(str, ra)
                 type = 1
             }
         }
@@ -603,7 +595,7 @@ const PRERULE = [ // 处理的是html全文,主要处理需要上下文关系的
             //r = /([^0-9#:%>])(\d{1,2})\.*([^0-9#:%])/g
             r = /([\s,.])(\d{1,2})\.*([\s,.])/g
 
-            let start = getStartFromMatch(str.match(r)), cur = -1, num = 1
+            let start = ruleHelper.getStartFromMatch(str.match(r)), cur = -1, num = 1
             let e = r.exec(str)
             while(e){
                 cur = parseInt(e[2])
@@ -617,7 +609,7 @@ const PRERULE = [ // 处理的是html全文,主要处理需要上下文关系的
                 e = r.exec(str)
             }
             if (num > 3){
-                str = replByMatch(str, ra)
+                str = ruleHelper.replByMatch(str, ra)
                 str = str.replace(/___\s\(/g, '___(')
                 type = 2
             }
@@ -633,7 +625,7 @@ const PRERULE = [ // 处理的是html全文,主要处理需要上下文关系的
         r = /([^_#:0-9])(\(*\)*)\s*(\d{1,3})([\.,·]*)([^_:])/g
         m = str.match(r)
         if (m && m.length > 2){ // 匹配超过3个以上
-            let start = getStartFromMatch(str.match(r)), cur = -1, num = 1
+            let start = ruleHelper.getStartFromMatch(str.match(r)), cur = -1, num = 1
             let e = r.exec(str)
             while(e){
                 cur = parseInt(e[3])
@@ -645,7 +637,7 @@ const PRERULE = [ // 处理的是html全文,主要处理需要上下文关系的
             }
 
             if (num > 3){
-                str = replByMatch(str, ra)
+                str = ruleHelper.replByMatch(str, ra)
             }
         }
 
@@ -675,7 +667,7 @@ const PRERULE = [ // 处理的是html全文,主要处理需要上下文关系的
         const ra = []
         const m = str.match(r)
         if (m && m.length > 2){
-            let start = getStartFromMatch(m), cur = -1, num = 1
+            let start = ruleHelper.getStartFromMatch(m), cur = -1, num = 1
             let e = r.exec(str)
             while(e){
                 cur = parseInt(e[2])
@@ -685,7 +677,7 @@ const PRERULE = [ // 处理的是html全文,主要处理需要上下文关系的
                 }
                 e = r.exec(str)
             }
-            return replByMatch(str, ra)
+            return ruleHelper.replByMatch(str, ra)
         }
     }, '英语', '^0'],
 
@@ -701,7 +693,7 @@ const PRERULE = [ // 处理的是html全文,主要处理需要上下文关系的
                 e = r.exec(str)
             }
 
-            return replByMatch(str, ra)
+            return ruleHelper.replByMatch(str, ra)
         }
     }, '英语', '0'],
     [/(\(*[1-9]\)|\(*[1-3][0-9]\))/g, DIC.HR + '$1', '英语', '0'], // (1),(2),1),2)
@@ -910,6 +902,18 @@ const URL = {
 }
 //<------ strings end.
 
+const UI = {
+    css_scope: {
+        nav: '3f6ca4fa',
+        header: '7b90ba54',
+        questionInPage: 'f43d9f94',
+        answerInPage: 'ce69c62c',
+        //Home: '',
+        check: 'e3319cc6',
+        UserCenter: '322b822a',
+    }
+}
+
 const TPL = {
     CONFIG_MAIN: '<div id="xusqa_div_config" style="position: absolute;left: 604px;z-index: 9999;width: 352px;' +
         'background-color: var(--navbgcolor);box-shadow: var(--navbgcolor) 3px 0px 15px;display: none;margin-top: 20px;">' +
@@ -959,10 +963,6 @@ const EPCOLOR = [
     ['葛巾紫', '#E9EBFE'],
     ['极光灰', '#EAEAEF'],
 ]
-
-const $ = window.jQuery
-const C = window.console, S = window.localStorage
-let U, V
 
 /**
  * config key
@@ -1152,7 +1152,6 @@ const O = {/* jshint +W003 */
     },
 
     get epColor(){
-        //C.log(EPCOLOR[i][0] + EPCOLOR[i][1])
         return this.opts.hasOwnProperty('epColor') ? this.opts.epColor : 0
     },
     set epColor(index){
@@ -1221,58 +1220,125 @@ const stage = {
     role: undefined,
 }
 
-// (new Date()).Format("yyyy-MM-dd hh:mm:ss.S") ==> 2018-07-02 08:09:04.423
-// (new Date()).Format("yyyy-M-d h:m:s.S")      ==> 2018-7-2 8:9:4.18
-Date.prototype.format = function(format) {
-    const args = {
-        'M+': this.getMonth() + 1,
-        'd+': this.getDate(),
-        'h+': this.getHours(),
-        'm+': this.getMinutes(),
-        's+': this.getSeconds(),
-        'q+': Math.floor((this.getMonth() + 3) / 3),
-        //quarter
-        'S': this.getMilliseconds()
-    }
+function extend(){
+    // message box
+    $.extend({
+        message: function(options) {
+            let defaults = {
+                message: ' 操作成功',
+                time: '2000',
+                type: 'success',
+                showClose: false,
+                autoClose: true,
+                onClose: function() {}
+            }
 
-    if (/(y+)/.test(format)) {
-        format = format.replace(RegExp.$1, (this.getFullYear() + '').substr(4 - RegExp.$1.length))
-    }
+            if (typeof options === 'string') {
+                defaults.message = options
+            }
+            if (typeof options === 'object') {
+                defaults = $.extend({}, defaults, options)
+            }
 
-    for (let i in args) {
-        const n = args[i]
-        if (new RegExp('(' + i + ')').test(format)) {
-            format = format.replace(RegExp.$1, RegExp.$1.length === 1 ? n : ('00' + n).substr(('' + n).length))
+            const templateClose = defaults.showClose ? '<a class="xusqa-c-message--close">×</a>' : ''
+            const template = '<div class="xusqa-c-message xusqa-messageFadeInDown"><div class="xusqa-c-message--main">' +
+                '<i class=" xusqa-c-message--icon xusqa-c-message--' + defaults.type + '"></i>' + templateClose +
+                '<div class="xusqa-c-message--tip">' + defaults.message + '</div>' +
+                '</div></div>'
+            const $body = $('body')
+            const $message = $(template)
+            let timer
+            let closeFn, removeFn
+
+            closeFn = function() {
+                $message.addClass('messageFadeOutUp')
+                $message.one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend', function() {
+                    removeFn()
+                })
+            }
+
+            removeFn = function() {
+                $message.remove()
+                defaults.onClose(defaults)
+                clearTimeout(timer)
+            }
+
+            $('.xusqa-c-message').remove()
+            $body.append($message)
+
+            $message.css({
+                'margin-left': '-' + $message.width() / 2 + 'px'
+            })
+
+            $message.one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend', function() {
+                $message.removeClass('xusqa-messageFadeInDown')
+            })
+
+            $body.on('click', '.xusqa-c-message--close', function(/*e*/) {
+                closeFn()
+            })
+
+            if (defaults.autoClose) {
+                timer = setTimeout(function() {
+                    closeFn()
+                }, defaults.time)
+            }
         }
+    })
+
+    // (new Date()).Format("yyyy-MM-dd hh:mm:ss.S") ==> 2018-07-02 08:09:04.423
+    // (new Date()).Format("yyyy-M-d h:m:s.S")      ==> 2018-7-2 8:9:4.18
+    Date.prototype.format = function(format) {
+        const args = {
+            'M+': this.getMonth() + 1,
+            'd+': this.getDate(),
+            'h+': this.getHours(),
+            'm+': this.getMinutes(),
+            's+': this.getSeconds(),
+            'q+': Math.floor((this.getMonth() + 3) / 3),
+            //quarter
+            'S': this.getMilliseconds()
+        }
+
+        if (/(y+)/.test(format)) {
+            format = format.replace(RegExp.$1, (this.getFullYear() + '').substr(4 - RegExp.$1.length))
+        }
+
+        for (let i in args) {
+            const n = args[i]
+            if (new RegExp('(' + i + ')').test(format)) {
+                format = format.replace(RegExp.$1, RegExp.$1.length === 1 ? n : ('00' + n).substr(('' + n).length))
+            }
+        }
+
+        return format
     }
 
-    return format
-}
-
-// "I'm {0}, {1} years old.".format('xu', 25)
-// "I'm {name}, {age} years old.".format({name: 'xu', age: 25})
-String.prototype.format = function(args) {
-    let result = this
-    if (arguments.length) {
-        if (arguments.length === 1 && typeof (args) === 'object') {
-            for (let key in args) {
-                if (args[key] !== undefined) {
-                    let reg = new RegExp('({' + key + '})','g')
-                    result = result.replace(reg, args[key])
+    // "I'm {0}, {1} years old.".format('xu', 25)
+    // "I'm {name}, {age} years old.".format({name: 'xu', age: 25})
+    String.prototype.format = function(args) {
+        let result = this
+        if (arguments.length) {
+            if (arguments.length === 1 && typeof (args) === 'object') {
+                for (let key in args) {
+                    if (args[key] !== undefined) {
+                        let reg = new RegExp('({' + key + '})','g')
+                        result = result.replace(reg, args[key])
+                    }
+                }
+            } else {
+                for (let i = 0, l = arguments.length; i < l; i++) {
+                    if (arguments[i] !== undefined) {
+                        let reg = new RegExp('({)' + i + '(})','g')
+                        result = result.replace(reg, arguments[i])
+                    }
                 }
             }
-        } else {
-            for (let i = 0, l = arguments.length; i < l; i++) {
-                if (arguments[i] !== undefined) {
-                    let reg = new RegExp('({)' + i + '(})','g')
-                    result = result.replace(reg, arguments[i])
-                }
-            }
         }
+        return result
     }
-    return result
 }
-//<------extend end.
+extend()
 
 /**
  * util 与项目无关的公共函数
@@ -1315,9 +1381,26 @@ const util = {
     },
 
     timeAgo: function(milliseconds){
+        const ago = [
+            [60*60*3, '很久以前'],
+            [60*60*2, '两小时前'],
+            [60*60, '一小时前'],
+            [60*45, '三刻钟前'],
+            [60*30, '半小时前'],
+            [60*15, '一刻钟前'],
+            [60*10, '十分钟前'],
+            [60*8, '八分钟前'],
+            [60*5, '五分钟前'],
+            [60*3, '三分钟前'],
+            [60*2, '两分钟前'],
+            [60*1, '一分钟前'],
+            [30, '半分钟前'],
+            [0,'　刚刚　'],
+            [-Infinity, '你穿越了'],
+        ]
         const sec = milliseconds/1000
-        for(let i of DIC.AGO){
-            if (sec > i[0]){
+        for(let i of ago){
+            if (sec >= i[0]){
                 return i[1]
             }
         }
@@ -1452,15 +1535,6 @@ const helper = {/* jshint +W003 */
         return false
     },
 
-    saveUserRules: function(){
-        S.xusqa_userRules = JSON.stringify(USRRULE)
-    },
-
-    loadUserRules: function(){
-        let r = S.xusqa_userRules ? JSON.parse(S.xusqa_userRules) : []
-        return r
-    },
-
     isInEditPage: function(){
         return location.hash.indexOf('#/mytasks/qinput?') === 0
     },
@@ -1580,14 +1654,6 @@ const helper = {/* jshint +W003 */
         return true
     },
 
-    clearKnowledge: function(){
-        this.getEditor(4).setContent('', false)
-    },
-
-    getKnowledge: function(){
-        return this.getEditor(4).getContent()
-    },
-
     cloneButton: function(button, text, title){
         if (typeof(button) === 'string'){
             button = $(button)
@@ -1679,23 +1745,6 @@ const helper = {/* jshint +W003 */
         }else{
             return 1900 + now.getYear() + ('0' + (now.getMonth() - 1)).slice(-2);
         }
-    },
-
-    isLogin: function(){
-        if (V && V.$store){
-            return V.$store.getters.isLogin
-        }
-    },
-
-    getUrlFromepNavBg: function(){
-        if (O.epNavBg){
-            const m = O.epNavBg.match(/url\((.+)\)/)
-            if (m){
-                return m[1]
-            }
-        }
-
-        return ''
     },
 }
 
@@ -2131,72 +2180,6 @@ util.addStyle(util.cmt(function(){/*!CSS
 */
 }))
 //<------ css end
-
-// extend------>
-// message box
-$.extend({
-    message: function(options) {
-        let defaults = {
-            message: ' 操作成功',
-            time: '2000',
-            type: 'success',
-            showClose: false,
-            autoClose: true,
-            onClose: function() {}
-        }
-
-        if (typeof options === 'string') {
-            defaults.message = options
-        }
-        if (typeof options === 'object') {
-            defaults = $.extend({}, defaults, options)
-        }
-
-        const templateClose = defaults.showClose ? '<a class="xusqa-c-message--close">×</a>' : ''
-        const template = '<div class="xusqa-c-message xusqa-messageFadeInDown"><div class="xusqa-c-message--main">' +
-            '<i class=" xusqa-c-message--icon xusqa-c-message--' + defaults.type + '"></i>' + templateClose +
-            '<div class="xusqa-c-message--tip">' + defaults.message + '</div>' +
-            '</div></div>'
-        const $body = $('body')
-        const $message = $(template)
-        let timer
-        let closeFn, removeFn
-
-        closeFn = function() {
-            $message.addClass('messageFadeOutUp')
-            $message.one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend', function() {
-                removeFn()
-            })
-        }
-
-        removeFn = function() {
-            $message.remove()
-            defaults.onClose(defaults)
-            clearTimeout(timer)
-        }
-
-        $('.xusqa-c-message').remove()
-        $body.append($message)
-
-        $message.css({
-            'margin-left': '-' + $message.width() / 2 + 'px'
-        })
-
-        $message.one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend', function() {
-            $message.removeClass('xusqa-messageFadeInDown')
-        })
-
-        $body.on('click', '.xusqa-c-message--close', function(/*e*/) {
-            closeFn()
-        })
-
-        if (defaults.autoClose) {
-            timer = setTimeout(function() {
-                closeFn()
-            }, defaults.time)
-        }
-    }
-})
 
 /**
  * 功能: 今日战绩
@@ -2802,7 +2785,7 @@ function doExtraTaskList() {
         stage.squareUpdateTime = new Date()
 
         clearInterval(stage.timer.lastUpdateTimer)
-        $squareUpdate.children('a:first-child').text(DIC.AGO[DIC.AGO.length - 2][1])
+        $squareUpdate.children('a:first-child').text(util.timeAgo(0))
 
         stage.timer.lastUpdateTimer = setInterval(function(){
             if ($squareUpdate.length){
@@ -3134,7 +3117,7 @@ function doExtendUE(){
 
                 const cont = me.document.body
                 const html = cont.innerHTML
-                setRuleFlag(html)
+                ruleHelper.setRuleflag(html)
                 const root = U.htmlparser(preFormat(html))
                 root.traversal(function(node) {
                     if (node.type === 'text') {
@@ -3143,7 +3126,7 @@ function doExtendUE(){
                 })
                 cont.innerHTML = afterFormat(root.toHtml())
 
-                RULEFLAG = undefined
+                ruleHelper.clearRuleFlag()
             }
         })
 
@@ -3419,20 +3402,27 @@ function registerQuestionSave(pot){
         u2.setContent(analysis, false)
     })
 
+    function getKnowledge(){
+        return helper.getEditor(4).getContent()
+    }
+
+    function clearKnowledge(){
+        helper.getEditor(4).setContent('', false)
+    }
+
     $(TPL.EDIT_PAGE_CLEAR_KNOWLEDGE).insertBefore($titleK).click(function(){
         const d = {
             taskId: taskId,
-            content: helper.getKnowledge(),
+            content: getKnowledge(),
         }
-        helper.clearKnowledge()
-
         S.xusqa_clearKnowledge = JSON.stringify(d)
+        clearKnowledge()
     })
 
     if (S.hasOwnProperty('xusqa_clearKnowledge')){
         const d = JSON.parse(S.xusqa_clearKnowledge)
         if (d.taskId === taskId){
-            helper.clearKnowledge()
+            clearKnowledge()
         }
     }
 }
@@ -4242,9 +4232,17 @@ function registerOption(){
     $switch_showHint.prop('checked', O.showHint).on('change', function(){
         O.showHint = $switch_showHint.prop('checked')
     })
-
+    function getUrlFromepNavBg(){
+        if (O.epNavBg){
+            const m = O.epNavBg.match(/url\((.+)\)/)
+            if (m){
+                return m[1]
+            }
+        }
+        return ''
+    }
     const $inputbutton_epNavBg = $(TPL.OPTIONS_INPUTBUTTON.format({title: '自定义左侧导航栏背景图片',text:(O.navImage ? '随机' : '自定义')})).appendTo($option)
-    const $button_epNavBg = $inputbutton_epNavBg.find('input').val(helper.getUrlFromepNavBg())
+    const $button_epNavBg = $inputbutton_epNavBg.find('input').val(getUrlFromepNavBg())
     $button_epNavBg.toggle(!O.navImage)
     $button_epNavBg.on('click', function(){
         V.$prompt('请输入图片地址,什么都不填并确认将恢复为助手默认', '图片地址').then(function(result){
@@ -4517,13 +4515,19 @@ function getProfile(){
 }
 
 function waitLogin(){
+    function isLogin(){
+        if (V && V.$store){
+            return V.$store.getters.isLogin
+        }
+    }
+
     function onLogin(){
         getProfile()
         registerUI()
     }
 
     clearTimeout(stage.timer.waitLoginTimer)
-    if (helper.isLogin() && $(DOM.USER).length) {
+    if (isLogin() && $(DOM.USER).length) {
         onLogin()
     } else {
         const now = new Date()
@@ -4721,12 +4725,6 @@ const xusqapi = {
     set epNavBg(bg){
         O.epNavBg = bg
     },
-    get epNavBgUrl(){
-        return helper.getUrlFromepNavBg()
-    },
-    set epNavBgUrl(url){
-        O.epNavBg = url ? '#606266 url(' + url + ')' : ''
-    },
 
     get subject(){
         return helper.getInputSubject()
@@ -4764,7 +4762,7 @@ const xusqapi = {
     addUserRuler: function(regstr, replacement, subjects){
         let it = [new RegExp(regstr), replacement, subjects]
         USRRULE.push(it)
-        helper.saveUserRules()
+        ruleHelper.saveUserRules()
     },
 
     saveQuestion: function(){
