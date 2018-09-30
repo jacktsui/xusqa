@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手-手机版
 // @namespace    hacktsui
-// @version      0.213
+// @version      0.214
 // @description  有道搜题，录题员助手-手机版(功能有: 一键领取,任务广场任务数量角标.)
 // @author       Hacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -544,7 +544,7 @@ function doExtraTaskList() {
             }
 
             if (js.count != 0 || js.permission != 1) {
-                const dom_corner_a = $('<div class="xusqa-corner' + (js.permission == 1 ? '">' : '-gray">') +
+                const dom_corner = $('<div class="xusqa-corner' + (js.permission == 1 ? '">' : '-gray">') +
                     '<a style="position: absolute;top: -10px;left: 20px;width: 40px;font-size: ' +
                     (js.permission == 1 ? '15' : '12') + 'px;text-align: center;color: white;"' +
                     (js.permission == 1 ? ' href="javascript:void(0);">' : '>') +
@@ -552,7 +552,7 @@ function doExtraTaskList() {
                     '</a></div>').prependTo(li)
 
                 if (js.permission == 1) {
-                    dom_corner_a.click(function() {
+                    dom_corner.find('a').click(function() {
                         $.get(encodeURI(URL.TASK_RECIEVE.format({subject: s, education: e})), function(data, status) {
                             if (data.code == 200) {
                                 $V.$message.success(STR.ONEKEY_GET_TASK.SUCCESS.format({se: se}))

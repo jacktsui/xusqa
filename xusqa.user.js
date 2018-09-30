@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.2.098
+// @version      1.2.104
 // @description  有道搜题,录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -39,7 +39,7 @@
 (function() {
     'use strict';
 
-const ver = '1.2.098'
+const ver = '1.2.104'
 
 // 扩展版本号代理
 let ver_kfe = '0.0.000'
@@ -1884,6 +1884,15 @@ util.addStyle(util.cmt(function(){/*!CSS
     transform: rotateZ(-45deg);
 }
 
+.xusqa-corner-a {
+    position: absolute;
+    top: -10px;
+    left: 20px;
+    width: 40px;
+    text-align: center;
+    color: white;
+}
+
 .xusqa-corner:after {
     content: '';
     border-width: 40px;
@@ -2788,7 +2797,6 @@ function doExtraTaskList() {
         }
 
         stage.squareUpdateTime = new Date()
-
         clearInterval(stage.timer.lastUpdateTimer)
         $squareUpdate.children('a:first-child').text(util.timeAgo(0))
 
@@ -2830,15 +2838,6 @@ function doExtraTaskList() {
         })
     }
 
-    /*
-    function getRemain(rms){
-        for (let i of rms){
-            if (i.taskname === ROLE){
-                return i
-            }
-        }
-    }*/
-
     function setLiCorner(li) {
         const [s,e] = li.lastChild.innerText.split('-')
         /*\
@@ -2847,12 +2846,8 @@ function doExtraTaskList() {
          > {"code":200,"data":[{"count":4,"taskname":"图片裁切"},{"count":3054,"taskname":"题目录入","permission":-2,"remark":""},{"count":52,"taskname":"题目审核"}],"message":"SUCCESS"}
         \*/
         $.get(encodeURI(URL.GET_TASK_REMAIN.format({subject: s, education: e})), function(data/*, status*/) {
-            //const rm = getRemain(data.data)
             const rm = data.data[0]
             const taskname = rm.taskname
-            //if (!rm.hasOwnProperty('permission')){
-            //    rm.permission = 1
-            //}
             const se = s + '-' + e
             const b = helper.isExcludedSE(se)
 
@@ -2861,15 +2856,14 @@ function doExtraTaskList() {
             }
 
             if (rm.count !== 0 || rm.permission !== 1) { // 设置新角标
-                const $corner = $('<div class="xusqa-corner' + (rm.permission === 1 ? (b ? '-excluded' : '') : '-gray') + '">' +
-                    '<a style="position: absolute;top: -10px;left: 20px;width: 40px;font-size: ' +
-                    (rm.permission === 1 && !b ? '15' : '12') + 'px;text-align: center;color: white;"' +
+                const $corner = $('<div class="xusqa-corner' + (rm.permission === 1 ? (b ? '-excluded' : '') : '-gray') + '"><a class="xusqa-corner-a" style="font-size: ' +
+                    (rm.permission === 1 && !b ? '15' : '12') + 'px;"' +
                     (rm.permission === 1 && !b ? ' href="javascript:void(0);"' : '') + '>' +
                     ((rm.permission === 1 || rm.count > 0) ? rm.count : STR.EXTRA_TASK_SQUARE.WAIT_APPROVAL) +
                     '</a></div>').prependTo(li)
 
                 if (rm.permission === 1 && !b) { // 角标点击事件
-                    $corner.click(function() {
+                    $corner.find('a').click(function() {
                         $.get(encodeURI(URL.GET_TASK.format({tasktype: taskname, subject: s, education: e})), function(data/*, status*/) {
                             if (data.code === 200) {
                                 helper.msg.success(STR.ONEKEY_GET_TASK.SUCCESS.format({se: se}))
