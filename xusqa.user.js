@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.2.105
+// @version      1.2.106
 // @description  有道搜题,录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -39,7 +39,7 @@
 (function() {
     'use strict';
 
-const ver = '1.2.105'
+const ver = '1.2.106'
 
 // 扩展版本号代理
 let ver_kfe = '0.0.000'
@@ -4390,9 +4390,7 @@ function registerUI() {
 
     addHeaderButton(STR.MODULE.TASK_REPORT).click(myTaskReport)
     addHeaderButton(STR.MODULE.TASK_TODAY).click(todayTaskReport)
-    if (stage.manage){
-        return
-    }
+
     const $btnOneKeyGetTask = addHeaderButton(STR.MODULE.ONEKEY_GET_TASK).click(function(){
         return execCommand('doOneKeyGetTask')
     })
