@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.3.108
+// @version      1.3.109
 // @description  有道搜题,录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -39,7 +39,7 @@
 (function() {
     'use strict';
 
-const ver = '1.3.108'
+const ver = '1.3.109'
 
 // 扩展版本号代理
 let ver_kfe = '0.0.000'
@@ -2567,7 +2567,7 @@ function preMonthReport() {
  * 汇总任务,计算录入量,通过率等
  * 服务器没有对连续请求做优化,查询一页再查询另一页会非常慢;异步查询会返回全部数据,没法控制停止时机
  */
-function myTaskReport(stopDate) {
+function monthInputTaskReport(stopDate) {
     let arrtask = {}
     const arrTaskThisMonth = {}
     let totalPages
@@ -4555,8 +4555,14 @@ function registerUI() {
     UI.setScope('nav')
     UI.setScope('header')
 
-    const monthReport = (stage.role === '题目录入' ? myTaskReport : monthCheckTaskReport)
-    addHeaderButton(STR.MODULE.TASK_REPORT).click(monthReport)
+    addHeaderButton(STR.MODULE.TASK_REPORT).click(function(){
+        if (stage.role === '题目录入'){
+            monthInputTaskReport()
+        } else {
+            monthCheckTaskReport()
+        }
+
+    })
     addHeaderButton(STR.MODULE.TASK_TODAY).click(todayTaskReport)
 
     const $btnOneKeyGetTask = addHeaderButton(STR.MODULE.ONEKEY_GET_TASK).click(function(){
@@ -5014,7 +5020,7 @@ const xusqapi = {
         const r = /^(?:(?!0000)[0-9]{4}-(?:(?:0[1-9]|1[0-2])-(?:0[1-9]|1[0-9]|2[0-8])|(?:0[13-9]|1[0-2])-(?:29|30)|(?:0[13578]|1[02])-31)|(?:[0-9]{2}(?:0[48]|[2468][048]|[13579][26])|(?:0[48]|[2468][048]|[13579][26])00)-02-29)$/
         if (r.test(stopDate)){
             S.removeItem('xusqa_acc_premonth')
-            myTaskReport(new Date(stopDate).getTime())
+            monthInputTaskReport(new Date(stopDate).getTime())
         } else {
             C.log('命令日期格式错误，请使用以下格式: xusqapi.fixReport(\'2018-08-01\')')
         }
