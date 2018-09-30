@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.2.104
+// @version      1.2.105
 // @description  有道搜题,录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -39,7 +39,7 @@
 (function() {
     'use strict';
 
-const ver = '1.2.104'
+const ver = '1.2.105'
 
 // 扩展版本号代理
 let ver_kfe = '0.0.000'
@@ -907,6 +907,7 @@ const UI = {
         nav: '#app > div > div.nav-wrap',
         header: '#app > div > div.main-content > div > header',
         UserCenter: '#app > div > div.main-content > div > div',
+        check: '#app > div > div.main-content > div > div',
     },
     css_scope: S.hasOwnProperty('xusqa_ui') ? JSON.parse(S.xusqa_ui) : {},
     setScope(name, el){
@@ -936,6 +937,7 @@ const TPL = {
     GLASS: '<canvas " width="100px" height="100px" style="position: absolute;top: 0px;left: 0px;z-index: 9527;border: 1px solid #67c23a;border-radius: 10px; box-shadow: 0 3px 15px #67c23a;"></canvas>',
     LOCATE_ANSWER: '<a href="javascript:;" class="xusqa-btn" style="margin-left: 30px;display: inline-block;padding: 3px 10px;border: 1px solid #c0c4cc;border-radius: 3px;color: #606266;font-size: 13px;background-color: white;" title="{title}">{text}<a/>',
     SQUARE_UPDATE: '<div id="xusqa-square-update" class="process-task-con">最后刷新时间：<a  style="padding: 0px 10px;color: #f93e53;" >　刚刚　</a><a href="javascript:;" class="xusqa-a-button xusqa-btn">　刷新　</a><a href="javascript:;" class="xusqa-a-button xusqa-btn">分享到QQ</a></div>',
+    SQUARE_ROLE: '<a href="javascript:;" class="xusqa-a-button xusqa-btn">{role}</a>',
     ACC_INFO: '<div style=" font-size: 12px; font-style: italic; margin-bottom: 16px;">以上数据仅供参考.</div>',
     THIS_ACC_INFO: '<div style=" font-size: 12px; font-style: italic; margin-bottom: 16px;">{remark}数据仅供参考.</div>',
     JUDGE_RULE_A: '<a href="https://note.youdao.com/share/?id=d98298a63e8656ab277278f5c51efe70&amp;type=note#/" target="_blank" style="text-decoration: underline;color: #00a2d4;display: block;">查看判题规则</a>',
@@ -1199,6 +1201,13 @@ const O = {/* jshint +W003 */
             C.error('设置是否显示录题进度, true 或者 false')
         }
     },
+
+    get role(){
+        return this.opts.hasOwnProperty('role') ? this.opts.role : '题目录入'
+    },
+    set role(role){
+        this.setOptions('role', role)
+    }
 }
 
 // 暂存器,数据只在脚本运行期间有效,不保存
@@ -1213,6 +1222,7 @@ const stage = {
         questionPageno: -1
     },
     profile: {
+        username: undefined,
         qqnumber: undefined,
         permission: null,
         isValidSN: O.passport,
@@ -1353,6 +1363,7 @@ const util = {
         return f.toString().replace(/^[\s\S]*\/\*.*/, '').replace(/.*\*\/[\s\S]*$/, '').replace(/\r\n|\r|\n/g, '\n').format({
             nav: UI.css_scope.nav,
             header: UI.css_scope.header,
+            UserCenter: UI.css_scope.UserCenter,
             answerInPage: UI.css_scope.answerInPage,
             questionInPage: UI.css_scope.questionInPage,
             check: UI.css_scope.check})
@@ -1751,6 +1762,16 @@ const helper = {/* jshint +W003 */
             return 1900 + now.getYear() + ('0' + (now.getMonth() - 1)).slice(-2);
         }
     },
+
+    alternateRole: function(role){ //角色轮换
+        if(role === '题目录入'){
+            return '题目审核'
+        } else if(role === '题目审核'){
+            return '图片裁切'
+        } else{
+            return '题目录入'
+        }
+    }
 }
 
 // css------>
@@ -2789,6 +2810,16 @@ function doExtraTaskList() {
             $squareUpdate.children('a:first-child').text(STR.EXTRA_TASK_SQUARE.REFRESH)
             doExtraTaskList()
         })
+
+        if (stage.manage){
+            const $role = $(TPL.SQUARE_ROLE.format({role: stage.role})).appendTo($squareUpdate)
+            $role.on('click', function(){
+                stage.role = helper.alternateRole(stage.role)
+                O.role = stage.role
+                $role.text(stage.role)
+                doExtraTaskList()
+            })
+        }
     }
 
     function resetRefresh(qssumary){
@@ -2810,32 +2841,39 @@ function doExtraTaskList() {
             }
         }, 1000*30)
 
-        $squareUpdate.children('a:last-child').click(function(){
-            if (!qssumary){
-                helper.msg.error(STR.SHAREQQ.NO_TASK)
-                return
-            }
+        // qq 分享
+        if (!qssumary){
+            helper.msg.error(STR.SHAREQQ.NO_TASK)
+            return
+        }
 
-            if (new Date() - stage.squareUpdateTime > 1000*60*10){ // 超过10分钟,过期
-                helper.msg.error(STR.SHAREQQ.EXPIRED)
-                return
-            }
+        if (new Date() - stage.squareUpdateTime > 1000*60*10){ // 超过10分钟,过期
+            helper.msg.error(STR.SHAREQQ.EXPIRED)
+            return
+        }
 
-            const p = {
-                url: location.href,
-                desc: '',
-                title: STR.SHAREQQ.QTIME.format({qtime: stage.squareUpdateTime.format('hh:mm:ss')}),
-                summary: qssumary,
-                pics: URL.getRandomImg(),
-                site: document.title, //flash: '', style: '203', width: 16, height: 16
-            };
-            const s = [];
-            for(let i in p){
-                s.push(i + '=' + encodeURIComponent(p[i]||''));
+        const p = {
+            url: location.href,
+            desc: '',
+            title: STR.SHAREQQ.QTIME.format({qtime: stage.squareUpdateTime.format('hh:mm:ss')}),
+            summary: qssumary,
+            pics: URL.getRandomImg(),
+            site: document.title, //flash: '', style: '203', width: 16, height: 16
+        };
+        const s = [];
+        for(let i in p){
+            s.push(i + '=' + encodeURIComponent(p[i]||''));
+        }
+        const qhref = URL.SHAREQQ.format({params: s.join('&')});
+        $squareUpdate.children('a:nth-child(3)').attr({href: qhref, target: '_blank'});
+    }
+
+    function getRemainByRole(rms, role){
+        for(let i of rms){
+            if (i.taskname === role){
+                return i
             }
-            const qhref = URL.SHAREQQ.format({params: s.join('&')});
-            $squareUpdate.children('a:last-child').attr({href: qhref, target: '_blank'});
-        })
+        }
     }
 
     function setLiCorner(li) {
@@ -2846,8 +2884,8 @@ function doExtraTaskList() {
          > {"code":200,"data":[{"count":4,"taskname":"图片裁切"},{"count":3054,"taskname":"题目录入","permission":-2,"remark":""},{"count":52,"taskname":"题目审核"}],"message":"SUCCESS"}
         \*/
         $.get(encodeURI(URL.GET_TASK_REMAIN.format({subject: s, education: e})), function(data/*, status*/) {
-            const rm = data.data[0]
-            const taskname = rm.taskname
+            const rm = getRemainByRole(data.data, stage.role) || data.data[0]
+            const taskname = stage.manage ? stage.role : rm.taskname
             const se = s + '-' + e
             const b = helper.isExcludedSE(se)
 
@@ -2855,14 +2893,15 @@ function doExtraTaskList() {
                 li.firstChild.remove()
             }
 
-            if (rm.count !== 0 || rm.permission !== 1) { // 设置新角标
-                const $corner = $('<div class="xusqa-corner' + (rm.permission === 1 ? (b ? '-excluded' : '') : '-gray') + '"><a class="xusqa-corner-a" style="font-size: ' +
-                    (rm.permission === 1 && !b ? '15' : '12') + 'px;"' +
-                    (rm.permission === 1 && !b ? ' href="javascript:void(0);"' : '') + '>' +
-                    ((rm.permission === 1 || rm.count > 0) ? rm.count : STR.EXTRA_TASK_SQUARE.WAIT_APPROVAL) +
+            const pm = stage.manage || rm.permission === 1
+            if (rm.count !== 0 || !pm) { // 设置新角标
+                const $corner = $('<div class="xusqa-corner' + (pm ? (b ? '-excluded' : '') : '-gray') + '"><a class="xusqa-corner-a" style="font-size: ' +
+                    (pm && !b ? '15' : '12') + 'px;"' +
+                    (pm && !b ? ' href="javascript:void(0);"' : '') + '>' +
+                    ((pm || rm.count > 0) ? rm.count : STR.EXTRA_TASK_SQUARE.WAIT_APPROVAL) +
                     '</a></div>').prependTo(li)
 
-                if (rm.permission === 1 && !b) { // 角标点击事件
+                if (pm && !b) { // 角标点击事件
                     $corner.find('a').click(function() {
                         $.get(encodeURI(URL.GET_TASK.format({tasktype: taskname, subject: s, education: e})), function(data/*, status*/) {
                             if (data.code === 200) {
@@ -3895,8 +3934,9 @@ function doExtendCheckPage(){
             timer = setTimeout(doRegister, 200)
             return
         }
-
-        stage.editPage.v = $(DOM.EDIT_PAGE)[0].__vue__
+        const $ep = $(DOM.EDIT_PAGE)
+        UI.setScope('check', $ep[0])
+        stage.editPage.v = $ep[0].__vue__
 
         /*
         registerLocateButton({
@@ -4243,6 +4283,14 @@ function registerOption(){
         }
         return ''
     }
+
+    const $switch_epColor = $(TPL.OPTIONS_BUTTON.format({title: '设置护眼色,点击按钮切换'})).appendTo($option).find('button')
+    $switch_epColor.find('span').text(EPCOLOR[O.epColor][0])
+    $switch_epColor.on('click', function(){
+        O.epColor = (O.epColor + 1) % EPCOLOR.length
+        refreshNavImage()
+        $switch_epColor.find('span').text(EPCOLOR[O.epColor][0])
+    })
     const $inputbutton_epNavBg = $(TPL.OPTIONS_INPUTBUTTON.format({title: '自定义左侧导航栏背景图片',text:(O.navImage ? '随机' : '自定义')})).appendTo($option)
     const $button_epNavBg = $inputbutton_epNavBg.find('input').val(getUrlFromepNavBg())
     $button_epNavBg.toggle(!O.navImage)
@@ -4260,14 +4308,9 @@ function registerOption(){
         $button_epNavBg.toggle(!O.navImage)
         refreshNavImage()
     })
-    const $switch_epColor = $(TPL.OPTIONS_BUTTON.format({title: '设置护眼色,点击按钮切换'})).appendTo($option).find('button')
-    $switch_epColor.find('span').text(EPCOLOR[O.epColor][0])
-    $switch_epColor.on('click', function(){
-        O.epColor = (O.epColor + 1) % EPCOLOR.length
-        refreshNavImage()
-        $switch_epColor.find('span').text(EPCOLOR[O.epColor][0])
-    })
+
     $(TPL.OPTIONS_SEPARATE).appendTo($option)
+
     const $xusqa = $(TPL.OPTIONS_XUSQA.format({ver: ver})).appendTo($option)
     const $xusqa_kfe = $(TPL.OPTIONS_XUSQA_KFE.format({ver_kfe: ver_kfe})).appendTo($option)
     $(TPL.OPTIONS_MANUAL).appendTo($option)
@@ -4439,6 +4482,8 @@ function initVue(){
                     stage.role = i.name
                 }
             }
+        } else {
+            stage.role = O.role
         }
 
         V.$router.afterEach((to, from) => {
@@ -4467,9 +4512,7 @@ function initVue(){
                 } else if (to.name === 'QuestionJudge') {
                     registerQjudgeHint()
                 } else if (to.name === 'TaskChoose'){
-                    if (!stage.manage){
-                        extraTaskList()
-                    }
+                    extraTaskList()
                 } else if (to.name === 'Mytasks'){
                     registerPreMonthReport()
                 } else if (to.name === 'UserCenter'){
@@ -4506,16 +4549,18 @@ function initVue(){
 function getProfile(){
     $.get(URL.GET_PROFILE, function(data){ // status:'success'
         if (data.code === 200){
+            const d = data.data
             var a = []
-            for(let es of data.data.permission){
+            for(let es of d.permission){
                 const se = es.slice(2) + '-' + es.slice(0,2)
                 if (SE[se]){
                     a.push(se)
                 }
             }
             stage.profile.permission = a
-            stage.profile.isValidSN = util.de(O.sn) === data.data.qqnumber
-            stage.profile.qqnumber = data.data.qqnumber
+            stage.profile.username = d.username
+            stage.profile.qqnumber = d.qqnumber
+            stage.profile.isValidSN = util.de(O.sn) === d.qqnumber
             O.passport = stage.profile.isValidSN
         }
     })

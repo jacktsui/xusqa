@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手-公式
 // @namespace    jacktsui
-// @version      0.4.103
+// @version      0.4.105
 // @description  有道搜题,录题员助手(公式加强)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -13,13 +13,13 @@
 // @match        http://searchq-editsys.youdao.com/static/Ueditor/kityformula-plugin/kityFormulaDialog.html
 // @grant        none
 // @run-at       document-end
-// @note         2018-09-23 初版,化学方程式,数学简单公式
+// @note         2018-09-23 初版,化学方程式,数学公式
 // ==/UserScript==
 
 (function() {
     'use strict';
 
-const ver = '0.4.103'
+const ver = '0.4.105'
 
 const xusqapi = window.top.xusqapi
 if (!xusqapi){
@@ -37,7 +37,7 @@ if (!xusqapi.passport){
 if ('化学,数学,物理'.indexOf(xusqapi.subject) < 0){
     return
 }
-let ue, kfe
+let kfe
 
 function mathLatexParse(str){
     const oparr = {'/': '\\frac', '√': '\\sqrt', '²': '^', '₂': '_'}
@@ -101,7 +101,7 @@ function mathLatexParse(str){
                     }
                 }
                 pos = str.indexOf(op)
-                if (++c > 9){ // 最多十次防止死循环
+                if (++c > 9){ // 最多十次防止死循环,理论上不会发生
                     break
                 }
             }
@@ -175,7 +175,7 @@ function inikfe(){
     clearTimeout(timer)
     if (window.kfe){
         kfe = window.kfe
-        ue = window.editor
+        const ue = window.editor
         ue.focus()
         const txt = ue.selection.getText()
         if (txt){
@@ -188,14 +188,12 @@ function inikfe(){
 }
 inikfe()
 
-xusqapi.mathLatexParse = mathLatexParse
+xusqapi.txt2LaTex = txt2LaTex
 xusqapi.laTex = laTex
 
 })()
 /*!
  * 本脚本使用 MIT 协议
- *
- * MIT许可证（MIT）
  * 版权所有 © 2018 徐。355088586@qq
  * 
  */
