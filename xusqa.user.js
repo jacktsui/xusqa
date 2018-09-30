@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.3.107
+// @version      1.3.108
 // @description  有道搜题,录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -39,7 +39,7 @@
 (function() {
     'use strict';
 
-const ver = '1.3.107'
+const ver = '1.3.108'
 
 // 扩展版本号代理
 let ver_kfe = '0.0.000'
@@ -2818,10 +2818,10 @@ function monthCheckTaskReport() {
 
     function doCollect(task) {
         for (let t of task) {
-            if (t.tasktype !== stage.role){
-                continue
-            }
             if (t.finishedtime > firstDay){
+                if (t.tasktype !== stage.role){
+                    continue
+                }
                 const key = t.subject + '-' + t.education
                 if (!arr.hasOwnProperty(key)) {
                     arr[key] = {
@@ -2841,13 +2841,10 @@ function monthCheckTaskReport() {
                 arr[key].checkcount += parseInt(d0)
                 arr[key].passcount += parseInt(d1)
                 arr[key].salary += t.salary
-
-                return true
             } else {
                 return false
             }
         }
-
         return true
     }
 
