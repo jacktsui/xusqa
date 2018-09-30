@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.2.106
+// @version      1.3.107
 // @description  有道搜题,录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -17,7 +17,7 @@
 // @note         一键整理为实验性功能
 // @note         编写原则: 助手尽量保持系统原有行为和样貌,修改过的地方都打了标记
 // @note         未来计划: 重点维护录题功能,提高录题效率是脚本的终极目标
-// @note         最近更新: 2018.09.28 初审,终审账户录题扩展
+// @note         最近更新: 2018.09.30 初审,终审账户录题扩展,初审任务报告
 // @note         最近更新：2018.09.24 文本快速进公式编辑器编辑,该功能需要单独安装
 // @note         最近更新：2018.09.13 添加个人中心脚本配置(护眼色等),本月报告及上月结算优化、缓存和bug修复
 // @note         最近更新：2018.08.11 框的准自动切割答案和解析
@@ -39,7 +39,7 @@
 (function() {
     'use strict';
 
-const ver = '1.2.106'
+const ver = '1.3.107'
 
 // 扩展版本号代理
 let ver_kfe = '0.0.000'
@@ -59,31 +59,31 @@ const CDN = 'https://cdn.bootcss.com/'
 
 /*->->->->->-> 配置区 ->->->->->->*/
 const SE = {
-    '数学-高中': 1.5,
-    '理数-高中': 1.5,
-    '文数-高中': 1.5,
-    '英语-高中': 1.2,
-    '语文-高中': 1.2,
-    '物理-高中': 1.5,
-    '化学-高中': 1.5,
+    '数学-高中': [1.5, 0.3],
+    '理数-高中': [1.5, 0.3],
+    '文数-高中': [1.5, 0.3],
+    '英语-高中': [1.2, 0.3],
+    '语文-高中': [1.2, 0.3],
+    '物理-高中': [1.5, 0.3],
+    '化学-高中': [1.5, 0.3],
     '生物-高中': NaN,
     '历史-高中': NaN,
     '政治-高中': NaN,
     '地理-高中': NaN,
     '理综-高中': NaN,
     '文综-高中': NaN,
-    '数学-初中': 1.3,
-    '英语-初中': 1.1,
-    '语文-初中': 1.1,
-    '物理-初中': 1.3,
-    '化学-初中': 1.1,
+    '数学-初中': [1.3, 0.25],
+    '英语-初中': [1.1, 0.25],
+    '语文-初中': [1.1, 0.25],
+    '物理-初中': [1.3, 0.28],
+    '化学-初中': [1.1, 0.28],
     '生物-初中': NaN,
     '历史-初中': NaN,
     '政治-初中': NaN,
     '地理-初中': NaN,
-    '数学-小学': 0.5,
-    '英语-小学': 0.4,
-    '语文-小学': 1.1,
+    '数学-小学': [0.5, 0.22],
+    '英语-小学': [0.4, 0.18],
+    '语文-小学': [1.1, 0.22],
     '历史-小学': NaN,
     '政治-小学': NaN,
     '地理-小学': NaN,
@@ -683,13 +683,28 @@ const PRERULE = [ // 处理的是html全文,主要处理需要上下文关系的
 
     [function(str){ // (汉字)->______(汉字),(few)->______(few)
         //const r = /(\([\u4E00-\u9FA5]+\)|\([a-z]{2,}\))/g
-        const r = /([^_])(\([a-z]+\)|\([a-z]+\s[a-z]+\))/g
+        //const r = /([^_.])(\s*\([a-z]+\)|\([a-z]+\s[a-z]+\))/g
+        const r = /([^_.\s])(\s*\([a-z]+\)|\([a-z]+\s[a-z]+\))/g
         const m = str.match(r)
         const ra = []
         if (m && m.length > 2) { // 匹配超过3个以上
             let e = r.exec(str)
             while(e){
                 ra.push([e[0], e.index, e[1] + DIC.US6 + e[2]])
+                e = r.exec(str)
+            }
+
+            return ruleHelper.replByMatch(str, ra)
+        }
+    }, '英语', '0'],
+    [function(str){ // (汉字)->______(汉字),(few)->______(few)
+        const r = /(\([\u4E00-\u9FA5]+\))/g
+        const m = str.match(r)
+        const ra = []
+        if (m && m.length > 4) { // 匹配超过5个以上
+            let e = r.exec(str)
+            while(e){
+                ra.push([e[0], e.index, DIC.US6 + e[1]])
                 e = r.exec(str)
             }
 
@@ -2226,6 +2241,9 @@ function todayTaskReport() {
 
     function doCollect(task) {
         for (let t of task) {
+            if (t.tasktype !== stage.role){
+                continue
+            }
             const d = (new Date(t.finishedtime)).format('yyyy-MM-dd')
             if (d === today){
                 const key = t.subject + '-' + t.education
@@ -2242,8 +2260,16 @@ function todayTaskReport() {
                 arrtask[key].totalcount += t.totalcount
                 arrtask[key].finishedcount += t.finishedcount
                 arrtask[key].returntimes += (t.status === '已退回' ? 1 : 0)
-                arrtask[key].inputcount += parseInt(t.remark.match(/\d+/)) // 录完2题
-                const [d0,d1] = t.remark2.match(/\d+/g) // 已被审核4题，通过4题
+                let d0, d1
+                if(t.tasktype === '题目录入'){
+                    arrtask[key].inputcount += parseInt(t.remark.match(/\d+/)) // 录完2题
+                    const r = t.remark2.match(/\d+/g) // 已被审核4题，通过4题
+                    d0 = r[0]; d1 = r[1]
+                } else if(t.tasktype === '题目审核'){
+                    const r = t.remark.match(/\d+/g) // 审完0题，通过0题
+                    d0 = r[0]; d1 = r[1]
+                }
+
                 arrtask[key].checkcount += parseInt(d0)
                 arrtask[key].passcount += parseInt(d1)
             } else {
@@ -2259,7 +2285,7 @@ function todayTaskReport() {
         let thtm = '<table style="margin: 10px 20px 10px 0px;font-size: 14px;border-collapse:collapse;;border: none;">'
         thtm += '<caption>今日战绩 查询时间: ' + new Date().format('hh:mm:ss') + '</caption>'
         thtm += '<tr style="border-bottom:2px solid #808080;">'
-        thtm += '<th>&nbsp;</th><th>总量</th><th>完成量</th><th>已退回</th><th>录入量</th><th>已审核</th><th>通过</th><th>通过率</th>'
+        thtm += '<th>&nbsp;</th><th>总量</th><th>完成量</th><th>已退回</th>' + (stage.role === '题目录入' ? '<th>录入量</th>' : '') + '<th>已审核</th><th>通过</th><th>通过率</th>'
         thtm += '</tr>';
 
         for (let key in result) {
@@ -2278,7 +2304,7 @@ function todayTaskReport() {
                 '<td style="text-align: right;">' + result[key].totalcount + '</td>' + // 总量
                 '<td style="text-align: right;">' + result[key].finishedcount + '</td>' + // 完成量
                 '<td style="text-align: right;">' + result[key].returntimes + '</td>' + // 退回次数
-                '<td style="text-align: right;">' + result[key].inputcount + '</td>' + // 录入量
+                (stage.role === '题目录入' ? '<td style="text-align: right;">' + result[key].inputcount + '</td>' : '') + // 录入量
                 '<td style="text-align: right;">' + result[key].checkcount + '</td>' + // 已审核
                 '<td style="text-align: right;">' + result[key].passcount + '</td>' + // 通过
                 '<td style="text-align: right;">' + (passrate * 100).toFixed(1) + (passrate ? '%' : '') + '</td>' + // 通过率
@@ -2292,7 +2318,7 @@ function todayTaskReport() {
             '<td style="text-align: right;">' + nTotal + '</td>' +
             '<td style="text-align: right;">' + nFinished + '</td>' +
             '<td style="text-align: right;">' + nReturnTimes + '</td>' +
-            '<td style="text-align: right;">' + nInput + '</td>' +
+            (stage.role === '题目录入' ? '<td style="text-align: right;">' + nInput + '</td>' : '') +
             '<td style="text-align: right;">' + nCheck + '</td>' +
             '<td style="text-align: right;">' + nPass + '</td>' +
             '<td style="text-align: right;">' + (passrate * 100).toFixed(1) + (passrate ? '%' : '') + '</td>' +
@@ -2429,9 +2455,9 @@ function preMonthReport() {
             passrate = passrate > 1 ? 1 : passrate //
             dSalary += result[key].salary
 
-            result[key].price = SE[key]
-            result[key].presalary = result[key].passcount * SE[key] + // 通过的 数量*价格
-                (result[key].checkcount - result[key].passcount) * SE[key] * (1/* - 0.2*/) + // 未审核通过的题扣除20%
+            result[key].price = SE[key][0]
+            result[key].presalary = result[key].passcount * SE[key][0] + // 通过的 数量*价格
+                (result[key].checkcount - result[key].passcount) * SE[key][0] * (1/* - 0.2*/) + // 未审核通过的题扣除20%
                 (result[key].finishedcount - result[key].inputcount) * 0.05 // 判好题的 数量*0.05
 
             dPreSalary += result[key].presalary || 0
@@ -2643,17 +2669,17 @@ function myTaskReport(stopDate) {
                 passrate = passrate > 1 ? 1 : passrate //
                 dSalary += result[key].salary
 
-                result[key].price = SE[key]
-                result[key].presalary = result[key].passcount * SE[key] + // 通过的 数量*价格
-                    //(result[key].checkcount - result[key].passcount) * SE[key] * (1 - 0.2) + // 未审核通过的题扣除20%
-                    (result[key].checkcount - result[key].passcount) * SE[key] * (1 - 0.0) +
+                result[key].price = SE[key][0]
+                result[key].presalary = result[key].passcount * SE[key][0] + // 通过的 数量*价格
+                    //(result[key].checkcount - result[key].passcount) * SE[key][0] * (1 - 0.2) + // 未审核通过的题扣除20%
+                    (result[key].checkcount - result[key].passcount) * SE[key][0] * (1 - 0.0) +
                     (result[key].finishedcount - result[key].inputcount) * 0.05 // 判好题的 数量*0.05
 
                 // 未审核的按照当前通过率预估
                 if (result[key].inputcount >= result[key].checkcount) { // why appear, i don't know
                     let notcheck = result[key].inputcount - result[key].checkcount
                     let prepass = (notcheck * (passrate ? passrate : 0)).toFixed(0)
-                    result[key].presalary += prepass * SE[key] + (notcheck - prepass) * SE[key] * 0.8
+                    result[key].presalary += prepass * SE[key][0] + (notcheck - prepass) * SE[key][0] * 0.8
                 }
 
                 dPreSalary += result[key].presalary || 0
@@ -2745,6 +2771,150 @@ function myTaskReport(stopDate) {
         if(closeAcc && !S.hasOwnProperty('xusqa_acc_premonth')){ // 保存新的结算数据
             S.xusqa_acc_premonth = JSON.stringify(arrtask)
         }
+    }
+
+    helper.msg.info(STR.TASK_REPORT.PROGRESS)
+    /*\
+     {  "code":200,
+        "data":{
+            "task":[
+                {"totalcount":10,"finishedcount":10,"tasktype":"题目录入","education":"初中","subject":"数学","finishedtime":1529656885260,"remark":"录完5题","id":201882,"salary":0.0,"remark2":"已被审核0题，通过0题","status":"已完成"},
+            ],
+            "totalSalary":0, "pageno":1, "totalPages":22, "lastMonthSalary":0,"totalElements":218
+        },
+        "message":"SUCCESS" }
+    \*/
+    $.get(URL.GET_MY_TASK.format({pageno: 1}), function(data/*, status*/) {
+        totalPages = data.data.totalPages
+        if (doCollect(data.data.task)){
+            collectByPageno(2)
+        } else {
+            collectionFinished()
+        }
+
+        function collectByPageno(i){
+            $.get(URL.GET_MY_TASK.format({pageno: i}), function(data/*, status*/) {
+                if (doCollect(data.data.task) && i < totalPages){
+                    collectByPageno(i+1)
+                } else {
+                    collectionFinished()
+                }
+            })
+        }
+    })
+}
+
+
+/**
+ * 功能: 任务报告
+ * 汇总任务,计算录入量,通过率等
+ * 服务器没有对连续请求做优化,查询一页再查询另一页会非常慢;异步查询会返回全部数据,没法控制停止时机
+ */
+function monthCheckTaskReport() {
+    const arr = {}
+    let totalPages
+    const now = new Date()
+    const firstDay = helper.getFirstDay(now)
+
+    function doCollect(task) {
+        for (let t of task) {
+            if (t.tasktype !== stage.role){
+                continue
+            }
+            if (t.finishedtime > firstDay){
+                const key = t.subject + '-' + t.education
+                if (!arr.hasOwnProperty(key)) {
+                    arr[key] = {
+                        totalcount: 0,
+                        finishedcount: 0,
+                        returntimes: 0,
+                        checkcount: 0,
+                        passcount: 0,
+                        presalary: 0.0,
+                        salary: 0.0
+                    }
+                }
+                arr[key].totalcount += t.totalcount
+                arr[key].finishedcount += t.finishedcount
+                arr[key].returntimes += (t.status === '已退回' ? 1 : 0)
+                const [d0,d1] = t.remark.match(/\d+/g) // 审完4题，通过4题
+                arr[key].checkcount += parseInt(d0)
+                arr[key].passcount += parseInt(d1)
+                arr[key].salary += t.salary
+
+                return true
+            } else {
+                return false
+            }
+        }
+
+        return true
+    }
+
+    function createTable() {
+        let nTotal = 0, nFinished = 0, nReturnTimes = 0, nCheck = 0, nPass = 0, dPreSalary=0.0, dSalary=0.0
+        function c(result){
+            let tr = ''
+            tr += '<tr style="border-bottom:1px solid #808080;">'
+            tr += '<th></th><th>总量</th><th>完成量</th><th>已退回</th>><th>已审核</th><th>通过</th><th>通过率</th></th><th>劳务预估</th><th>劳务结算</th>'
+            tr += '</tr>';
+
+            for (let key in result) {
+                nTotal += result[key].totalcount
+                nFinished += result[key].finishedcount
+                nReturnTimes += result[key].returntimes
+                nCheck += result[key].checkcount
+                nPass += result[key].passcount
+                let passrate = (result[key].passcount / result[key].checkcount)
+                passrate = passrate > 1 ? 1 : passrate //
+                dSalary += result[key].salary
+
+                result[key].price = SE[key][1]
+                result[key].presalary = result[key].checkcount * SE[key][1]
+                dPreSalary += result[key].presalary || 0
+
+                tr += '<tr class="xusqa-c-message--tr" style="border-top:1px solid #D3D3D3;">' +
+                    '<td style="text-align: center;">' + key + '</td>' + // ex. 高中-数学
+                    '<td style="text-align: right;">' + result[key].totalcount + '</td>' + // 总量
+                    '<td style="text-align: right;">' + result[key].finishedcount + '</td>' + // 完成量
+                    '<td style="text-align: right;">' + result[key].returntimes + '</td>' + // 退回次数
+                    '<td style="text-align: right;">' + result[key].checkcount + '</td>' + // 已审核
+                    '<td style="text-align: right;">' + result[key].passcount + '</td>' + // 通过
+                    '<td style="text-align: right;">' + (passrate * 100).toFixed(2) + (passrate ? '%' : '') + '</td>' + // 通过率
+                    '<td style="text-align: right;">' + (result[key].presalary).toFixed(2) + '</td>' + // 劳务费预估
+                    '<td style="text-align: right;">' + (result[key].salary).toFixed(2) + '</td>' + // 劳务结算
+                    '</tr>'
+            }
+            return tr
+        }
+
+        let thtm = '<table style="margin: 10px 20px 10px 0px;font-size: 14px;border-collapse:collapse;;border: none;">'
+        thtm += '<caption>查询时间: ' + new Date().format('yyyy-MM-dd hh:mm:ss') + '</caption>'
+        thtm += c(arr)
+        thtm += '<tr style="border-top:1px solid #808080;font-weight:bold">' +
+            '<td style="text-align: center;">合计:</td>' +
+            '<td style="text-align: right;">' + nTotal + '</td>' +
+            '<td style="text-align: right;">' + nFinished + '</td>' +
+            '<td style="text-align: right;">' + nReturnTimes + '</td>' +
+            '<td style="text-align: right;">' + nCheck + '</td>' +
+            '<td style="text-align: right;">' + nPass + '</td>' +
+            '<td style="text-align: right;">' + (nPass/nCheck * 100).toFixed(2) + '%</td>' +
+            '<td style="text-align: right;">' + dPreSalary.toFixed(2) + '</td>' +
+            '<td style="text-align: right;">' + dSalary.toFixed(2) + '</td>' +
+            '</tr>'
+
+        thtm += '</table>'
+
+        return thtm
+    }
+
+    function collectionFinished(){
+        helper.closeMessage()
+        $.message({
+            message: createTable(),
+            showClose: true,
+            autoClose: false
+        })
     }
 
     helper.msg.info(STR.TASK_REPORT.PROGRESS)
@@ -4388,7 +4558,8 @@ function registerUI() {
     UI.setScope('nav')
     UI.setScope('header')
 
-    addHeaderButton(STR.MODULE.TASK_REPORT).click(myTaskReport)
+    const monthReport = (stage.role === '题目录入' ? myTaskReport : monthCheckTaskReport)
+    addHeaderButton(STR.MODULE.TASK_REPORT).click(monthReport)
     addHeaderButton(STR.MODULE.TASK_TODAY).click(todayTaskReport)
 
     const $btnOneKeyGetTask = addHeaderButton(STR.MODULE.ONEKEY_GET_TASK).click(function(){
@@ -4512,7 +4683,9 @@ function initVue(){
                 } else if (to.name === 'TaskChoose'){
                     extraTaskList()
                 } else if (to.name === 'Mytasks'){
-                    registerPreMonthReport()
+                    if (stage.role === '题目录入'){
+                        registerPreMonthReport()
+                    }
                 } else if (to.name === 'UserCenter'){
                     registerDbsn()
                 }
