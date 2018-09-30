@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.3.111
+// @version      1.3.112
 // @description  有道搜题,录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -39,7 +39,7 @@
 (function() {
     'use strict';
 
-const ver = '1.3.111'
+const ver = '1.3.112'
 
 // 扩展版本号代理
 let ver_kfe = '0.0.000'
@@ -1686,12 +1686,27 @@ const helper = {/* jshint +W003 */
         let m = now.getMonth()
         if (m === 0){
             m = 11
-            y = y - 1
+            y -= 1
         } else {
-            m = m - 1
+            m -= 1
         }
 
         return new Date(y, m, 1).getTime()
+    },
+
+    getPre2MonthFirstDay: function(now){
+        let y = now.getFullYear()
+        let m = now.getMonth()
+        if (m === 0){
+            y -= 1
+            m = 10
+        } else if(m === 1){
+            y -= 1
+            m = 11
+        } else{
+            m -= 2
+        }
+        return new Date(y, m ,1).getTime()
     },
 
     getPreMonth: function(now){
@@ -2426,6 +2441,10 @@ function monthInputTaskReport(stopDate) {
     let tcc = 0
     let tsc = 0
 
+    if (!stopDate){
+        stopDate = helper.getPre2MonthFirstDay(now)
+    }
+
     function doCollect(task) {
         function c(arr, t){
             const key = t.subject + '-' + t.education
@@ -2465,7 +2484,7 @@ function monthInputTaskReport(stopDate) {
                     arrtask = JSON.parse(S.xusqa_acc_premonth)
                     return false
                 }
-                if ((t.finishedcount === 0 || t.salary)){
+                if (t.finishedcount === 0 || t.salary){ // 上月已结算任务
                     if (!closeAcc){
                         const id = t.id
                         if (!checkedTaskArray.length || (checkedTaskArray.indexOf(id) === -1)){
@@ -2475,11 +2494,12 @@ function monthInputTaskReport(stopDate) {
                         cc++
                         continue
                     }
+                } else { // 上月未结算任务
+                    c(arrtask, t)
                 }
                 if (t.finishedtime > preMonthFirstDay && t.salary){
                     tsc++
                 }
-                c(arrtask, t)
             }
         }
 
