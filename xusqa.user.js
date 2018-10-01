@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.3.114
+// @version      1.3.115
 // @description  有道搜题,录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -39,7 +39,7 @@
 (function() {
     'use strict';
 
-const ver = '1.3.114'
+const ver = '1.3.115'
 
 // 扩展版本号代理
 let ver_kfe = '0.0.000'
@@ -1220,6 +1220,13 @@ const O = {/* jshint +W003 */
     },
     set role(role){
         this.setOptions('role', role)
+    },
+
+    get forceShowPreAcc(){
+        return this.opts.hasOwnProperty('forceShowPreAcc') && this.opts.forceShowPreAcc
+    },
+    set forceShowPreAcc(b){
+        this.setOptions('forceShowPreAcc', b)
     }
 }
 
@@ -2484,7 +2491,7 @@ function monthInputTaskReport(stopDate) {
         for (let t of task) {
             if (t.finishedtime > firstDay){
                 c(arrTaskThisMonth, t)
-            } else if(lastMonthSalary) {
+            } else if(lastMonthSalary || O.forceShowPreAcc) {
                 if (stopDate && stopDate > t.finishedtime){
                     return false
                 }
@@ -4328,6 +4335,11 @@ function registerOption(){
             O.showQInputProgress = $switch_showQInputProgress.prop('checked')
         })
     }
+
+    const $switch_forceShowPreAcc = $(TPL.OPTIONS_SWITCH.format({title: '未结算时强制显示上月未结'})).appendTo($option).find('input')
+    $switch_forceShowPreAcc.prop('checked', O.forceShowPreAcc).on('change', function(){
+        O.forceShowPreAcc = $switch_forceShowPreAcc.prop('checked')
+    })
 
     $(TPL.OPTIONS_SEPARATE).appendTo($option)
 
