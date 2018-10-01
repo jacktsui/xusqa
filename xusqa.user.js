@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.3.112
+// @version      1.3.113
 // @description  有道搜题,录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -39,7 +39,7 @@
 (function() {
     'use strict';
 
-const ver = '1.3.112'
+const ver = '1.3.113'
 
 // 扩展版本号代理
 let ver_kfe = '0.0.000'
@@ -953,7 +953,6 @@ const TPL = {
     SQUARE_UPDATE: '<div id="xusqa-square-update" class="process-task-con">最后刷新时间：<a  style="padding: 0px 10px;color: #f93e53;" >　刚刚　</a><a href="javascript:;" class="xusqa-a-button xusqa-btn">　刷新　</a><a href="javascript:;" class="xusqa-a-button xusqa-btn">分享到QQ</a></div>',
     SQUARE_ROLE: '<a href="javascript:;" class="xusqa-a-button xusqa-btn">{role}</a>',
     ACC_INFO: '<div style=" font-size: 12px; font-style: italic; margin-bottom: 16px;">以上数据仅供参考.</div>',
-    THIS_ACC_INFO: '<div style=" font-size: 12px; font-style: italic; margin-bottom: 16px;">{remark}数据仅供参考.</div>',
     JUDGE_RULE_A: '<a href="https://note.youdao.com/share/?id=d98298a63e8656ab277278f5c51efe70&amp;type=note#/" target="_blank" style="text-decoration: underline;color: #00a2d4;display: block;">查看判题规则</a>',
     JUDGE_REFRESH: '<a href="javascript:;" class="xu-img-under-full-btn" title="助手提示: 检索空白或者乱码刷新">快速刷新</a>',
     EDIT_PAGE_SAVE: '<a href="javascript:;" class="xu-img-under-btn xusqa-btn" title="助手提示: 录题过程中可以临时保存当前录入内容，防止丢失">暂存题目</a>',
@@ -2430,6 +2429,7 @@ function monthInputTaskReport(stopDate) {
     let arrtask = {}
     const arrTaskThisMonth = {}
     let totalPages
+    let lastMonthSalary
 
     const closeTaskId = [] // 保存已经结算的数据
     const checkedTaskArray = helper.getCheckedTaskIdArray()
@@ -2476,7 +2476,7 @@ function monthInputTaskReport(stopDate) {
         for (let t of task) {
             if (t.finishedtime > firstDay){
                 c(arrTaskThisMonth, t)
-            } else {
+            } else if(lastMonthSalary) {
                 if (stopDate && stopDate > t.finishedtime){
                     return false
                 }
@@ -2500,6 +2500,8 @@ function monthInputTaskReport(stopDate) {
                 if (t.finishedtime > preMonthFirstDay && t.salary){
                     tsc++
                 }
+            } else {
+                return false
             }
         }
 
@@ -2596,6 +2598,7 @@ function monthInputTaskReport(stopDate) {
         thtm += '<caption>查询时间: ' + new Date().format('yyyy-MM-dd hh:mm:ss') + '</caption>'
         thtm += c(arrTaskThisMonth, '本月录入')
         thtm += c(arrtask, '上月未结')
+
         let b = nsCheck >=500 && nsPass / nsCheck > 0.8
         dsPreSalary = b ? dsPreSalary*1.2 : dsPreSalary
         dsSalary = b ? dsSalary*1.2 : dsSalary
@@ -2613,7 +2616,12 @@ function monthInputTaskReport(stopDate) {
             '</tr>'
 
         thtm += '</table>'
-        thtm += TPL.THIS_ACC_INFO.format({remark: b ? '(满足奖励条件,合计结算金额已×1.2)' : '(未满足奖励条件)'})
+        thtm += '<div style=" font-size: 12px; font-style: italic; margin-bottom: 16px;">注:'
+        thtm += b ? '(满足奖励条件,合计结算金额已×1.2)' : '(未满足奖励条件)'
+        if (!lastMonthSalary){
+            thtm += '上月任务还未结算,暂时无上月未结数据,'
+        }
+        thtm += '数据仅供参考.</div>'
 
         return thtm
     }
@@ -2656,6 +2664,7 @@ function monthInputTaskReport(stopDate) {
     \*/
     $.get(URL.GET_MY_TASK.format({pageno: 1}), function(data/*, status*/) {
         totalPages = data.data.totalPages
+        lastMonthSalary = data.data.lastMonthSalary
         if (doCollect(data.data.task)){
             collectByPageno(2)
         } else {
