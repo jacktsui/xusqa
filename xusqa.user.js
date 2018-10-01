@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.3.118
+// @version      1.3.119
 // @description  有道搜题,录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -50,7 +50,7 @@
 (function() {
     'use strict';
 
-const ver = '1.3.118'
+const ver = '1.3.119'
 
 // 扩展版本号代理
 let ver_kfe = '0.0.000'
@@ -756,7 +756,7 @@ const STR = {
         SUCCESS: '框选成功',
     },
     TASK_REPORT: {
-        PROGRESS: '正在生成报告……',
+        PROGRESS: '正在汇总报告……',
     },
     LOCATE_ANSWER: {
         LOCATE_PAGENO_SUCCESS: '已成功定位上次位置:{pageno}',
@@ -2191,6 +2191,13 @@ const util = {
             return false
         }
     },
+
+    progress(pos, max){
+        if(pos > max){
+            pos = max
+        }
+        return '正在汇总……<br/>' + new Array(pos).join('▮') + new Array(max-pos).join('▯')
+    },
 }
 // util end------>
 
@@ -3230,10 +3237,30 @@ function monthInputTaskReport(stopDate) {
     const closeAcc = S.hasOwnProperty(accMonth)
     let tcc = 0
     let tsc = 0
+    let closeAccDone
+
+    if (closeAcc && S.hasOwnProperty('xusqa_acc_premonth')){
+        arrtask = JSON.parse(S.xusqa_acc_premonth)
+        closeAccDone = true
+    }
 
     if (!stopDate){
         stopDate = helper.getPre2MonthFirstDay(now)
     }
+
+    let progStep, progPos = 0
+    const progMax = 20
+    if (closeAccDone || !O.forceShowPreAcc){ // 已缓存上月未结,只查询本月数据
+        progStep = (now.getTime() - firstDay)/progMax
+    } else {
+        progStep = (now.getTime() - stopDate)/progMax
+    }
+
+    const msg = helper.msg({
+        message: util.progress(0,progMax),
+        dangerouslyUseHTMLString: true,
+        duration: 0,
+    })
 
     function doCollect(task) {
         function c(arr, t){
@@ -3259,19 +3286,23 @@ function monthInputTaskReport(stopDate) {
             arr[key].checkcount += parseInt(d0)
             arr[key].passcount += parseInt(d1)
             arr[key].salary += t.salary
-
-            return true
         }
         let cc = 0
         for (let t of task) {
+            // 更新汇总进度
+            const pos = Math.floor((now.getTime() - t.finishedtime)/progStep)
+            if (pos > progPos){
+                progPos = pos
+                msg.message = util.progress(progPos, progMax)
+            }
+
             if (t.finishedtime > firstDay){
                 c(arrTaskThisMonth, t)
             } else if(lastMonthSalary || O.forceShowPreAcc) {
-                if (stopDate && stopDate > t.finishedtime){
+                if (closeAccDone){ // 已经缓存上月未结算数据
                     return false
                 }
-                if (closeAcc && S.hasOwnProperty('xusqa_acc_premonth')){
-                    arrtask = JSON.parse(S.xusqa_acc_premonth)
+                if (stopDate && stopDate > t.finishedtime){
                     return false
                 }
                 if (t.finishedcount === 0 || t.salary){ // 上月已结算任务
@@ -3440,11 +3471,6 @@ function monthInputTaskReport(stopDate) {
         }
     }
 
-    helper.msg({
-        message: STR.TASK_REPORT.PROGRESS,
-        type: 'info',
-        duration: 0,
-    })
     /*\
      {  "code":200,
         "data":{
@@ -3488,8 +3514,24 @@ function monthCheckTaskReport() {
     const now = new Date()
     const firstDay = helper.getFirstDay(now)
 
+    let progStep, progPos = 0
+    const progMax = 20
+    progStep = (now.getTime() - firstDay)/progMax
+
+    const msg = helper.msg({
+        message: util.progress(0,progMax),
+        dangerouslyUseHTMLString: true,
+        duration: 0,
+    })
+
     function doCollect(task) {
         for (let t of task) {
+            const pos = Math.floor((now.getTime() - t.finishedtime)/progStep)
+            if (pos > progPos){
+                progPos = pos
+                msg.message = util.progress(progPos, progMax)
+            }
+
             if (t.finishedtime > firstDay){
                 if (t.tasktype !== stage.role){
                     continue
@@ -3588,12 +3630,6 @@ function monthCheckTaskReport() {
             showClose: true,
         })
     }
-
-    helper.msg({
-        message: STR.TASK_REPORT.PROGRESS,
-        type: 'info',
-        duration: 0,
-    })
     /*\
      {  "code":200,
         "data":{
@@ -3768,7 +3804,6 @@ function doExtraTaskList() {
             finishedcount++
             if (finishedcount === totalcount) {
                 helper.msg.success(STR.EXTRA_TASK_SQUARE.REFRESH_SUCCESS)
-
                 resetRefresh(qssumary)
             }
         })
