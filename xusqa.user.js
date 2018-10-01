@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.3.115
+// @version      1.3.116
 // @description  有道搜题,录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -39,7 +39,7 @@
 (function() {
     'use strict';
 
-const ver = '1.3.115'
+const ver = '1.3.116'
 
 // 扩展版本号代理
 let ver_kfe = '0.0.000'
@@ -2634,7 +2634,10 @@ function monthInputTaskReport(stopDate) {
         thtm += '<div style=" font-size: 12px; font-style: italic; margin-bottom: 16px;">注:'
         thtm += b ? '(满足奖励条件,合计结算金额已×1.2)' : '(未满足奖励条件)'
         if (!lastMonthSalary){
-            thtm += '上月任务还未结算,暂时无上月未结数据,'
+            thtm += '上月任务还未结算'
+            if (!O.forceShowPreAcc){
+                thtm += ',暂时无上月未结数据,'
+            }
         }
         thtm += '数据仅供参考.</div>'
 
