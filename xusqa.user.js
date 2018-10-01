@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.3.117
+// @version      1.3.118
 // @description  有道搜题,录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -50,7 +50,7 @@
 (function() {
     'use strict';
 
-const ver = '1.3.117'
+const ver = '1.3.118'
 
 // 扩展版本号代理
 let ver_kfe = '0.0.000'
@@ -436,8 +436,8 @@ const PRERULE = [ // 处理的是html全文,主要处理需要上下文关系的
 
     // 万能点`·
     // 英语数字前面`: `1->___1___,相关代码在上面f里
-    [/1`(\d+)/,function(_){ // 1`10:1.______,2.______,...10.______
-        let l = parseInt(_.split('`')[1])
+    [/1`(\d+)/,function(_,$1){ // 1`10:1.______,2.______,...10.______
+        let l = parseInt($1)
         let s = ''
         for(let i = 1; i <= l; i++){
             s += DIC.HR + i + '.' + DIC.US6
@@ -648,7 +648,7 @@ const PRERULE = [ // 处理的是html全文,主要处理需要上下文关系的
             str = str.replace(/&nbsp;&nbsp;&nbsp;&nbsp;([B-D]\.)/g, '$1') //先清理,防止重复添加
             str = str.replace(/(<br\/>[B-D]|[B-D])(\.)/g, DIC.TAB + '$1$2')
         } else { // 非完形填空,分段换行
-            str = str.replace(/([A-G]\.)/g, DIC.P + '$1')
+            str = str.replace(/([^A-Z])([A-G]\.)/g, '$1' + DIC.P + '$2')
         }
 
         str = str.replace(/(\s[b-z])\s(___)/g, '$1$2')
@@ -3376,7 +3376,7 @@ function monthInputTaskReport(stopDate) {
                 '<td style="text-align: right;">' + nInput + '</td>' +
                 '<td style="text-align: right;">' + nCheck + '</td>' +
                 '<td style="text-align: right;">' + nPass + '</td>' +
-                '<td style="text-align: right;">' + (passrate * 100).toFixed(2) + '%</td>' +
+                '<td style="text-align: right;">' + (passrate * 100).toFixed(2) + (passrate ? '%' : '') + '</td>' +
                 '<td style="text-align: right;">' + dPreSalary.toFixed(2) + '</td>' +
                 '<td style="text-align: right;">' + dSalary.toFixed(2) + '</td>' +
                 '</tr></tbody>'
@@ -3400,7 +3400,7 @@ function monthInputTaskReport(stopDate) {
             '<td style="text-align: right;">' + nsInput + '</td>' +
             '<td style="text-align: right;">' + nsCheck + '</td>' +
             '<td style="text-align: right;">' + nsPass + '</td>' +
-            '<td style="text-align: right;">' + (nsPass/nsCheck * 100).toFixed(2) + '%</td>' +
+            '<td style="text-align: right;">' + (nsPass/nsCheck * 100).toFixed(2) + (nsCheck === 0 ? '' : '%') + '</td>' +
             '<td style="text-align: right;">' + dsPreSalary.toFixed(2) + '</td>' +
             '<td style="text-align: right;">' + dsSalary.toFixed(2) + '</td>' +
             '</tr></tfoot>'
@@ -5447,13 +5447,6 @@ function waitLogin(){
     }
 }
 
-function init(){
-    refreshNavImage()
-    initVue()
-    waitLogin()
-}
-init()
-
 const policy = {
     frequencyCheck: function(timeList, rule){ //rule=[[2,1000*10],[4,1000*60],]
         const now = new Date()
@@ -5543,6 +5536,15 @@ function doClear(){
 }
 doClear()
 
+/**
+ * 脚本入口
+ */
+function init(){
+    refreshNavImage()
+    initVue()
+    waitLogin()
+}
+init()
 /*\
  * API 调用方法：
  *  window.xusqapi.fnname(params1,param2,...)
@@ -5718,6 +5720,11 @@ const xusqapi = {
 
     getScope: function(name){
         return UI.css_scope[name]
+    },
+
+    replace: function(uid, regexp, replacement){
+        const u = helper.getEditor(uid)
+        u.body.innerHTML = u.body.innerHTML.replace(regexp, replacement)
     },
 }
 window.xusqapi = xusqapi
