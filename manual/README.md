@@ -58,7 +58,8 @@ https://github.com/jacktsui/xusqa/raw/master/xusqa.user.js
 部分功能展示
 - 英语  
 ![image](./english1.gif)  
-![image](./english2.gif)
+![image](./english2.gif)  
+![image](./english3.gif)
 
 - 化学  
 ![image](./chemistry1.gif)
