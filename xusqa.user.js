@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.3.119
+// @version      1.3.120
 // @description  有道搜题,录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -50,7 +50,7 @@
 (function() {
     'use strict';
 
-const ver = '1.3.119'
+const ver = '1.3.120'
 
 // 扩展版本号代理
 let ver_kfe = '0.0.000'
@@ -733,7 +733,6 @@ const STR = {
         TASK_TODAY: '今日战绩',
         TASK_REPORT: '本月报告',
         TASK_PREMONTH: '上月结算',
-        TASK_PAST: '往期结算',
         EXTRA_TASK_SQUARE: '任务广场',
         EXTRA_OCR: '框的狠',
         ONEKEY_GET_TASK: '一键领取',
@@ -2372,59 +2371,6 @@ const helper = {/* jshint +W003 */
         return button.clone().addClass('xusqa-btn').text(text).attr('title', title)
     },
 
-    getCheckedTaskIdArray: function(){
-        const a = []
-
-        for(let k in S) {
-            if (k.indexOf('xusqa_acc_month_') === 0){
-                a.push.apply(a, JSON.parse(S[k]))
-            }
-        }
-
-        return a
-    },
-
-    getPreCheckedTaskIdArray: function(now){
-        const preMonth = helper.getPreMonth(now)
-        const k = 'xusqa_acc_month_' + preMonth
-        if (S.hasOwnProperty(k)){
-            return JSON.parse(S[k])
-        } else {
-            return []
-        }
-    },
-
-    getPre2CheckedTaskIdArray: function(){
-        const a = []
-        const prem = this.getPreMonth(new Date())
-
-        for(let k in S) {
-            if (k.indexOf('xusqa_acc_month_') === 0){
-                const ms = k.match(/_(\d{6})/)[1]
-                if (ms < prem){
-                    a.push.apply(a, JSON.parse(S[k]))
-                }
-            }
-        }
-
-        return a
-    },
-
-    checkPre2CheckedTaskIdArray: function(){
-        const prem = this.getPreMonth(new Date())
-
-        for(let k in S) {
-            if (k.indexOf('xusqa_acc_month_') === 0){
-                const ms = k.match(/_(\d{6})/)[1]
-                if (ms < prem && S[k]){
-                    return true
-                }
-            }
-        }
-
-        return false
-    },
-
     getFirstDay: function(now){
         return new Date(now.getFullYear(), now.getMonth(), 1).getTime();
     },
@@ -2884,11 +2830,11 @@ function todayTaskReport() {
 
     function doCollect(task) {
         for (let t of task) {
-            if (t.tasktype !== stage.role){
-                continue
-            }
             const d = (new Date(t.finishedtime)).format('yyyy-MM-dd')
             if (d === today){
+                if (t.tasktype !== stage.role){
+                    continue
+                }
                 const key = t.subject + '-' + t.education
                 if (!arrtask.hasOwnProperty(key)) {
                     arrtask[key] = {
@@ -3028,12 +2974,22 @@ function todayTaskReport() {
  * 功能: 上月结算情况
  * 汇总上月结算数据
  */
-function preMonthReport() {
+function preMonthTaskReport() {
+    function getPreMonthClosedTaskIds(now){
+        const preMonth = helper.getPreMonth(now)
+        const k = 'xusqa_acc_month_' + preMonth
+        if (S.hasOwnProperty(k)){
+            return JSON.parse(S[k])
+        } else {
+            return []
+        }
+    }
+
     let arrtask = {}
     let totalPages
     const now = new Date()
 
-    const checkedTaskArray = helper.getPreCheckedTaskIdArray(now)
+    const preMonthClosedTaskIds = getPreMonthClosedTaskIds(now) // 上月已结算任务Id
     const prem = helper.getPreMonth(now)
     let accCls = false
     const k = 'xusqa_cls_month_' + prem
@@ -3047,14 +3003,14 @@ function preMonthReport() {
 
     function doCollect(task) {
         for (let t of task) {
-            if (t.id > checkedTaskArray[0]){
+            if (t.id > preMonthClosedTaskIds[0]){
                 continue
             }
-            if (t.id < checkedTaskArray[checkedTaskArray.length - 1]){
+            if (t.id < preMonthClosedTaskIds[preMonthClosedTaskIds.length - 1]){
                 return false
             }
 
-            if (t.finishedcount === 0 || !util.binarySearch(checkedTaskArray, t.id)){
+            if (t.finishedcount === 0 || !util.binarySearch(preMonthClosedTaskIds, t.id)){
                 continue
             }
 
@@ -3089,7 +3045,7 @@ function preMonthReport() {
         let nTotal = 0, nFinished = 0, nReturnTimes = 0, nInput = 0, nCheck = 0, nPass = 0, dPreSalary=0.0, dSalary=0.0
         let thtm = '<table style="margin: 10px 20px 10px 0px;font-size: 14px;border-collapse:collapse;;border: none;">'
 
-        thtm += '<caption>' + (checkedTaskArray.length ? prem : '往期') + ' 劳务结算</caption>'
+        thtm += '<caption>' + prem + ' 劳务结算</caption>'
         thtm += '<thead>><tr>'
         thtm += '<th>&nbsp;</th><th>总量</th><th>完成量</th><th>已退回</th><th>录入量</th><th>已审核</th><th>通过</th><th>通过率</th></th><th>助手核算</th><th>劳务结算</th>'
         thtm += '</tr></thead><tbody>';
@@ -3223,23 +3179,32 @@ function preMonthReport() {
  * 服务器没有对连续请求做优化,查询一页再查询另一页会非常慢;异步查询会返回全部数据,没法控制停止时机
  */
 function monthInputTaskReport(stopDate) {
-    let arrtask = {}
-    const arrTaskThisMonth = {}
+    function getPre2CloseTaskId(now){
+        const key = '' + helper.getPre2Month(now)
+        if (S.hasOwnProperty(key)){
+            return JSON.parse(S[key])
+        } else {
+            return []
+        }
+    }
     let totalPages
     let lastMonthSalary
-
-    const closeTaskId = [] // 保存已经结算的数据
-    const checkedTaskArray = helper.getCheckedTaskIdArray()
     const now = new Date()
-    const firstDay = helper.getFirstDay(now)
-    const preMonthFirstDay = helper.getPreMonthFirstDay(now)
-    const accMonth = 'xusqa_acc_month_' + helper.getPreMonth(now)
-    const closeAcc = S.hasOwnProperty(accMonth)
-    let tcc = 0
-    let tsc = 0
+
+    let arrtask = {} // 上月未结算任务
+    let arrtaskId = [] // 上月未结算任务Id
+    const arrTaskThisMonth = {} // 本月录入任务
+
+    const closeTaskId = [] // 生成上月已经结算的数据
+    const pre2CloseTaskId = getPre2CloseTaskId(now) // 获取上上月已结算数据
+    const firstDay = helper.getFirstDay(now) // 本月的开始时间
+    const preMonthFirstDay = helper.getPreMonthFirstDay(now) // 上月的开始时间
+    const accMonth = helper.getPreMonth(now)
+    const closeAcc = S.hasOwnProperty('xusqa_acc_month_' + accMonth)
+    let tsc = 0 // 记录上月结算任务数量
     let closeAccDone
 
-    if (closeAcc && S.hasOwnProperty('xusqa_acc_premonth')){
+    if (closeAcc && S.hasOwnProperty('_premonth')){  // 上月未结算已缓存
         arrtask = JSON.parse(S.xusqa_acc_premonth)
         closeAccDone = true
     }
@@ -3264,6 +3229,9 @@ function monthInputTaskReport(stopDate) {
 
     function doCollect(task) {
         function c(arr, t){
+            if (t.tasktype !== stage.role){
+                return
+            }
             const key = t.subject + '-' + t.education
             if (!arr.hasOwnProperty(key)) {
                 arr[key] = {
@@ -3287,7 +3255,6 @@ function monthInputTaskReport(stopDate) {
             arr[key].passcount += parseInt(d1)
             arr[key].salary += t.salary
         }
-        let cc = 0
         for (let t of task) {
             // 更新汇总进度
             const pos = Math.floor((now.getTime() - t.finishedtime)/progStep)
@@ -3305,30 +3272,23 @@ function monthInputTaskReport(stopDate) {
                 if (stopDate && stopDate > t.finishedtime){
                     return false
                 }
-                if (t.finishedcount === 0 || t.salary){ // 上月已结算任务
+                if (t.finishedcount === 0 || t.salary){ // 生成本次结算的任务列表
                     if (!closeAcc){
                         const id = t.id
-                        if (!checkedTaskArray.length || (checkedTaskArray.indexOf(id) === -1)){
+                        if (!pre2CloseTaskId.length || (pre2CloseTaskId.indexOf(id) === -1)){
                             closeTaskId.push(id)
                         }
                     } else {
-                        cc++
                         continue
                     }
                 } else { // 上月未结算任务
+                    arrtaskId.push(t.id)
                     c(arrtask, t)
                 }
-                if (t.finishedtime > preMonthFirstDay && t.salary){
+                if (t.finishedtime > preMonthFirstDay && t.salary){ // 上月有了结算数据
                     tsc++
                 }
             } else {
-                return false
-            }
-        }
-
-        if (!stopDate && cc === task.length){
-            tcc++
-            if (tcc > 3){ // 终止查询条件:超过3页都已结算
                 return false
             }
         }
@@ -3461,12 +3421,12 @@ function monthInputTaskReport(stopDate) {
         })
 
         if (!closeAcc && tsc > 0){
-            S[accMonth] = JSON.stringify(closeTaskId)
-            S.removeItem('xusqa_acc_premonth') // 移除旧的未结算数据
-            helper.msg.success('上月数据结算完成,再次查询将显示本月报告')
+            S['xusqa_acc_month_' + accMonth] = JSON.stringify(closeTaskId) // 保存上月已结任务Id
+            S['xusqa_ncc_month_' + accMonth] = JSON.stringify(arrtaskId) // 保存上月未结任务Id
+            S.removeItem('xusqa_acc_premonth') // 移除旧的未结算汇总缓存
         }
 
-        if(closeAcc && !S.hasOwnProperty('xusqa_acc_premonth')){ // 保存新的结算数据
+        if(closeAcc && !S.hasOwnProperty('xusqa_acc_premonth')){ // 保存新的上月未结汇总数据
             S.xusqa_acc_premonth = JSON.stringify(arrtask)
         }
     }
@@ -5088,12 +5048,13 @@ function registerPreMonthReport(){
     if ($btnAddTime.length === 0){
         stage.timer.registerPreMonthReport = setTimeout(registerPreMonthReport, 500)
     } else {
-        const text = helper.checkPre2CheckedTaskIdArray() ? STR.MODULE.TASK_PREMONTH : STR.MODULE.TASK_PAST
-        const btnPrem = helper.cloneButton($btnAddTime, text, STR.HINT.PAST)
-        btnPrem.css({'float': 'right','display': 'block','margin-right': '20px'})
-        btnPrem.insertAfter($btnAddTime.parent()).click(function(){
-            preMonthReport()
-        })
+        if (S.hasOwnProperty('xusqa_acc_month_' + helper.getPreMonth(new Date()))){
+            const btnPrem = helper.cloneButton($btnAddTime, STR.MODULE.TASK_PREMONTH, STR.HINT.PAST)
+            btnPrem.css({'float': 'right','display': 'block','margin-right': '20px'})
+            btnPrem.insertAfter($btnAddTime.parent()).click(function(){
+                preMonthTaskReport()
+            })
+        }
     }
 }
 
@@ -5373,6 +5334,7 @@ function initVue(){
                     stage.role = i.name
                 }
             }
+            stage.role =stage.role || '题目录入'
         } else {
             stage.role = O.role
         }
