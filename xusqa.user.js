@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.3.120
+// @version      1.3.121
 // @description  有道搜题,录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -50,7 +50,7 @@
 (function() {
     'use strict';
 
-const ver = '1.3.120'
+const ver = '1.3.121'
 
 // 扩展版本号代理
 let ver_kfe = '0.0.000'
@@ -350,7 +350,7 @@ const RULE = [
         }
     }, '化学'],
     [function(/*str*/){
-        if( DIC.ruleflag === 1001){
+        if( ruleHelper.ruleflag === 1001){
             return [[/([abS])([n]|\d+)/g, '$1<sub>$2</sub>'], ]
         }
     },'数学'],
@@ -2192,9 +2192,8 @@ const util = {
     },
 
     progress(pos, max){
-        if(pos > max){
-            pos = max
-        }
+        pos = pos > max ? max : pos
+        pos = pos < 0 ? 0 : pos
         return '正在汇总……<br/>' + new Array(pos).join('▮') + new Array(max-pos).join('▯')
     },
 }
@@ -3383,7 +3382,7 @@ function monthInputTaskReport(stopDate) {
         let b = nsCheck >=500 && nsPass / nsCheck > 0.8
         dsPreSalary = b ? dsPreSalary*1.2 : dsPreSalary
         dsSalary = b ? dsSalary*1.2 : dsSalary
-        thtm += '<tfoot><tr>' +
+        thtm += '<tfoot style="font-weight: bold;"><tr>' +
             '<td style="text-align: center;">合计:</td>' +
             '<td style="text-align: right;">' + nsTotal + '</td>' +
             '<td style="text-align: right;">' + nsFinished + '</td>' +

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手-公式
 // @namespace    jacktsui
-// @version      0.4.105
+// @version      0.4.121
 // @description  有道搜题,录题员助手(公式加强)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -19,7 +19,7 @@
 (function() {
     'use strict';
 
-const ver = '0.4.105'
+const ver = '0.4.121'
 
 const xusqapi = window.top.xusqapi
 if (!xusqapi){
@@ -53,7 +53,7 @@ function mathLatexParse(str){
     }
 
     function parse(str){
-        const ops = ['√', '/', '²', '₂']
+        const ops = ['₂', '²', '√', '/'] //优先级
         function left(str, pos){
             let i = pos - 1
             let flag = 0
@@ -114,11 +114,11 @@ function mathLatexParse(str){
     str = str.replace(/\^/g, '²')
     str = str.replace(/\_/g, '₂')
     let re
-    re = /(\d+|[a-z]+|\(.+\))([/²₂])/g
+    re = /(\d+|\(.+\))([²₂/])/g
     while(str.match(re)){
         str = str.replace(re, '{$1}$2')
     }
-    re = /([√/²₂])(\d+|[a-z]+|\(.+\))/g
+    re = /([²₂√/])(\d+|\(.+\))/g
     while(str.match(re)){
         str = str.replace(re, '$1{$2}')
     }
