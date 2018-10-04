@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手-公式
 // @namespace    jacktsui
-// @version      0.4.121
+// @version      0.4.123
 // @description  有道搜题,录题员助手(公式加强)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -19,7 +19,7 @@
 (function() {
     'use strict';
 
-const ver = '0.4.121'
+const ver = '0.4.123'
 
 const xusqapi = window.top.xusqapi
 if (!xusqapi){
@@ -114,13 +114,21 @@ function mathLatexParse(str){
     str = str.replace(/\^/g, '²')
     str = str.replace(/\_/g, '₂')
     let re
+    let wc = 0
     re = /(\d+|\(.+\))([²₂/])/g
     while(str.match(re)){
         str = str.replace(re, '{$1}$2')
+        if (++wc > 9){ // 防卡死,理论上不会卡死
+            break
+        }
     }
+    wc = 0
     re = /([²₂√/])(\d+|\(.+\))/g
     while(str.match(re)){
         str = str.replace(re, '$1{$2}')
+        if (++wc > 9){ // 防卡死,理论上不会卡死
+            break
+        }
     }
 
     return parse(str)

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.3.121
+// @version      1.3.123
 // @description  有道搜题,录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -38,7 +38,7 @@
  * 外部资源
  * http://searchq-editsys.youdao.com/static/Ueditor/kityformula-plugin/kityformula/js/jquery-1.11.0.min.js
  * https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js
- * 放前面方便统一更换
+ * 10月1号取消外部资源引用,不会再出现插件因CDN无法使用的问题,以下内容过期
  * 8月19号bootcss广州部分地区不能访问
  * 8月1号staticfile出过问题,部分地区不能访问
  * 备用cdn服务器
@@ -50,7 +50,7 @@
 (function() {
     'use strict';
 
-const ver = '1.3.121'
+const ver = '1.3.123'
 
 // 扩展版本号代理
 let ver_kfe = '0.0.000'
@@ -743,7 +743,7 @@ const STR = {
     },
     ONEKEY_GET_TASK: {
         WAITING: '正在寻找任务……',
-        SUCCESS: '已领取任务“{se}”题目录入',
+        SUCCESS: '已领取任务“{se}”{role}',
         NOMORE_TASK: '没有多余的任务 T_T',
     },
     EXTRA_TASK_SQUARE: {
@@ -2428,7 +2428,16 @@ const helper = {/* jshint +W003 */
         } else{
             return '题目录入'
         }
-    }
+    },
+
+    sn2num: function(sn){
+        for(let i in DIC.SN){
+            if (DIC.SN[i] === sn){
+                return i
+            }
+        }
+        return sn
+    },
 }
 
 // css------>
@@ -2554,7 +2563,7 @@ util.addStyle(util.cmt(function(){/*!CSS
     border: none;
 }
 .el-message__content tbody tr:hover {
-    background: #F5FAFA;
+    background: #67c23a1d;
 }
 .xusqa-btn {
     border-left: 3px solid #f56c6c !important;
@@ -3301,7 +3310,7 @@ function monthInputTaskReport(stopDate) {
             let nTotal = 0, nFinished = 0, nReturnTimes = 0, nInput = 0, nCheck = 0, nPass = 0, dPreSalary=0.0, dSalary=0.0
             let tr = ''
             tr += '<thead><tr>'
-            tr += '<th>' + title + '</th><th>总量</th><th>完成量</th><th>已退回</th><th>录入量</th><th>已审核</th><th>通过</th><th>通过率</th></th><th>劳务预估</th><th>劳务结算</th>'
+            tr += '<th>' + title + '</th><th>总量</th><th>完成量</th><th>已退回</th><th>录入量</th><th>已审核</th><th>通过</th><th>通过率</th></th><th>劳务预估</th>' //'<th>劳务结算</th>'
             tr += '</tr></thead><tbody>';
 
             for (let key in result) {
@@ -3340,7 +3349,7 @@ function monthInputTaskReport(stopDate) {
                     '<td style="text-align: right;">' + result[key].passcount + '</td>' + // 通过
                     '<td style="text-align: right;">' + (passrate * 100).toFixed(2) + (passrate ? '%' : '') + '</td>' + // 通过率
                     '<td style="text-align: right;">' + (result[key].presalary).toFixed(2) + '</td>' + // 劳务费预估
-                    '<td style="text-align: right;">' + (result[key].salary).toFixed(2) + '</td>' + // 劳务结算
+                    //'<td style="text-align: right;">' + (result[key].salary).toFixed(2) + '</td>' + // 劳务结算
                     '</tr>'
             }
 
@@ -3368,13 +3377,13 @@ function monthInputTaskReport(stopDate) {
                 '<td style="text-align: right;">' + nPass + '</td>' +
                 '<td style="text-align: right;">' + (passrate * 100).toFixed(2) + (passrate ? '%' : '') + '</td>' +
                 '<td style="text-align: right;">' + dPreSalary.toFixed(2) + '</td>' +
-                '<td style="text-align: right;">' + dSalary.toFixed(2) + '</td>' +
+                //'<td style="text-align: right;">' + dSalary.toFixed(2) + '</td>' +
                 '</tr></tbody>'
 
             return tr
         }
 
-        let thtm = '<table style="margin: 10px 20px 10px 0px;font-size: 14px;border-collapse:collapse;;border: none;">'
+        let thtm = '<table style="margin: 10px 10px 10px 0px;font-size: 14px;border-collapse:collapse;;border: none;">'
         thtm += '<caption>查询时间: ' + new Date().format('yyyy-MM-dd hh:mm:ss') + '</caption>'
         thtm += c(arrTaskThisMonth, '本月录入')
         thtm += c(arrtask, '上月未结')
@@ -3392,7 +3401,7 @@ function monthInputTaskReport(stopDate) {
             '<td style="text-align: right;">' + nsPass + '</td>' +
             '<td style="text-align: right;">' + (nsPass/nsCheck * 100).toFixed(2) + (nsCheck === 0 ? '' : '%') + '</td>' +
             '<td style="text-align: right;">' + dsPreSalary.toFixed(2) + '</td>' +
-            '<td style="text-align: right;">' + dsSalary.toFixed(2) + '</td>' +
+            //'<td style="text-align: right;">' + dsSalary.toFixed(2) + '</td>' +
             '</tr></tfoot>'
 
         thtm += '</table>'
@@ -3746,7 +3755,7 @@ function doExtraTaskList() {
                     $corner.find('a').click(function() {
                         $.get(encodeURI(URL.GET_TASK.format({tasktype: taskname, subject: s, education: e})), function(data/*, status*/) {
                             if (data.code === 200) {
-                                helper.msg.success(STR.ONEKEY_GET_TASK.SUCCESS.format({se: se}))
+                                helper.msg.success(STR.ONEKEY_GET_TASK.SUCCESS.format({se: se, role: taskname}))
                                 $(DOM.NAV_MY_TASK)[0].click()
                             } else {
                                 helper.msg.error(data.code === 20001 ? data.message : '“' + se + '”' + data.message)
@@ -3834,7 +3843,7 @@ function doOneKeyGetTask() {
             return function(data/*, status*/){
                 if (data.code === 200){
                     _status = 200
-                    helper.msg.success(STR.ONEKEY_GET_TASK.SUCCESS.format({se: se}))
+                    helper.msg.success(STR.ONEKEY_GET_TASK.SUCCESS.format({se: se, role: stage.role}))
                     $(DOM.NAV_MY_TASK)[0].click()
                 } else if(data.code === 20001){ // 身上有任务
                     _status --
@@ -5089,10 +5098,10 @@ function registerOption(){
     $number_glassMinZoom.val(O.glassMinzoom).on('change', function(){
         O.glassMinzoom = $number_glassMinZoom.val()
     })
-    const $switch_newNum = $(TPL.OPTIONS_SWITCH.format({title: '小题序号是否从 1 开始重新排'})).appendTo($option).find('input')
-    $switch_newNum.prop('checked', O.newNum).on('change', function(){
-        O.newNum = $switch_newNum.prop('checked')
-    })
+    //const $switch_newNum = $(TPL.OPTIONS_SWITCH.format({title: '小题序号是否从 1 开始重新排'})).appendTo($option).find('input')
+    //$switch_newNum.prop('checked', O.newNum).on('change', function(){
+    //    O.newNum = $switch_newNum.prop('checked')
+    //})
     const $switch_autoSliceAnalysis = $(TPL.OPTIONS_SWITCH.format({title: '框的狠自动分割答案和解析'})).appendTo($option).find('input')
     $switch_autoSliceAnalysis.prop('checked', O.autoSliceAnalysis).on('change', function(){
         O.autoSliceAnalysis = $switch_autoSliceAnalysis.prop('checked')
@@ -5108,6 +5117,8 @@ function registerOption(){
             O.showQInputProgress = $switch_showQInputProgress.prop('checked')
         })
     }
+
+    $(TPL.OPTIONS_SEPARATE).appendTo($option)
 
     const $switch_forceShowPreAcc = $(TPL.OPTIONS_SWITCH.format({title: '未结算时强制显示上月未结'})).appendTo($option).find('input')
     $switch_forceShowPreAcc.prop('checked', O.forceShowPreAcc).on('change', function(){
@@ -5543,7 +5554,7 @@ function init(){
 init()
 /*\
  * API 调用方法：
- *  window.xusqapi.fnname(params1,param2,...)
+ * window.xusqapi.fnname(params1,param2,...)
 \*/
 const xusqapi = {
     get options(){
