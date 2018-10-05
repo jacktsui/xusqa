@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.3.123
+// @version      1.3.124
 // @description  有道搜题,录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -50,7 +50,7 @@
 (function() {
     'use strict';
 
-const ver = '1.3.123'
+const ver = '1.3.124'
 
 // 扩展版本号代理
 let ver_kfe = '0.0.000'
@@ -83,7 +83,7 @@ const SE = {
     '地理-初中': NaN,
     '数学-小学': [0.5, 0.22],
     '英语-小学': [0.4, 0.18],
-    '语文-小学': [1.1, 0.22],
+    '语文-小学': [0.6, 0.22],
     '历史-小学': NaN,
     '政治-小学': NaN,
     '地理-小学': NaN,
@@ -3334,7 +3334,7 @@ function monthInputTaskReport(stopDate) {
                 if (result[key].inputcount >= result[key].checkcount) { // why appear, i don't know
                     let notcheck = result[key].inputcount - result[key].checkcount
                     let prepass = (notcheck * (passrate ? passrate : 0)).toFixed(0)
-                    result[key].presalary += prepass * SE[key][0] + (notcheck - prepass) * SE[key][0] * 0.8
+                    result[key].presalary += prepass * SE[key][0] + (notcheck - prepass) * SE[key][0] // * 0.8 issue by 花落流年殇
                 }
 
                 dPreSalary += result[key].presalary || 0

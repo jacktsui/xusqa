@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手-公式
 // @namespace    jacktsui
-// @version      0.4.123
+// @version      0.4.124
 // @description  有道搜题,录题员助手(公式加强)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -16,10 +16,15 @@
 // @note         2018-09-23 初版,化学方程式,数学公式
 // ==/UserScript==
 
+/**
+ * 已知问题
+ * xp 系统可能出现公式录入界面灰掉的情况,具体原因未知
+ */
+
 (function() {
     'use strict';
 
-const ver = '0.4.123'
+const ver = '0.4.124'
 
 const xusqapi = window.top.xusqapi
 if (!xusqapi){
