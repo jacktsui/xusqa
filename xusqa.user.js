@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.3.124
+// @version      1.3.125
 // @description  有道搜题,录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -50,7 +50,7 @@
 (function() {
     'use strict';
 
-const ver = '1.3.124'
+const ver = '1.3.125'
 
 // 扩展版本号代理
 let ver_kfe = '0.0.000'
@@ -3325,6 +3325,10 @@ function monthInputTaskReport(stopDate) {
                 dSalary += result[key].salary
 
                 result[key].price = SE[key][0]
+                result[key].presalary = result[key].inputcount * result[key].price + // 判好题的 数量*0.05
+                    (result[key].finishedcount - result[key].inputcount) * 0.05
+
+                /*
                 result[key].presalary = result[key].passcount * SE[key][0] + // 通过的 数量*价格
                     //(result[key].checkcount - result[key].passcount) * SE[key][0] * (1 - 0.2) + // 未审核通过的题扣除20%
                     (result[key].checkcount - result[key].passcount) * SE[key][0] * (1 - 0.0) +
@@ -3335,7 +3339,7 @@ function monthInputTaskReport(stopDate) {
                     let notcheck = result[key].inputcount - result[key].checkcount
                     let prepass = (notcheck * (passrate ? passrate : 0)).toFixed(0)
                     result[key].presalary += prepass * SE[key][0] + (notcheck - prepass) * SE[key][0] // * 0.8 issue by 花落流年殇
-                }
+                }*/
 
                 dPreSalary += result[key].presalary || 0
 
