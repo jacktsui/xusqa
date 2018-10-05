@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.3.125
+// @version      1.3.126
 // @description  有道搜题,录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -50,7 +50,7 @@
 (function() {
     'use strict';
 
-const ver = '1.3.125'
+const ver = '1.3.126'
 
 // 扩展版本号代理
 let ver_kfe = '0.0.000'
@@ -2852,6 +2852,8 @@ function todayTaskReport() {
                         inputcount: 0,
                         checkcount: 0,
                         passcount: 0,
+                        price: 0,
+                        presalary: 0.0,
                     }
                 }
                 arrtask[key].totalcount += t.totalcount
@@ -2878,11 +2880,11 @@ function todayTaskReport() {
     }
     
     function createTable(result) {
-        let nTotal = 0, nFinished = 0, nReturnTimes = 0, nInput = 0, nCheck = 0, nPass = 0
+        let nTotal = 0, nFinished = 0, nReturnTimes = 0, nInput = 0, nCheck = 0, nPass = 0, nPreSalary = 0.0
         let thtm = '<table style="margin: 10px 20px 10px 0px;font-size: 14px;border-collapse:collapse;;border: none;">'
         thtm += '<caption>今日战绩 查询时间: ' + new Date().format('hh:mm:ss') + '</caption>'
         thtm += '<thead><tr>'
-        thtm += '<th>&nbsp;</th><th>总量</th><th>完成量</th><th>已退回</th>' + (stage.role === '题目录入' ? '<th>录入量</th>' : '') + '<th>已审核</th><th>通过</th><th>通过率</th>'
+        thtm += '<th>&nbsp;</th><th>总量</th><th>完成量</th><th>已退回</th>' + (stage.role === '题目录入' ? '<th>录入量</th>' : '') + '<th>已审核</th><th>通过</th><th>通过率</th><th>劳务预估</th>'
         thtm += '</tr></thead><tbody>';
 
         for (let key in result) {
@@ -2896,6 +2898,17 @@ function todayTaskReport() {
             //passrate = passrate ? passrate : 0 // divided by zero
             passrate = passrate > 1 ? 1 : passrate //
 
+            if (stage.role === '题目录入'){
+                result[key].price = SE[key][0]
+                result[key].presalary = result[key].inputcount * result[key].price +
+                (result[key].finishedcount - result[key].inputcount) * 0.05
+            } else if (stage.role === '题目审核') {
+                result[key].price = SE[key][1]
+                result[key].presalary = result[key].checkcount * result[key].price
+            }
+
+            nPreSalary += result[key].presalary || 0
+
             thtm += '<tr>' +
                 '<td style="text-align: center;">' + key + '</td>' + // ex. 高中-数学
                 '<td style="text-align: right;">' + result[key].totalcount + '</td>' + // 总量
@@ -2904,7 +2917,8 @@ function todayTaskReport() {
                 (stage.role === '题目录入' ? '<td style="text-align: right;">' + result[key].inputcount + '</td>' : '') + // 录入量
                 '<td style="text-align: right;">' + result[key].checkcount + '</td>' + // 已审核
                 '<td style="text-align: right;">' + result[key].passcount + '</td>' + // 通过
-                '<td style="text-align: right;">' + (passrate * 100).toFixed(1) + (passrate ? '%' : '') + '</td>' + // 通过率
+                '<td style="text-align: right;">' + (passrate * 100).toFixed(2) + (passrate ? '%' : '') + '</td>' + // 通过率
+                '<td style="text-align: right;">' + result[key].presalary.toFixed(2) + '</td>' + // 劳务预估
                 '</tr>'
         }
 
@@ -2918,7 +2932,8 @@ function todayTaskReport() {
             (stage.role === '题目录入' ? '<td style="text-align: right;">' + nInput + '</th>' : '') +
             '<th style="text-align: right;">' + nCheck + '</th>' +
             '<th style="text-align: right;">' + nPass + '</th>' +
-            '<th style="text-align: right;">' + (passrate * 100).toFixed(1) + (passrate ? '%' : '') + '</th>' +
+            '<th style="text-align: right;">' + (passrate * 100).toFixed(2) + (passrate ? '%' : '') + '</th>' +
+            '<th style="text-align: right;">' + nPreSalary.toFixed(2) + '</th>' +
             '</tr></tfoot>'
         thtm += '</table>'
 
