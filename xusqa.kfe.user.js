@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手-公式
 // @namespace    jacktsui
-// @version      0.4.124
+// @version      0.4.128
 // @description  有道搜题,录题员助手(公式加强)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -24,7 +24,7 @@
 (function() {
     'use strict';
 
-const ver = '0.4.124'
+const ver = '0.4.128'
 
 const xusqapi = window.top.xusqapi
 if (!xusqapi){
@@ -120,7 +120,7 @@ function mathLatexParse(str){
     str = str.replace(/\_/g, '₂')
     let re
     let wc = 0
-    re = /(\d+|\(.+\))([²₂/])/g
+    re = /(\d+|[A-Z]+|\(.+\))([²₂/])/g
     while(str.match(re)){
         str = str.replace(re, '{$1}$2')
         if (++wc > 9){ // 防卡死,理论上不会卡死
@@ -128,7 +128,7 @@ function mathLatexParse(str){
         }
     }
     wc = 0
-    re = /([²₂√/])(\d+|\(.+\))/g
+    re = /([²₂√/])(\d+|[A-Z]+|\(.+\))/g
     while(str.match(re)){
         str = str.replace(re, '$1{$2}')
         if (++wc > 9){ // 防卡死,理论上不会卡死
@@ -168,14 +168,18 @@ function txt2LaTex(str){
         }
         return str
     } else if(~['数学','物理'].indexOf(xusqapi.subject)){
-        const _str = str
-        str = str.replace(/([|·=+-]|^)([A-Z]{2})([|·=+-]|$)/g,'$1\\overrightarrow{$2}$3')
-        str = str.replace(/([·=+-])([A-Z]{2})([·=+-]|$)/g,'$1\\overrightarrow{$2}$3') // 第一遍有被跳过去的
+        if (xusqapi.education === '高中'){
+            const _str = str
+            str = str.replace(/([|·=+-]|^)([A-Z]{2})([|·=+-]|$)/g,'$1\\overrightarrow{$2}$3')
+            str = str.replace(/([·=+-])([A-Z]{2})([·=+-]|$)/g,'$1\\overrightarrow{$2}$3') // 第一遍有被跳过去的
 
-        if (str === _str){
-            str = mathLatexParse(str)
+            if (str === _str){
+                str = mathLatexParse(str)
+            }
+            return str
+        } else {
+            return mathLatexParse(str)
         }
-        return str
     }
 }
 
