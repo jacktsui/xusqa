@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.3.126
+// @version      1.3.127
 // @description  有道搜题,录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -27,6 +27,8 @@
 // @note         最近更新：2018.07.13 优化题目页“新增框选”可以直接定位题目，优化答案页“新增框选”保证框总在可视区。修复答案页在右靠时，框选按钮消失的问题
 // @note         最近更新：2018.07.10 添加框选截图功能。题目图片上可以直接拖框截图，题目页和答案页可以用原来的框选截图
 // @note         最近更新: 2018.07.07 定位答案添加定位到“上次位置”
+// @note         2018.07.03 一键智能整理
+// @note         2018.07.01 初版,任务报告,一键领取
 // ==/UserScript==
 
 /**
@@ -50,7 +52,7 @@
 (function() {
     'use strict';
 
-const ver = '1.3.126'
+const ver = '1.3.127'
 
 // 扩展版本号代理
 let ver_kfe = '0.0.000'
@@ -921,6 +923,7 @@ const UI = {
         header: '#app > div > div.main-content > div > header',
         UserCenter: '#app > div > div.main-content > div > div',
         check: '#app > div > div.main-content > div > div',
+        //QuestionJudge: '#app > div > div.main-content > div > div',
     },
     css_scope: S.hasOwnProperty('xusqa_ui') ? JSON.parse(S.xusqa_ui) : {},
     setScope(name, el){
@@ -2053,7 +2056,8 @@ const util = {
             UserCenter: UI.css_scope.UserCenter,
             answerInPage: UI.css_scope.answerInPage,
             questionInPage: UI.css_scope.questionInPage,
-            check: UI.css_scope.check})
+            check: UI.css_scope.check,
+            QuestionJudge: UI.css_scope.QuestionJudge})
     },
 
     addStyle: function(str, id){
@@ -2516,6 +2520,11 @@ header[data-v-{header}] {
 
 // css 替换
 util.addStyle(util.cmt(function(){/*!CSS
+.search-result[data-v-{QuestionJudge}] {
+    width: 870px;
+    min-width: 870px;
+    padding: 15px;
+}
 #answerCutBox {
     top: 182px;
 }
@@ -2779,6 +2788,12 @@ util.addStyle(util.cmt(function(){/*!CSS
     width: 99%;
     border: 1px solid rgba(0,0,0,.1);
     border-radius: 3px;
+}
+.xu-btn-exit {
+    color: #ccc;
+    font-size: 12px;
+    text-decoration: underline;
+    margin-left: 6px;
 }
 */
 }))
@@ -5010,6 +5025,7 @@ function registerQjudgeHint(){
             }
             $(TPL.JUDGE_RULE_A).insertAfter($btnQJudge.last())
             execCommand('registerQjudgeEncircle')
+            UI.setScope('QuestionJudge', $btnQJudge[0])
         } else {
             timer = setTimeout(tryRegisterQjudgeHint, 500);
         }
@@ -5257,8 +5273,10 @@ function registerDbsn(){
  * 一键领取,任务广场,任务报告，设置界面
  */
 function registerUI() {
+    const $exit = $(DOM.EXIT)
+    const $user = $(DOM.USER)
     function addHeaderButton(text) {
-        return helper.cloneButton(DOM.EXIT, text).insertAfter(DOM.USER)
+        return helper.cloneButton($exit, text).insertAfter($user)
     }
 
     UI.setScope('nav')
@@ -5277,6 +5295,11 @@ function registerUI() {
     const $btnOneKeyGetTask = addHeaderButton(STR.MODULE.ONEKEY_GET_TASK).click(function(){
         return execCommand('doOneKeyGetTask')
     })
+
+    $exit.removeClass()
+    $exit.addClass('xu-btn-exit')
+    $exit.insertAfter($user)
+
     const $btnConfig = $(TPL.CONFIG_BUTTON).insertAfter($btnOneKeyGetTask)
     const $config = $(TPL.CONFIG_MAIN).insertAfter($btnConfig)
     $btnConfig.click(function(){
