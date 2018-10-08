@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.3.129
+// @version      1.3.130
 // @description  有道搜题,录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -52,7 +52,7 @@
 (function() {
     'use strict';
 
-const ver = '1.3.129'
+const ver = '1.3.130'
 
 // 扩展版本号代理
 let ver_kfe = '0.0.000'
@@ -1229,6 +1229,13 @@ const O = {/* jshint +W003 */
     },
     set forceShowPreAcc(b){
         this.setOptions('forceShowPreAcc', b)
+    },
+
+    get optimizeQJudgeShow(){
+        return this.opts.hasOwnProperty('optimizeQJudgeShow') && this.opts.optimizeQJudgeShow
+    },
+    set optimizeQJudgeShow(b){
+        this.setOptions('optimizeQJudgeShow', b)
     }
 }
 
@@ -2523,18 +2530,10 @@ header[data-v-{header}] {
 */
 }))
 
-/**
-.edit-page[data-v-{QuestionJudge}] {
-    width: 900px;
-    min-width: 900px;
-}
- */
 // css 替换
 util.addStyle(util.cmt(function(){/*!CSS
 .search-result[data-v-{QuestionJudge}] {
-    width: 870px;
-    min-width: 870px;
-    padding: 15px;
+    background: white;
 }
 #answerCutBox {
     top: 182px;
@@ -2565,6 +2564,32 @@ util.addStyle(util.cmt(function(){/*!CSS
 }
 */
 }))
+
+if (O.optimizeQJudgeShow){
+    util.addStyle(util.cmt(function(){/*!CSS
+        .edit-page[data-v-{QuestionJudge}] {
+            width: 900px;
+        }
+        .edit-con[data-v-644cc886] {
+            min-width: 900px;
+        }
+        .search-title[data-v-{QuestionJudge}] {
+            width: 900px;
+            min-width: 900px;
+        }
+        .search-result[data-v-{QuestionJudge}] {
+            width: 870px;
+            min-width: 870px;
+            padding: 15px;
+            background: var(--bgcolor);
+        }
+        .search-btns[data-v-{QuestionJudge}] {
+            width: 900px;
+        }
+    }
+*/
+}))
+}
 
 // add css sheet to header, not comment
 util.addStyle(util.cmt(function(){/*!CSS
@@ -2864,8 +2889,21 @@ function report(dStart, dEnd) {
     const progMax = 20
 
     const now = new Date()
-    const progStep = (now.getTime() - dStart.getTime())/progMax
+    if (typeof(dStart) == 'number'){ // example: 9 表示查询9月任务数据
+        let m = dStart
+        let y = now.getFullYear()
+        dStart = new Date(y, m - 1, 1)
+        if (m == 12){
+            y += 1
+            m = 0
+        }
+        dEnd = new Date(y, m, 1)
+    } else if (typeof(dStart) === 'string' && typeof(dEnd) === 'string'){ // example: ('2018-09-01', '2018-10-01')
+        dStart = new Date(dStart)
+        dEnd = new Date(dEnd)
+    }
 
+    const progStep = (now.getTime() - dStart.getTime())/progMax
     const msg = helper.msg({
         message: util.progress(0,progMax),
         dangerouslyUseHTMLString: true,
@@ -5904,6 +5942,13 @@ const xusqapi = {
     },
     set ver_kfe(ver){
         ver_kfe = ver
+    },
+
+    get optimizeQJudgeShow(){
+        return O.optimizeQJudgeShow
+    },
+    set optimizeQJudgeShow(b){
+        O.optimizeQJudgeShow = b
     },
     /*\
      * method:
