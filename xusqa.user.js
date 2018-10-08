@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.3.128
+// @version      1.3.129
 // @description  有道搜题,录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -52,7 +52,7 @@
 (function() {
     'use strict';
 
-const ver = '1.3.128'
+const ver = '1.3.129'
 
 // 扩展版本号代理
 let ver_kfe = '0.0.000'
@@ -399,7 +399,7 @@ const RULE = [
     [/\s*([AB]\:)/g, DIC.P + '$1', '英语', '0'], // A和B对话
     [/\s*([MW]\:)/g, DIC.P + '$1', '英语', '2'], // 听力解析W和M对话
     //[/(\([A-G]\))/g, DIC.P + '$1', '英语,物理,化学', '0'], // ex: A.goodB.better (A)good(B)better(1)
-    [/([^A-Z])\s*([A-G]\.)/g, '$1' + DIC.P + '$2', '^英语', '0'], // ex: A.goodB.better 排除:ABC.
+    [/([^A-Z∠])\s*([A-G]\.)/g, '$1' + DIC.P + '$2', '^英语', '0'], // ex: A.goodB.better 排除:ABC.
 
     // 统一格式
     [/([0-9a-zA-Z>\-])([\u4E00-\u9FA5])/g, '$1 $2'], // 汉字前面的字符和汉字之间加空格 >上下标符号等特殊处理
@@ -2523,6 +2523,12 @@ header[data-v-{header}] {
 */
 }))
 
+/**
+.edit-page[data-v-{QuestionJudge}] {
+    width: 900px;
+    min-width: 900px;
+}
+ */
 // css 替换
 util.addStyle(util.cmt(function(){/*!CSS
 .search-result[data-v-{QuestionJudge}] {
@@ -2847,6 +2853,184 @@ util.addStyle(util.cmt(function(){/*!CSS
 */
 }))
 //<------ css end
+
+/**
+ * 功能: 自定义查询
+ * 汇总自定义日期区间[dStart, dEnd)的任务报告
+ */
+function report(dStart, dEnd) {
+    const arrtask = {}
+    let progPos = 0
+    const progMax = 20
+
+    const now = new Date()
+    const progStep = (now.getTime() - dStart.getTime())/progMax
+
+    const msg = helper.msg({
+        message: util.progress(0,progMax),
+        dangerouslyUseHTMLString: true,
+        duration: 0,
+    })
+
+    function doCollect(task) {
+        for (let t of task) {
+            const pos = Math.floor((now.getTime() - t.finishedtime)/progStep)
+            if (pos > progPos){
+                progPos = pos
+                msg.message = util.progress(progPos, progMax)
+            }
+
+            if (t.finishedtime >= dStart.getTime()){
+                if (t.finishedtime >= dEnd.getTime()){
+                    continue
+                }
+
+                if (t.tasktype !== stage.role){
+                    continue
+                }
+                const key = t.subject + '-' + t.education
+                if (!arrtask.hasOwnProperty(key)) {
+                    arrtask[key] = {
+                        totalcount: 0,
+                        finishedcount: 0,
+                        returntimes: 0,
+                        inputcount: 0,
+                        checkcount: 0,
+                        passcount: 0,
+                        price: 0,
+                        presalary: 0.0,
+                    }
+                }
+                arrtask[key].totalcount += t.totalcount
+                arrtask[key].finishedcount += t.finishedcount
+                arrtask[key].returntimes += (t.status === '已退回' ? 1 : 0)
+                let d0, d1
+                if(t.tasktype === '题目录入'){
+                    arrtask[key].inputcount += parseInt(t.remark.match(/\d+/)) // 录完2题
+                    const r = t.remark2.match(/\d+/g) // 已被审核4题，通过4题
+                    d0 = r[0]; d1 = r[1]
+                } else if(t.tasktype === '题目审核'){
+                    const r = t.remark.match(/\d+/g) // 审完0题，通过0题
+                    d0 = r[0]; d1 = r[1]
+                }
+
+                arrtask[key].checkcount += parseInt(d0)
+                arrtask[key].passcount += parseInt(d1)
+            } else {
+                return false
+            }
+        }
+
+        return true
+    }
+
+    function createTable(result) {
+        let nTotal = 0, nFinished = 0, nReturnTimes = 0, nInput = 0, nCheck = 0, nPass = 0, nPreSalary = 0.0
+        let thtm = '<table style="margin: 10px 20px 10px 0px;font-size: 14px;border-collapse:collapse;;border: none;">'
+        thtm += '<caption>自定义查询 查询期间: [' + dStart.format('yyyy-MM-dd') + ',' + dEnd.format('yyyy-MM-dd') + ')</caption>'
+        thtm += '<thead><tr>'
+        thtm += '<th>&nbsp;</th><th>总量</th><th>完成量</th><th>已退回</th>' + (stage.role === '题目录入' ? '<th>录入量</th>' : '') + '<th>已审核</th><th>通过</th><th>通过率</th><th>劳务预估</th>'
+        thtm += '</tr></thead><tbody>';
+
+        for (let key in result) {
+            nTotal += result[key].totalcount
+            nFinished += result[key].finishedcount
+            nReturnTimes += result[key].returntimes
+            nInput += result[key].inputcount
+            nCheck += result[key].checkcount
+            nPass += result[key].passcount
+            let passrate = (result[key].passcount / result[key].checkcount)
+            //passrate = passrate ? passrate : 0 // divided by zero
+            passrate = passrate > 1 ? 1 : passrate //
+
+            if (stage.role === '题目录入'){
+                result[key].price = SE[key][0]
+                result[key].presalary = result[key].inputcount * result[key].price +
+                (result[key].finishedcount - result[key].inputcount) * 0.05
+            } else if (stage.role === '题目审核') {
+                result[key].price = SE[key][1]
+                result[key].presalary = result[key].checkcount * result[key].price
+            }
+
+            nPreSalary += result[key].presalary || 0
+
+            thtm += '<tr>' +
+                '<td style="text-align: center;">' + key + '</td>' + // ex. 高中-数学
+                '<td style="text-align: right;">' + result[key].totalcount + '</td>' + // 总量
+                '<td style="text-align: right;">' + result[key].finishedcount + '</td>' + // 完成量
+                '<td style="text-align: right;">' + result[key].returntimes + '</td>' + // 退回次数
+                (stage.role === '题目录入' ? '<td style="text-align: right;">' + result[key].inputcount + '</td>' : '') + // 录入量
+                '<td style="text-align: right;">' + result[key].checkcount + '</td>' + // 已审核
+                '<td style="text-align: right;">' + result[key].passcount + '</td>' + // 通过
+                '<td style="text-align: right;">' + (passrate * 100).toFixed(2) + (passrate ? '%' : '') + '</td>' + // 通过率
+                '<td style="text-align: right;">' + result[key].presalary.toFixed(2) + '</td>' + // 劳务预估
+                '</tr>'
+        }
+
+        let passrate = nPass / nCheck
+
+        thtm += '</tbody><tfoot><tr>' +
+            '<th style="text-align: center;">全部</th>' +
+            '<th style="text-align: right;">' + nTotal + '</th>' +
+            '<th style="text-align: right;">' + nFinished + '</th>' +
+            '<th style="text-align: right;">' + nReturnTimes + '</th>' +
+            (stage.role === '题目录入' ? '<td style="text-align: right;">' + nInput + '</th>' : '') +
+            '<th style="text-align: right;">' + nCheck + '</th>' +
+            '<th style="text-align: right;">' + nPass + '</th>' +
+            '<th style="text-align: right;">' + (passrate * 100).toFixed(2) + (passrate ? '%' : '') + '</th>' +
+            '<th style="text-align: right;">' + nPreSalary.toFixed(2) + '</th>' +
+            '</tr></tfoot>'
+        thtm += '</table>'
+
+        return thtm
+    }
+
+    function collectionFinished(){
+        helper.closeMessage()
+        helper.msg({
+            message: createTable(arrtask),
+            type: 'success',
+            dangerouslyUseHTMLString: true,
+            duration: 0,
+            showClose: true,
+        })
+    }
+
+    /*\
+     {  "code":200,
+        "data":{
+            "task":[
+                {"totalcount":10,"finishedcount":10,"tasktype":"题目录入","education":"初中","subject":"数学","finishedtime":1529656885260,"remark":"录完5题","id":201882,"salary":0.0,"remark2":"已被审核0题，通过0题","status":"已完成"},
+                ...
+            ],
+            "totalSalary":0,
+            "pageno":1,
+            "totalPages":22,
+            "lastMonthSalary":0,
+            "totalElements":218
+        },
+        "message":"SUCCESS" }
+    \*/
+    $.get(URL.GET_MY_TASK.format({pageno: 1}), function(data/*, status*/) {
+        if (doCollect(data.data.task)){
+            collectByPageno(2)
+        } else{
+            collectionFinished()
+        }
+
+        function collectByPageno(i){
+            $.get(URL.GET_MY_TASK.format({pageno: i}), (function(i){
+                return function(data/*, status*/) {
+                    if (doCollect(data.data.task)){
+                        collectByPageno(i+1)
+                    } else {
+                        collectionFinished()
+                    }
+                }
+            })(i))
+        }
+    })
+}
 
 /**
  * 功能: 今日战绩
@@ -5783,6 +5967,10 @@ const xusqapi = {
     replace: function(uid, regexp, replacement){
         const u = helper.getEditor(uid)
         u.body.innerHTML = u.body.innerHTML.replace(regexp, replacement)
+    },
+
+    report: function(dStart, dEnd){
+        report(dStart, dEnd)
     },
 }
 window.xusqapi = xusqapi

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手-公式
 // @namespace    jacktsui
-// @version      0.4.128
+// @version      0.4.129
 // @description  有道搜题,录题员助手(公式加强)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -24,7 +24,7 @@
 (function() {
     'use strict';
 
-const ver = '0.4.128'
+const ver = '0.4.129'
 
 const xusqapi = window.top.xusqapi
 if (!xusqapi){
@@ -183,6 +183,39 @@ function txt2LaTex(str){
     }
 }
 
+/**
+ * "{\{ }^{A}_{B}"
+ * "{\{ }^{{\, }^{A}_{B}}_{{\, }^{C}_{\, }}"
+ * "{\{ }^{{\, }^{A}_{B}}_{{\, }^{C}_{D}}"
+ */
+
+ function brace(str){
+     str = str.trim()
+     if (str[0] === '{' && str[str.length - 1] === '}' ){
+         str = str.slice(1, -1).trim()
+         let lastPun = ''
+         if (str[str.length - 1] === ','){
+             str = str.slice(0, -1)
+             lastPun = ','
+         }
+         const arr = str.split(',')
+         if (arr.length === 2){
+             return '{\\{ }^{' + txt2LaTex(arr[0]) + ',}_{' + txt2LaTex(arr[1]) + lastPun + '}'
+         } else if (arr.length === 3){
+             return '{\\{ }^{{\\, }^{' + txt2LaTex(arr[0]) + ',}_{' + txt2LaTex(arr[1]) + ',}}_{{\\, }^{' +
+                txt2LaTex(arr[2]) + lastPun + '}_{\\, }}'
+         } else if (arr.length === 4){
+             return '{\\{ }^{{\\, }^{' + txt2LaTex(arr[0]) + ',}_{' + txt2LaTex(arr[1]) + ',}}_{{\\, }^{' +
+                txt2LaTex(arr[2]) + ',}_{' + txt2LaTex(arr[3]) + lastPun + '}}'
+         } else {
+            throw new Error('kfe failed!')
+         }
+
+     } else {
+         return txt2LaTex(str)
+     }
+ }
+
 function laTex(laTex){
     kfe.execCommand('render', laTex)
 }
@@ -196,7 +229,7 @@ function inikfe(){
         ue.focus()
         const txt = ue.selection.getText()
         if (txt){
-            kfe.execCommand('render', txt2LaTex(txt))
+            kfe.execCommand('render', brace(txt))
         }
         kfe.execCommand('focus')
     } else {
