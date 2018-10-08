@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.3.131
+// @version      1.3.132
 // @description  有道搜题,录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -52,7 +52,7 @@
 (function() {
     'use strict';
 
-const ver = '1.3.131'
+const ver = '1.3.132'
 
 // 扩展版本号代理
 let ver_kfe = '0.0.000'
@@ -3442,14 +3442,6 @@ function preMonthTaskReport() {
  * 服务器没有对连续请求做优化,查询一页再查询另一页会非常慢;异步查询会返回全部数据,没法控制停止时机
  */
 function monthInputTaskReport(stopDate) {
-    function getPre2CloseTaskId(now){
-        const key = '' + helper.getPre2Month(now)
-        if (S.hasOwnProperty(key)){
-            return JSON.parse(S[key])
-        } else {
-            return []
-        }
-    }
     let totalPages
     let lastMonthSalary
     const now = new Date()
@@ -3458,12 +3450,10 @@ function monthInputTaskReport(stopDate) {
     let arrtaskId = [] // 上月未结算任务Id
     const arrTaskThisMonth = {} // 本月录入任务
 
-    const closeTaskId = [] // 生成上月已经结算的数据
-    const pre2CloseTaskId = getPre2CloseTaskId(now) // 获取上上月已结算数据
     const firstDay = helper.getFirstDay(now) // 本月的开始时间
     const preMonthFirstDay = helper.getPreMonthFirstDay(now) // 上月的开始时间
-    const accMonth = helper.getPreMonth(now)
-    const closeAcc = S.hasOwnProperty('xusqa_acc_month_' + accMonth)
+    const nccMonthKey = 'xusqa_ncc_month_' + helper.getPreMonth(now)
+    const closeAcc = S.hasOwnProperty(nccMonthKey)
     let tsc = 0 // 记录上月结算任务数量
     let closeAccDone
 
@@ -3473,7 +3463,7 @@ function monthInputTaskReport(stopDate) {
     }
 
     if (!stopDate){
-        stopDate = helper.getPre2MonthFirstDay(now)
+        stopDate = helper.getPreMonthFirstDay(now)
     }
 
     let progStep, progPos = 0
@@ -3535,16 +3525,7 @@ function monthInputTaskReport(stopDate) {
                 if (stopDate && stopDate > t.finishedtime){
                     return false
                 }
-                if (t.finishedcount === 0 || t.salary){ // 生成本次结算的任务列表
-                    if (!closeAcc){
-                        const id = t.id
-                        if (!pre2CloseTaskId.length || (pre2CloseTaskId.indexOf(id) === -1)){
-                            closeTaskId.push(id)
-                        }
-                    } else {
-                        continue
-                    }
-                } else { // 上月未结算任务
+                if (t.finishedcount !== 0 && t.salary === 0){ // 上月未结算任务
                     arrtaskId.push(t.id)
                     c(arrtask, t)
                 }
@@ -3688,8 +3669,7 @@ function monthInputTaskReport(stopDate) {
         })
 
         if (!closeAcc && tsc > 0){
-            S['xusqa_acc_month_' + accMonth] = JSON.stringify(closeTaskId) // 保存上月已结任务Id
-            S['xusqa_ncc_month_' + accMonth] = JSON.stringify(arrtaskId) // 保存上月未结任务Id
+            S[nccMonthKey] = JSON.stringify(arrtaskId) // 保存上月未结任务Id
             S.removeItem('xusqa_acc_premonth') // 移除旧的未结算汇总缓存
         }
 
