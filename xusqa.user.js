@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.3.130
+// @version      1.3.131
 // @description  有道搜题,录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -52,7 +52,7 @@
 (function() {
     'use strict';
 
-const ver = '1.3.130'
+const ver = '1.3.131'
 
 // 扩展版本号代理
 let ver_kfe = '0.0.000'
@@ -1152,7 +1152,7 @@ const O = {/* jshint +W003 */
     },
 
     get crazyMode(){
-        return this.opts.crazyMode
+        return this.opts.hasOwnProperty('crazyMode') && this.opts.crazyMode
     },
     set crazyMode(bCrazyMode){
         if (typeof(bCrazyMode) === 'boolean'){
@@ -1225,7 +1225,7 @@ const O = {/* jshint +W003 */
     },
 
     get forceShowPreAcc(){
-        return this.opts.hasOwnProperty('forceShowPreAcc') && this.opts.forceShowPreAcc
+        return this.opts.hasOwnProperty('forceShowPreAcc') ? this.opts.forceShowPreAcc : this.crazyMode
     },
     set forceShowPreAcc(b){
         this.setOptions('forceShowPreAcc', b)
@@ -2570,8 +2570,8 @@ if (O.optimizeQJudgeShow){
         .edit-page[data-v-{QuestionJudge}] {
             width: 900px;
         }
-        .edit-con[data-v-644cc886] {
-            min-width: 900px;
+        .edit-con[data-v-{QuestionJudge}] {
+            min-width: 902px;
         }
         .search-title[data-v-{QuestionJudge}] {
             width: 900px;
@@ -3240,9 +3240,8 @@ function todayTaskReport() {
  * 汇总上月结算数据
  */
 function preMonthTaskReport() {
-    function getPreMonthClosedTaskIds(now){
-        const preMonth = helper.getPreMonth(now)
-        const k = 'xusqa_acc_month_' + preMonth
+    function getPreMonthClosedTaskIds(prem){
+        const k = 'xusqa_acc_month_' + prem
         if (S.hasOwnProperty(k)){
             return JSON.parse(S[k])
         } else {
@@ -3254,16 +3253,13 @@ function preMonthTaskReport() {
     let totalPages
     const now = new Date()
 
-    const preMonthClosedTaskIds = getPreMonthClosedTaskIds(now) // 上月已结算任务Id
     const prem = helper.getPreMonth(now)
+    const preMonthClosedTaskIds = getPreMonthClosedTaskIds(prem) // 上月已结算任务Id
     let accCls = false
     const k = 'xusqa_cls_month_' + prem
     if (S.hasOwnProperty(k)){
         arrtask = JSON.parse(S[k])
         accCls = true
-    } else {
-        helper.msg.error(prem + '未结算,或助手结算数据丢失!')
-        return
     }
 
     function doCollect(task) {
@@ -3387,7 +3383,9 @@ function preMonthTaskReport() {
     }
 
     function collectionFinished(){
-        if (!accCls){
+        if (accCls){
+            arrtask = JSON.parse(S[k])
+        } else {
             S[k] = JSON.stringify(arrtask)
         }
         helper.closeMessage()
@@ -3469,7 +3467,7 @@ function monthInputTaskReport(stopDate) {
     let tsc = 0 // 记录上月结算任务数量
     let closeAccDone
 
-    if (closeAcc && S.hasOwnProperty('_premonth')){  // 上月未结算已缓存
+    if (closeAcc && S.hasOwnProperty('xusqa_acc_premonth')){  // 上月未结算已缓存
         arrtask = JSON.parse(S.xusqa_acc_premonth)
         closeAccDone = true
     }
@@ -5311,23 +5309,6 @@ function registerQjudgeEncircle(){
     }
 }
 
-function registerPreMonthReport(){
-    const $btnAddTime = $(DOM.MYTASK_ADDTIME)
-
-    clearTimeout(stage.timer.registerPreMonthReport)
-    if ($btnAddTime.length === 0){
-        stage.timer.registerPreMonthReport = setTimeout(registerPreMonthReport, 500)
-    } else {
-        if (S.hasOwnProperty('xusqa_acc_month_' + helper.getPreMonth(new Date()))){
-            const btnPrem = helper.cloneButton($btnAddTime, STR.MODULE.TASK_PREMONTH, STR.HINT.PAST)
-            btnPrem.css({'float': 'right','display': 'block','margin-right': '20px'})
-            btnPrem.insertAfter($btnAddTime.parent()).click(function(){
-                preMonthTaskReport()
-            })
-        }
-    }
-}
-
 function question(id){
     $.get(URL.QUESTION.format({id: id}), function(data){
         if (data.code === 200){
@@ -5645,10 +5626,6 @@ function initVue(){
                     registerQjudgeHint()
                 } else if (to.name === 'TaskChoose'){
                     extraTaskList()
-                } else if (to.name === 'Mytasks'){
-                    if (stage.role === '题目录入'){
-                        registerPreMonthReport()
-                    }
                 } else if (to.name === 'UserCenter'){
                     registerDbsn()
                 }
@@ -6016,6 +5993,10 @@ const xusqapi = {
 
     report: function(dStart, dEnd){
         report(dStart, dEnd)
+    },
+
+    preMonthTaskReport: function(){
+        preMonthTaskReport()
     },
 }
 window.xusqapi = xusqapi
