@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手-公式
 // @namespace    jacktsui
-// @version      0.4.129
+// @version      0.4.133
 // @description  有道搜题,录题员助手(公式加强)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -24,7 +24,7 @@
 (function() {
     'use strict';
 
-const ver = '0.4.129'
+const ver = '0.4.133'
 
 const xusqapi = window.top.xusqapi
 if (!xusqapi){
@@ -191,7 +191,7 @@ function txt2LaTex(str){
 
  function brace(str){
      str = str.trim()
-     if (str[0] === '{' && str[str.length - 1] === '}' ){
+     if (str[0] === '{' && str[str.length - 1] === '}' && ~str.indexOf(',')){// 简单判断是不是{形式
          str = str.slice(1, -1).trim()
          let lastPun = ''
          if (str[str.length - 1] === ','){

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.3.132
+// @version      1.3.133
 // @description  有道搜题,录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -52,7 +52,7 @@
 (function() {
     'use strict';
 
-const ver = '1.3.132'
+const ver = '1.3.133'
 
 // 扩展版本号代理
 let ver_kfe = '0.0.000'
@@ -954,7 +954,6 @@ const TPL = {
     LOCATE_ANSWER: '<a href="javascript:;" class="xusqa-btn" style="margin-left: 30px;display: inline-block;padding: 3px 10px;border: 1px solid #c0c4cc;border-radius: 3px;color: #606266;font-size: 13px;background-color: white;" title="{title}">{text}<a/>',
     SQUARE_UPDATE: '<div id="xusqa-square-update" class="process-task-con">最后刷新时间：<a  style="padding: 0px 10px;color: #f93e53;" >　刚刚　</a><a href="javascript:;" class="xusqa-a-button xusqa-btn">　刷新　</a><a href="javascript:;" class="xusqa-a-button xusqa-btn">分享到QQ</a></div>',
     SQUARE_ROLE: '<a href="javascript:;" class="xusqa-a-button xusqa-btn">{role}</a>',
-    ACC_INFO: '<div style=" font-size: 12px; font-style: italic; margin-bottom: 16px;">以上数据仅供参考.</div>',
     JUDGE_RULE_A: '<a href="https://note.youdao.com/share/?id=d98298a63e8656ab277278f5c51efe70&amp;type=note#/" target="_blank" style="text-decoration: underline;color: #00a2d4;display: block;">查看判题规则</a>',
     JUDGE_REFRESH: '<a href="javascript:;" class="xu-img-under-full-btn" title="助手提示: 检索空白或者乱码刷新">快速刷新</a>',
     EDIT_PAGE_SAVE: '<a href="javascript:;" class="xu-img-under-btn xusqa-btn" title="助手提示: 录题过程中可以临时保存当前录入内容，防止丢失">暂存题目</a>',
@@ -3240,8 +3239,8 @@ function todayTaskReport() {
  * 汇总上月结算数据
  */
 function preMonthTaskReport() {
-    function getPreMonthClosedTaskIds(prem){
-        const k = 'xusqa_acc_month_' + prem
+    function getPre2MonthNccTaskIds(m){
+        const k = 'xusqa_ncc_month_' + m
         if (S.hasOwnProperty(k)){
             return JSON.parse(S[k])
         } else {
@@ -3252,29 +3251,20 @@ function preMonthTaskReport() {
     let arrtask = {}
     let totalPages
     const now = new Date()
+    const firstDay = helper.getFirstDay(now)
+    const preMonthFirstDay = helper.getPreMonthFirstDay(now)
 
-    const prem = helper.getPreMonth(now)
-    const preMonthClosedTaskIds = getPreMonthClosedTaskIds(prem) // 上月已结算任务Id
+    const pre2m = helper.getPre2Month(now)
+    const pre2MonthNccTaskIds = getPre2MonthNccTaskIds(pre2m) // 上月已结算任务Id
     let accCls = false
-    const k = 'xusqa_cls_month_' + prem
+    const k = 'xusqa_cls_month_' + helper.getPreMonth(now)
     if (S.hasOwnProperty(k)){
         arrtask = JSON.parse(S[k])
         accCls = true
     }
 
     function doCollect(task) {
-        for (let t of task) {
-            if (t.id > preMonthClosedTaskIds[0]){
-                continue
-            }
-            if (t.id < preMonthClosedTaskIds[preMonthClosedTaskIds.length - 1]){
-                return false
-            }
-
-            if (t.finishedcount === 0 || !util.binarySearch(preMonthClosedTaskIds, t.id)){
-                continue
-            }
-
+        function c(t){
             const key = t.subject + '-' + t.education
             if (!arrtask.hasOwnProperty(key)) {
                 arrtask[key] = {
@@ -3299,6 +3289,28 @@ function preMonthTaskReport() {
             arrtask[key].salary += t.salary
         }
 
+        for (let t of task) {
+            if (t.finishedtime >= firstDay){
+                continue
+            }
+
+            if (t.finishedtime >=preMonthFirstDay){ // 上月的任务
+                if (t.salary){
+                    c(t)
+                }
+            } else { // 上上月
+                if (pre2MonthNccTaskIds.length){
+                    if (t.id < pre2MonthNccTaskIds[pre2MonthNccTaskIds.length - 1]){
+                        return false
+                    } else if (~pre2MonthNccTaskIds.indexOf(t.id)) {
+                        c(t)
+                    }
+                } else {
+                    return false
+                }
+            }
+        }
+
         return true
     }
 
@@ -3306,7 +3318,7 @@ function preMonthTaskReport() {
         let nTotal = 0, nFinished = 0, nReturnTimes = 0, nInput = 0, nCheck = 0, nPass = 0, dPreSalary=0.0, dSalary=0.0
         let thtm = '<table style="margin: 10px 20px 10px 0px;font-size: 14px;border-collapse:collapse;;border: none;">'
 
-        thtm += '<caption>' + prem + ' 劳务结算</caption>'
+        thtm += '<caption>' + helper.getPreMonth(now) + ' 劳务结算</caption>'
         thtm += '<thead>><tr>'
         thtm += '<th>&nbsp;</th><th>总量</th><th>完成量</th><th>已退回</th><th>录入量</th><th>已审核</th><th>通过</th><th>通过率</th></th><th>助手核算</th><th>劳务结算</th>'
         thtm += '</tr></thead><tbody>';
@@ -3362,22 +3374,15 @@ function preMonthTaskReport() {
             '<td style="text-align: right;">' + dPreSalary.toFixed(2) + '</td>' +
             '<td style="text-align: right;">' + dSalary.toFixed(2) + '</td>' +
             '</tr>'
-        if (bReward){
-            thtm += '<tr style="font-style:italic">' +
-            '<td>&nbsp;</td>' +
-            '<td>&nbsp;</td>' +
-            '<td>&nbsp;</td>' +
-            '<td>&nbsp;</td>' +
-            '<td>&nbsp;</td>' +
-            '<td>&nbsp;</td>' +
-            '<td>&nbsp;</td>' +
-            '<td>&nbsp;</td>' +
-            '<td style="text-align: right;">(奖励后)</td>' +
-            '<td style="text-align: right;">(奖励后)</td>' +
-            '</tr>'
-        }
 
         thtm += '</tfoot></table>'
+
+        thtm += '<div style=" font-size: 12px; font-style: italic; margin-bottom: 16px;">注:'
+        thtm += bReward ? '(满足奖励条件,合计结算金额已×1.2)' : '(未满足奖励条件)'
+        if (!pre2MonthNccTaskIds.length){
+            thtm += '数据未包含' + pre2m + '未结算数据.'
+        }
+        thtm += '数据仅供参考.</div>'
 
         return thtm
     }
@@ -3390,7 +3395,7 @@ function preMonthTaskReport() {
         }
         helper.closeMessage()
         helper.msg({
-            message: createTable(arrtask) + TPL.ACC_INFO,
+            message: createTable(arrtask),
             type: 'success',
             dangerouslyUseHTMLString: true,
             duration: 0,
