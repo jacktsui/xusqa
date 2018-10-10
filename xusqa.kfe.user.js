@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手-公式
 // @namespace    jacktsui
-// @version      0.4.133
+// @version      0.4.134
 // @description  有道搜题,录题员助手(公式加强)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -24,7 +24,7 @@
 (function() {
     'use strict';
 
-const ver = '0.4.133'
+const ver = '0.4.134'
 
 const xusqapi = window.top.xusqapi
 if (!xusqapi){
@@ -159,8 +159,10 @@ function txt2LaTex(str){
 
         str = str.replace(/([A-Z][a-z]*)(\d+)/g, '{$1}_{$2}')
 
-        for (let i of arrow){
-            str = str.replace(i[0], i[1])
+        if (str !== _str){
+            for (let i of arrow){
+                str = str.replace(i[0], i[1])
+            }
         }
 
         if (str === _str){
