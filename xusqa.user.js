@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.3.134
+// @version      1.3.136
 // @description  有道搜题,录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -52,7 +52,7 @@
 (function() {
     'use strict';
 
-const ver = '1.3.134'
+const ver = '1.3.136'
 
 // 扩展版本号代理
 let ver_kfe = '0.0.000'
@@ -282,7 +282,7 @@ const RULE = [
             rt.push(/(∠[0-9A-Z]+=)(\d{2,3})([^\d°])/g, '$1$2°$3')
         }
 
-        if(!str.match(/梯形|方形|菱形|边形|矩形/)){
+        if(!str.match(/梯形|方形|菱形|边形|矩形|体|平面/)){
             rt.push([/A([A-Z]{3})/g, '△$1']) // A->△
         }
 
