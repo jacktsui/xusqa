@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手-公式
 // @namespace    jacktsui
-// @version      0.4.136
+// @version      0.4.140
 // @description  有道搜题,录题员助手(公式加强)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -24,7 +24,7 @@
 (function() {
     'use strict';
 
-const ver = '0.4.136'
+const ver = '0.4.140'
 
 const xusqapi = window.top.xusqapi
 if (!xusqapi){
@@ -45,6 +45,9 @@ if ('化学,数学,物理'.indexOf(xusqapi.subject) < 0){
 let kfe
 
 function mathLatexParse(str){
+    if (!str){
+        return ''
+    }
     const oparr = {'/': '\\frac', '√': '\\sqrt', '²': '^', '₂': '_'}
     function exp(l, o, r){
         if (~['²', '₂',].indexOf(o)){
@@ -140,6 +143,9 @@ function mathLatexParse(str){
 }
 
 function txt2LaTex(str){
+    if (!str){
+        return ''
+    }
     const _str = str
     const arrow = [
         ['=', '\\xlongequal {\\placeholder } {\\placeholder }'],
@@ -193,26 +199,30 @@ function txt2LaTex(str){
 
  function brace(str){
      str = str.trim()
+     /*
      if (str[0] === '{' && str[str.length - 1] === '}' && ~str.indexOf(',')){// 简单判断是不是{形式
          str = str.slice(1, -1).trim()
          let lastPun = ''
          if (str[str.length - 1] === ','){
              str = str.slice(0, -1)
              lastPun = ','
-         }
-         const arr = str.split(',')
-         if (arr.length === 2){
-             return '{\\{ }^{' + txt2LaTex(arr[0]) + ',}_{' + txt2LaTex(arr[1]) + lastPun + '}'
-         } else if (arr.length === 3){
-             return '{\\{ }^{{\\, }^{' + txt2LaTex(arr[0]) + ',}_{' + txt2LaTex(arr[1]) + ',}}_{{\\, }^{' +
-                txt2LaTex(arr[2]) + lastPun + '}_{\\, }}'
+         }*/
+    if (str[str.length - 1] === '`'){
+        str = str.slice(0, -1)
+    }
+    if (~str.indexOf('`')){
+         const arr = str.split('`')
+         if (arr.length === 3){
+             return txt2LaTex(arr[0]) + '{\\{ }^{' + txt2LaTex(arr[1]) + '}_{' + txt2LaTex(arr[2]) + '}'
          } else if (arr.length === 4){
-             return '{\\{ }^{{\\, }^{' + txt2LaTex(arr[0]) + ',}_{' + txt2LaTex(arr[1]) + ',}}_{{\\, }^{' +
-                txt2LaTex(arr[2]) + ',}_{' + txt2LaTex(arr[3]) + lastPun + '}}'
+             return txt2LaTex(arr[0]) + '{\\{ }^{{\\, }^{' + txt2LaTex(arr[1]) + '}_{' + txt2LaTex(arr[2]) + '}}_{{\\, }^{' +
+                txt2LaTex(arr[3]) + '}_{\\, }}'
+         } else if (arr.length === 5){
+             return txt2LaTex(arr[0]) + '{\\{ }^{{\\, }^{' + txt2LaTex(arr[1]) + '}_{' + txt2LaTex(arr[2]) + '}}_{{\\, }^{' +
+                txt2LaTex(arr[3]) + ',}_{' + txt2LaTex(arr[4]) + '}}'
          } else {
             throw new Error('kfe failed!')
          }
-
      } else {
          return txt2LaTex(str)
      }

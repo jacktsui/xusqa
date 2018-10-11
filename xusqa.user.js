@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.3.139
+// @version      1.3.140
 // @description  有道搜题,录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -52,7 +52,7 @@
 (function() {
     'use strict';
 
-const ver = '1.3.139'
+const ver = '1.3.140'
 
 // 扩展版本号代理
 let ver_kfe = '0.0.000'
@@ -258,6 +258,8 @@ const RULE = [
     [/([A-Z]{2})\s*\/\//g, '$1∥', '数学'], // 平行
     [/([A-Z]{2})\s*L/g, '$1⊥', '数学'], // 垂直
     [/[LZ<\/]([A-Z]{3})/g, '∠$1', '数学'], // 角∠
+    [/([xyz])E/g, '$1∈', '数学'], // ∈
+    [/[\)\]][Uu]([\(\[])/g, '$1∪$2', '数学'], // ∪
     [/([\u4E00-\u9FA5.,+=-])\s*[LZ\/]([1-9A-Z])/g, '$1∠$2', '数学'], // ∠1,∠2,∠A,∠B 需要测试
     [/口([A-Z]{4})/g, '▱$1', '数学'],
     [/(∠[0-9A-Z]+=\d+)&quot;/g, '$1°', '数学'], // &quot;->°
@@ -973,7 +975,7 @@ const TPL = {
     OPTIONS_MANUAL: '<div data-v-'+UI.css_scope.UserCenter+' class="item-cell-con"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell-title">使用手册</div><div data-v-'+UI.css_scope.UserCenter+' class="item-cell-value"><a target="_blank" href="https://github.com/jacktsui/xusqa/blob/master/manual/README.md" style="text-decoration: underline;color: #00a2d4;">查看使用手册</a></div></div></div>',
     OPTIONS_COPYRIGHT: '<div data-v-'+UI.css_scope.UserCenter+' class="item-cell-con"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell-title">脚本作者</div><div data-v-'+UI.css_scope.UserCenter+' class="item-cell-value">© 2018, 徐。355088586@qq.com</div></div></div>',
     OPTIONS_XUSQA: '<div data-v-'+UI.css_scope.UserCenter+' class="item-cell-con"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell-title">主脚本 版本 {ver}</div><div data-v-'+UI.css_scope.UserCenter+' class="item-cell-value"><a target="_blank" href="https://github.com/jacktsui/xusqa/raw/master/xusqa.user.js" style="text-decoration: underline;color: #00a2d4;">正在检查更新</a></div></div></div>',
-    OPTIONS_XUSQA_KFE: '<div data-v-'+UI.css_scope.UserCenter+' class="item-cell-con"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell-title">公式脚本 版本 {ver_kfe}</div><div data-v-'+UI.css_scope.UserCenter+' class="item-cell-value"><span style="width: 210px;font-size: 10px;color: #f56c6c;word-break: break-word;display: inline-block;text-align: left;">注:因未知原因,部分用户出现公式编辑器无法编辑的问题,请禁用或删除此脚本.</span><a target="_blank" href="https://github.com/jacktsui/xusqa/raw/master/xusqa.kfe.user.js" style="text-decoration: underline;color: #00a2d4;">正在检查更新</a></div></div></div>',
+    OPTIONS_XUSQA_KFE: '<div data-v-'+UI.css_scope.UserCenter+' class="item-cell-con"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell-title">公式脚本 版本 {ver_kfe}</div><div data-v-'+UI.css_scope.UserCenter+' class="item-cell-value"><span style="width: 210px;font-size: 10px;color: #f56c6c;word-break: break-word;display: inline-block;text-align: left;">注:部分用户如出现“公式编辑器无法编辑”的问题,请禁用或删除此脚本.</span><a target="_blank" href="https://github.com/jacktsui/xusqa/raw/master/xusqa.kfe.user.js" style="text-decoration: underline;color: #00a2d4;">正在检查更新</a></div></div></div>',
     //OPTIONS_XUSQA_KFE: '<div data-v-'+UI.css_scope.UserCenter+' class="item-cell-con"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell"><div data-v-'+UI.css_scope.UserCenter+' class="item-cell-title">公式脚本 版本 {ver_kfe}</div><div data-v-'+UI.css_scope.UserCenter+' class="item-cell-value"><a style="font-size: 10px;text-decoration: underline;color: #f56c6c;">因存在未知问题,临时下架</a></div></div></div>',
 }
 
