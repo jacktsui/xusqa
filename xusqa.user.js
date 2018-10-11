@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.3.136
+// @version      1.3.137
 // @description  有道搜题,录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -52,7 +52,7 @@
 (function() {
     'use strict';
 
-const ver = '1.3.136'
+const ver = '1.3.137'
 
 // 扩展版本号代理
 let ver_kfe = '0.0.000'
@@ -5400,6 +5400,7 @@ function registerOption(){
 
     const $xusqa = $(TPL.OPTIONS_XUSQA.format({ver: ver})).appendTo($option)
     const $xusqa_kfe = $(TPL.OPTIONS_XUSQA_KFE.format({ver_kfe: ver_kfe})).appendTo($option)
+    $xusqa_kfe.hide()
     $(TPL.OPTIONS_MANUAL).appendTo($option)
     $(TPL.OPTIONS_COPYRIGHT).appendTo($option)
     $.get(URL.VER, function(data, status){
