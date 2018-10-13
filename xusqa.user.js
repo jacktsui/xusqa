@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.3.143
+// @version      1.3.144
 // @description  有道搜题,录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -52,7 +52,7 @@
 (function() {
     'use strict';
 
-const ver = '1.3.143'
+const ver = '1.3.144'
 
 // 扩展版本号代理
 let ver_kfe = '0.0.000'
@@ -959,7 +959,7 @@ const TPL = {
     SQUARE_UPDATE: '<div id="xusqa-square-update" class="process-task-con">最后刷新时间：<a  style="padding: 0px 10px;color: #f93e53;" >　刚刚　</a><a href="javascript:;" class="xusqa-a-button xusqa-btn">　刷新　</a><a href="javascript:;" class="xusqa-a-button xusqa-btn">分享到QQ</a></div>',
     SQUARE_ROLE: '<a href="javascript:;" class="xusqa-a-button xusqa-btn">{role}</a>',
     JUDGE_RULE_A: '<a href="https://note.youdao.com/share/?id=d98298a63e8656ab277278f5c51efe70&amp;type=note#/" target="_blank" style="text-decoration: underline;color: #00a2d4;display: block;">查看判题规则</a>',
-    //JUDGE_REFRESH: '<a href="javascript:;" class="xu-img-under-full-btn" title="助手提示: 检索空白或者乱码刷新">快速刷新</a>',
+    JUDGE_REFRESH: '<a href="javascript:;" class="xu-img-under-full-btn" title="助手提示: 检索空白或者乱码刷新">快速刷新</a>',
     EDIT_PAGE_SAVE: '<a href="javascript:;" class="xu-img-under-btn xusqa-btn" title="助手提示: 录题过程中可以临时保存当前录入内容，防止丢失">暂存题目</a>',
     EDIT_PAGE_RESTORE: '<a href="javascript:;" class="xu-img-under-btn xusqa-btn" style="background-color: gray;" title="助手提示: 恢复为最后一次保存时的状态">恢复题目</a>',
     EDIT_PAGE_SAVE_SAMPLE: '<a href="javascript:;" style="color: #337ab7;font-size: 16px;margin-left: 16px;float: right" title="助手提示: 收集样本,帮助作者优化一键整理,一定要在整理前收集">收集样本</a>',
@@ -5278,10 +5278,11 @@ function registerQjudgeEncircle(){
                 return
             }
             const $qimg = $('#app > div > div.main-content > div > div > div.edit-con > div.search-con > div > img')
-            /*
-            $(TPL.JUDGE_REFRESH).insertAfter($qimg).on('click', function(){
-                location.reload()
-            })*/
+            if (O.optimizeQJudgeShow){
+                $(TPL.JUDGE_REFRESH).insertAfter($qimg).on('click', function(){
+                    location.reload()
+                })
+            }
             const src = $qimg[0].src
             const scale = /*$img[0].width*/ 960 / $img[0].naturalWidth
             //http://nos.netease.com/yd-searchq/968c7132-c967-41a4-9803-d59e98713649.jpg?imageView&crop=41_978_1594_217
