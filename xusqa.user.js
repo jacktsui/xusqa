@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.3.145
+// @version      1.3.146
 // @description  有道搜题,录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -52,7 +52,7 @@
 (function() {
     'use strict';
 
-const ver = '1.3.145'
+const ver = '1.3.146'
 
 // 扩展版本号代理
 let ver_kfe = '0.0.000'
@@ -689,7 +689,7 @@ const PRERULE = [ // 处理的是html全文,主要处理需要上下文关系的
 
     [function(str){
         //const r = /([^_.])(\s*\([a-z]+\)|\([a-z]+\s[a-z]+\))/g
-        const r = /([^_.\s])(\s*\([a-z]+\)|\([a-z]+\s[a-z]+\))/g
+        const r = /([^_.\s]\s*)(\([a-z]+\)|\([a-z]+\s[a-z]+\))/g
         const m = str.match(r)
         const ra = []
         if (m && m.length > 2) { // 匹配超过3个以上
