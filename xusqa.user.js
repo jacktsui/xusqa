@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.3.150
+// @version      1.3.151
 // @description  有道搜题,录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -52,7 +52,7 @@
 (function() {
     'use strict';
 
-const ver = '1.3.150'
+const ver = '1.3.151'
 
 // 扩展版本号代理
 let ver_kfe = '0.0.000'
@@ -259,6 +259,7 @@ const RULE = [
     [/([A-Z]{2})\s*L/g, '$1⊥', '数学'], // 垂直
     [/[LZ<\/]([A-Z]{3})/g, '∠$1', '数学'], // 角∠
     [/([xyz])E/g, '$1∈', '数学'], // ∈
+    [/E([ZR])/g, '∈$1', '数学'],
     [/[\)\]][Uu]([\(\[])/g, '$1∪$2', '数学'], // ∪
     [/([\u4E00-\u9FA5.,+=-])\s*[LZ\/]([1-9A-Z])/g, '$1∠$2', '数学'], // ∠1,∠2,∠A,∠B 需要测试
     [/口([A-Z]{4})/g, '▱$1', '数学'],
@@ -407,7 +408,7 @@ const RULE = [
 
     // 统一格式
     //[/([0-9a-zA-Z>+°\)\-])([\u4E00-\u9FA5])/g, '$1 $2'], // 汉字前面的字符和汉字之间加空格 >上下标符号等特殊处理
-    //[/([\u4E00-\u9FA5])([0-9a-zA-Z+°\-])/g, '$1 $2'], // 汉字后面的字符和汉字之间加空格
+    //[/([\u4E00-\u9FA5])([0-9a-zA-Z+°\(\-])/g, '$1 $2'], // 汉字后面的字符和汉字之间加空格
 
     [/(\d+\.)\s+([A-Za-z]+)/g, '$1$2', '英语', '12'], // 统一去掉答案和解析点后面的空格
     //[/(\d+\.)([A-D])(\s+)/g, '$1$2' + DIC.TAB, '英语', '2'], // 英语解析
@@ -5805,6 +5806,13 @@ init()
  * API 调用方法：
  * window.xusqapi.fnname(params1,param2,...)
 \*/
+function fixEmpty(){
+    const r = $('#searchResult')
+    const v = $('#app > div > div.main-content > div > div')[0].__vue__
+    r.html(v.data.simquestion)
+    C.log(v.data.simquestion)
+    C.log('Id:' + v.data.simquesid)
+}
 const xusqapi = {
     get options(){
         return O.options
@@ -6000,6 +6008,10 @@ const xusqapi = {
 
     preMonthTaskReport: function(){
         preMonthTaskReport()
+    },
+
+    fix: function(){
+        fixEmpty()
     },
 }
 window.xusqapi = xusqapi
