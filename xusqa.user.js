@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.3.154
+// @version      1.3.155
 // @description  有道搜题,录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -52,7 +52,7 @@
 (function() {
     'use strict';
 
-const ver = '1.3.154'
+const ver = '1.3.155'
 
 // 扩展版本号代理
 let ver_kfe = '0.0.000'
@@ -5288,13 +5288,12 @@ function registerQjudgeEncircle(){
                 $(TPL.JUDGE_REFRESH).insertAfter($qimg).on('click', function(){
                     location.reload()
                 })
-
-                $(TPL.JUDGE_FIX).insertAfter($qimg).on('click', function(){
-                    const r = $('#searchResult')
-                    const v = $('#app > div > div.main-content > div > div')[0].__vue__
-                    r.html(v.data.simquestion)
-                })
             }
+            $(TPL.JUDGE_FIX).insertAfter($qimg).on('click', function(){
+                const r = $('#searchResult')
+                const v = $('#app > div > div.main-content > div > div')[0].__vue__
+                r.html(v.data.simquestion)
+            })
             const src = $qimg[0].src
             const scale = /*$img[0].width*/ 960 / $img[0].naturalWidth
             //http://nos.netease.com/yd-searchq/968c7132-c967-41a4-9803-d59e98713649.jpg?imageView&crop=41_978_1594_217
