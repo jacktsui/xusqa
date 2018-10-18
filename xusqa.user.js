@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.3.157
+// @version      1.3.158
 // @description  有道搜题,录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -52,7 +52,7 @@
 (function() {
     'use strict';
 
-const ver = '1.3.157'
+const ver = '1.3.158'
 
 // 扩展版本号代理
 let ver_kfe = '0.0.000'
@@ -378,7 +378,7 @@ const RULE = [
     [/\.(s|min)[-1]{1,2}/g, '·$1<sup>-1</sup>', '化学'], // 上标
 
     // 化学方程式
-    [/(\([a-zA-Z0-9]+\))(\d+)/g, '$1<sub>$2</sub>', '化学'], // 括号外面数字
+    [/(\([A-Z][a-zA-Z0-9]*\))(\d+)/g, '$1<sub>$2</sub>', '化学'], // 括号外面数字
     [/\((\w*)([A-Z][a-z]*)(\d)(\d*[+-])\)/g, '($1$2<sub>$3</sub><sup>$4</sup>)', '化学'], // 括号里面离子
     [/([A-Z][a-z]*)(\d)(\d*[+-])([\u2E80-\u9FFF,.+=-])/g, '$1<sub>$2</sub><sup>$3</sup>$4', '化学'],
     [/([A-Z][a-z]*)(\d)(\d*[+-])$/g, '$1<sub>$2</sub><sup>$2</sup>', '化学'],
@@ -5811,13 +5811,6 @@ init()
  * API 调用方法：
  * window.xusqapi.fnname(params1,param2,...)
 \*/
-function fixEmpty(){
-    const r = $('#searchResult')
-    const v = $('#app > div > div.main-content > div > div')[0].__vue__
-    r.html(v.data.simquestion)
-    C.log(v.data.simquestion)
-    C.log('Id:' + v.data.simquesid)
-}
 const xusqapi = {
     get options(){
         return O.options
@@ -6014,14 +6007,6 @@ const xusqapi = {
     preMonthTaskReport: function(){
         preMonthTaskReport()
     },
-
-    fixEmpty: function(){
-        fixEmpty()
-    },
-
-    sn2num: function(sn){
-        return helper.sn2num(sn)
-    }
 }
 window.xusqapi = xusqapi
 
