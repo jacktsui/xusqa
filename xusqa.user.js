@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.3.156
+// @version      1.3.157
 // @description  有道搜题,录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -52,7 +52,7 @@
 (function() {
     'use strict';
 
-const ver = '1.3.156'
+const ver = '1.3.157'
 
 // 扩展版本号代理
 let ver_kfe = '0.0.000'
@@ -961,8 +961,8 @@ const TPL = {
     SQUARE_UPDATE: '<div id="xusqa-square-update" class="process-task-con">最后刷新时间：<a  style="padding: 0px 10px;color: #f93e53;" >　刚刚　</a><a href="javascript:;" class="xusqa-a-button xusqa-btn">　刷新　</a><a href="javascript:;" class="xusqa-a-button xusqa-btn">分享到QQ</a></div>',
     SQUARE_ROLE: '<a href="javascript:;" class="xusqa-a-button xusqa-btn">{role}</a>',
     JUDGE_RULE_A: '<a href="https://note.youdao.com/share/?id=d98298a63e8656ab277278f5c51efe70&amp;type=note#/" target="_blank" style="text-decoration: underline;color: #00a2d4;display: block;">查看判题规则</a>',
-    JUDGE_REFRESH: '<a href="javascript:;" class="xu-img-under-full-btn" title="助手提示: 检索空白或者乱码刷新" style="width: 80%;">快速刷新</a>',
-    JUDGE_FIX: '<a href="javascript:;" class="xu-img-under-full-btn" style="width: 19%;">临时修复空白bug</a>',
+    JUDGE_REFRESH: '<a href="javascript:;" class="xu-img-under-full-btn" title="助手提示: 检索空白或者乱码刷新" style="width: 99%;">快速刷新</a>',
+    //JUDGE_FIX: '<a href="javascript:;" class="xu-img-under-full-btn" style="width: 19%;">临时修复空白bug</a>',
     EDIT_PAGE_SAVE: '<a href="javascript:;" class="xu-img-under-btn xusqa-btn" title="助手提示: 录题过程中可以临时保存当前录入内容，防止丢失">暂存题目</a>',
     EDIT_PAGE_RESTORE: '<a href="javascript:;" class="xu-img-under-btn xusqa-btn" style="background-color: gray;" title="助手提示: 恢复为最后一次保存时的状态">恢复题目</a>',
     EDIT_PAGE_SAVE_SAMPLE: '<a href="javascript:;" style="color: #337ab7;font-size: 16px;margin-left: 16px;float: right" title="助手提示: 收集样本,帮助作者优化一键整理,一定要在整理前收集">收集样本</a>',
@@ -5284,16 +5284,16 @@ function registerQjudgeEncircle(){
                 return
             }
             const $qimg = $('#app > div > div.main-content > div > div > div.edit-con > div.search-con > div > img')
-            //if (O.optimizeQJudgeShow){
+            if (O.optimizeQJudgeShow){
                 $(TPL.JUDGE_REFRESH).insertAfter($qimg).on('click', function(){
                     location.reload()
                 })
-            //}
-            $(TPL.JUDGE_FIX).insertAfter($qimg).on('click', function(){
-                const r = $('#searchResult')
-                const v = $('#app > div > div.main-content > div > div')[0].__vue__
-                r.html(v.data.simquestion)
-            })
+            }
+            //$(TPL.JUDGE_FIX).insertAfter($qimg).on('click', function(){
+            //    const r = $('#searchResult')
+            //    const v = $('#app > div > div.main-content > div > div')[0].__vue__
+            //    r.html(v.data.simquestion)
+            //})
             const src = $qimg[0].src
             const scale = /*$img[0].width*/ 960 / $img[0].naturalWidth
             //http://nos.netease.com/yd-searchq/968c7132-c967-41a4-9803-d59e98713649.jpg?imageView&crop=41_978_1594_217
@@ -5340,6 +5340,27 @@ function queryQInputProgress(f){
 
 function registerOption(){
     const $option = $(TPL.OPTIONS.format({ver: stage.profile.isValidSN ? '专业版' : '基础版'})).insertAfter($(DOM.POSITION))
+
+    if (stage.role === '题目录入'){
+        //const $switch_showJudgeHint = $(TPL.OPTIONS_SWITCH.format({title: '判题时显示判题规则提示'})).appendTo($option).find('input')
+        //$switch_showJudgeHint.prop('checked', O.showJudgeHint).on('change', function(){
+        //    O.showJudgeHint = $switch_showJudgeHint.prop('checked')
+        //})
+        const $switch_optimizeQJudgeShow = $(TPL.OPTIONS_SWITCH.format({title: '判题界面优化(底色,宽度)'})).appendTo($option).find('input')
+        $switch_optimizeQJudgeShow.prop('checked', O.optimizeQJudgeShow).on('change', function(){
+            O.optimizeQJudgeShow = $switch_optimizeQJudgeShow.prop('checked')
+        })
+        const $switch_showQInputProgress = $(TPL.OPTIONS_SWITCH.format({title: '录题时显示当前进度'})).appendTo($option).find('input')
+        $switch_showQInputProgress.prop('checked', O.showQInputProgress).on('change', function(){
+            O.showQInputProgress = $switch_showQInputProgress.prop('checked')
+        })
+    }
+
+    const $switch_autoSliceAnalysis = $(TPL.OPTIONS_SWITCH.format({title: '框的狠自动分割答案和解析'})).appendTo($option).find('input')
+    $switch_autoSliceAnalysis.prop('checked', O.autoSliceAnalysis).on('change', function(){
+        O.autoSliceAnalysis = $switch_autoSliceAnalysis.prop('checked')
+    })
+
     const $number_glassMinZoom = $(TPL.OPTIONS_NUMBER.format({title: '放大镜最小放大倍数 [1,5]',hint: '助手提示: 建议设为 1.5-3 倍', min:1, max:5, step:0.1})).appendTo($option).find('input')
     $number_glassMinZoom.val(O.glassMinzoom).on('change', function(){
         O.glassMinzoom = $number_glassMinZoom.val()
@@ -5348,21 +5369,6 @@ function registerOption(){
     //$switch_newNum.prop('checked', O.newNum).on('change', function(){
     //    O.newNum = $switch_newNum.prop('checked')
     //})
-    const $switch_autoSliceAnalysis = $(TPL.OPTIONS_SWITCH.format({title: '框的狠自动分割答案和解析'})).appendTo($option).find('input')
-    $switch_autoSliceAnalysis.prop('checked', O.autoSliceAnalysis).on('change', function(){
-        O.autoSliceAnalysis = $switch_autoSliceAnalysis.prop('checked')
-    })
-
-    if (stage.role === '题目录入'){
-        const $switch_showJudgeHint = $(TPL.OPTIONS_SWITCH.format({title: '判题时显示判题规则提示'})).appendTo($option).find('input')
-        $switch_showJudgeHint.prop('checked', O.showJudgeHint).on('change', function(){
-            O.showJudgeHint = $switch_showJudgeHint.prop('checked')
-        })
-        const $switch_showQInputProgress = $(TPL.OPTIONS_SWITCH.format({title: '录题时显示当前进度'})).appendTo($option).find('input')
-        $switch_showQInputProgress.prop('checked', O.showQInputProgress).on('change', function(){
-            O.showQInputProgress = $switch_showQInputProgress.prop('checked')
-        })
-    }
 
     $(TPL.OPTIONS_SEPARATE).appendTo($option)
 
@@ -6012,6 +6018,10 @@ const xusqapi = {
     fixEmpty: function(){
         fixEmpty()
     },
+
+    sn2num: function(sn){
+        return helper.sn2num(sn)
+    }
 }
 window.xusqapi = xusqapi
 
