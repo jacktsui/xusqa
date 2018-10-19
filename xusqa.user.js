@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         有道搜题录题助手
 // @namespace    jacktsui
-// @version      1.3.159
+// @version      1.3.160
 // @description  有道搜题,录题员助手(一键领取任务,广场任务数量角标显示,任务报告,一键整理,定位答案,框选截图,放大镜,题目保存和恢复,优化系统行为等)
 // @author       Jacktsui
 // @copyright    © 2018, 徐。355088586@qq.com
@@ -52,7 +52,7 @@
 (function() {
     'use strict';
 
-const ver = '1.3.159'
+const ver = '1.3.160'
 
 // 扩展版本号代理
 let ver_kfe = '0.0.000'
@@ -340,7 +340,7 @@ const RULE = [
     [/([A-Za-z])([xX])(\d+)/g, '$1×$2', '物理,化学'],
 
     [function(str){ // 电子结构式?忘了是个什么东西了,长这样的1s22s22p63s2
-        const r = /([1-4][spd])([1-6])/g
+        const r = /([1-4][spd])([1-9])/g
         let sm = '', sp = ''
         let t = 0
 
